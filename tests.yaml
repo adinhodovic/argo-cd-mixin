@@ -1,0 +1,73 @@
+# yamllint disable rule:line-length
+---
+rule_files:
+  - prometheus_alerts.yaml
+
+tests:
+  - interval: 5m
+    input_series:
+      - series: 'django_migrations_unapplied_total{job="django"}'
+        values: '1+0x4'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: DjangoMigrationsUnapplied
+        exp_alerts:
+          - exp_labels:
+              job: django
+              severity: warning
+            exp_annotations:
+              summary: 'Django has unapplied migrations.'
+              description: 'The job django has unapplied migrations.'
+              dashboard_url: 'https://grafana.com/d/django-overview-jkwq/django-overview?var-job=django'
+  - interval: 1m
+    input_series:
+      - series: 'django_db_errors_total{job="django", type="IntegrityError"}'
+        values: '1+1x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: DjangoDatabaseException
+        exp_alerts:
+          - exp_labels:
+              job: django
+              severity: info
+              type: IntegrityError
+            exp_annotations:
+              summary: 'Django database exception.'
+              description: 'The job django has hit the database exception IntegrityError.'
+              dashboard_url: 'https://grafana.com/d/django-overview-jkwq/django-overview?var-job=django'
+  - interval: 1m
+    input_series:
+      - series: 'django_http_responses_total_by_status_view_method_total{job="django", view="alert-test", status="200"}'
+        values: '1+10x10'
+      - series: 'django_http_responses_total_by_status_view_method_total{job="django", view="alert-test", status="403"}'
+        values: '1+1x10'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: DjangoHighHttp4xxErrorRate
+        exp_alerts:
+          - exp_labels:
+              job: django
+              severity: warning
+              view: alert-test
+            exp_annotations:
+              summary: 'Django high HTTP 4xx error rate.'
+              description: 'More than 5% HTTP requests with status 4xx for django/alert-test the past 5m.'
+              dashboard_url: 'https://grafana.com/d/django-requests-by-view-jkwq/django-requests-by-view?var-job=django&var-view=alert-test'
+  - interval: 1m
+    input_series:
+      - series: 'django_http_responses_total_by_status_view_method_total{job="django", view="alert-test", status="200"}'
+        values: '1+10x10'
+      - series: 'django_http_responses_total_by_status_view_method_total{job="django", view="alert-test", status="503"}'
+        values: '1+1x10'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: DjangoHighHttp5xxErrorRate
+        exp_alerts:
+          - exp_labels:
+              job: django
+              severity: warning
+              view: alert-test
+            exp_annotations:
+              summary: 'Django high HTTP 5xx error rate.'
+              description: 'More than 5% HTTP requests with status 5xx for django/alert-test the past 5m.'
+              dashboard_url: 'https://grafana.com/d/django-requests-by-view-jkwq/django-requests-by-view?var-job=django&var-view=alert-test'
