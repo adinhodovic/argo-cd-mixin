@@ -1,90 +1,87 @@
 "groups":
-- "name": "django"
+- "name": "argo-cd"
   "rules":
-  - "alert": "DjangoMigrationsUnapplied"
+  - "alert": "ArgoCdAppOutOfSync"
     "annotations":
-      "dashboard_url": "https://grafana.com/d/django-overview-jkwq/django-overview?var-job={{ $labels.job }}"
-      "description": "The job {{ $labels.job }} has unapplied migrations."
-      "summary": "Django has unapplied migrations."
+      "dashboard_url": "argo-cd-application-overview-kask?var-dest_server={{ $labels.dest_server }}&var-dest_project={{ $labels.project }}&var-dest_name={{ $labels.name }}"
+      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status ${{ $labels.sync_status }} for the past 10m."
+      "summary": "An ArgoCD Application is Out Of Sync."
     "expr": |
       sum(
-        django_migrations_unapplied_total{
-          job=~"django"
+        argocd_app_info{
+          job=~".*",
+          sync_status!="true"
         }
-      ) by (namespace, job)
+      ) by (job, dest_server, project, name, sync_status)
       > 0
-    "for": "15m"
+    "for": "10m"
     "labels":
       "severity": "warning"
-  - "alert": "DjangoDatabaseException"
+  - "alert": "ArgoCdAppUnhealthy"
     "annotations":
-      "dashboard_url": "https://grafana.com/d/django-overview-jkwq/django-overview?var-job={{ $labels.job }}"
-      "description": "The job {{ $labels.job }} has hit the database exception {{ $labels.type }}."
-      "summary": "Django database exception."
+      "dashboard_url": "argo-cd-application-overview-kask?var-dest_server={{ $labels.dest_server }}&var-dest_project={{ $labels.project }}&var-dest_name={{ $labels.name }}"
+      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status ${{ $labels.health_status }} for the past 10m."
+      "summary": "An ArgoCD Application is Unhealthy."
     "expr": |
-      sum (
-        increase(
-          django_db_errors_total{
-            job=~"django"
-          }[10m]
-        )
-      ) by (type, namespace, job)
+      sum(
+        argocd_app_info{
+          job=~".*",
+          health_status!~"Healthy|Progressing"
+        }
+      ) by (job, dest_server, project, name, health_status)
       > 0
-    "labels":
-      "severity": "info"
-  - "alert": "DjangoHighHttp4xxErrorRate"
-    "annotations":
-      "dashboard_url": "https://grafana.com/d/django-requests-by-view-jkwq/django-requests-by-view?var-job={{ $labels.job }}&var-view={{ $labels.view }}"
-      "description": "More than 5% HTTP requests with status 4xx for {{ $labels.job }}/{{ $labels.view }} the past 5m."
-      "summary": "Django high HTTP 4xx error rate."
-    "expr": |
-      sum(
-        rate(
-          django_http_responses_total_by_status_view_method_total{
-            job=~"django",
-            status=~"^4.*",
-            view!~"<unnamed view>|health_check:health_check_home|prometheus-django-metrics"
-          }[5m]
-        )
-      )  by (namespace, job, view)
-      /
-      sum(
-        rate(
-          django_http_responses_total_by_status_view_method_total{
-            job=~"django",
-            view!~"<unnamed view>|health_check:health_check_home|prometheus-django-metrics"
-          }[5m]
-        )
-      )  by (namespace, job, view)
-      * 100 > 5
-    "for": "1m"
+    "for": "10m"
     "labels":
       "severity": "warning"
-  - "alert": "DjangoHighHttp5xxErrorRate"
+  - "alert": "ArgoCdAppAutoSyncDisabled"
     "annotations":
-      "dashboard_url": "https://grafana.com/d/django-requests-by-view-jkwq/django-requests-by-view?var-job={{ $labels.job }}&var-view={{ $labels.view }}"
-      "description": "More than 5% HTTP requests with status 5xx for {{ $labels.job }}/{{ $labels.view }} the past 5m."
-      "summary": "Django high HTTP 5xx error rate."
+      "dashboard_url": "argo-cd-application-overview-kask?var-dest_server={{ $labels.dest_server }}&var-dest_project={{ $labels.project }}&var-dest_name={{ $labels.name }}"
+      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has autosync disabled for the past 10m."
+      "summary": "An ArgoCD Application has AutoSync Disabled."
     "expr": |
       sum(
-        rate(
-          django_http_responses_total_by_status_view_method_total{
-            job=~"django",
-            status=~"^5.*",
-            view!~"<unnamed view>|health_check:health_check_home|prometheus-django-metrics"
-          }[5m]
-        )
-      )  by (namespace, job, view)
-      /
+        argocd_app_info{
+          job=~".*",
+          autosync_enabled!="true"
+        }
+      ) by (job, dest_server, project, name, autosync_enabled)
+      > 0
+    "for": "10m"
+    "labels":
+      "severity": "warning"
+  - "alert": "ArgoCdAppSyncFailed"
+    "annotations":
+      "dashboard_url": "argo-cd-application-overview-kask?var-dest_server={{ $labels.dest_server }}&var-dest_project={{ $labels.project }}&var-dest_name={{ $labels.name }}"
+      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has failed to sync with the status ${{ $labels.phase }} for the past 10m."
+      "summary": "An ArgoCD Application has Failed to Sync."
+    "expr": |
       sum(
-        rate(
-          django_http_responses_total_by_status_view_method_total{
-            job=~"django",
-            view!~"<unnamed view>|health_check:health_check_home|prometheus-django-metrics"
-          }[5m]
+        round(
+          increase(
+            argocd_app_sync_total{
+              job=~".*",
+              phase!="Succeeded"
+            }[10m]
+          )
         )
-      )  by (namespace, job, view)
-      * 100 > 5
-    "for": "1m"
+      ) by (job, dest_server, project, name, phase) > 0
+    "labels":
+      "severity": "warning"
+  - "alert": "ArgoCdNotificationDeliveryFailed"
+    "annotations":
+      "dashboard_url": "argo-cd-notifications-overview-kask?var-job={{ $labels.job }}&var-exported_service={{ $labels.exported_service }}"
+      "description": "The notification job {{ $labels.job }} has failed to deliver to {{ $labels.exported_service }} for the past 10m."
+      "summary": "ArgoCD Notification Delivery Failed."
+    "expr": |
+      sum(
+        round(
+          increase(
+            argocd_notifications_deliveries_total{
+              job=~".*",
+              succeeded!="true"
+            }[10m]
+          )
+        )
+      ) by (job, exported_service, succeeded) > 0
     "labels":
       "severity": "warning"

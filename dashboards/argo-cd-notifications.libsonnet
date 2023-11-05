@@ -1,68 +1,77 @@
-local grafana = import 'github.com/grafana/grafonnet-lib/grafonnet/grafana.libsonnet';
-local dashboard = grafana.dashboard;
-local row = grafana.row;
-local prometheus = grafana.prometheus;
-local template = grafana.template;
-local graphPanel = grafana.graphPanel;
+local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
+local dashboard = g.dashboard;
+local row = g.panel.row;
+local grid = g.util.grid;
+
+local timeSeriesPanel = g.panel.timeSeries;
+
+local variable = dashboard.variable;
+local datasource = variable.datasource;
+local query = variable.query;
+local prometheus = g.query.prometheus;
+
+// Timeseries
+local tsOptions = timeSeriesPanel.options;
+local tsStandardOptions = timeSeriesPanel.standardOptions;
+local tsQueryOptions = timeSeriesPanel.queryOptions;
+local tsFieldConfig = timeSeriesPanel.fieldConfig;
+local tsCustom = tsFieldConfig.defaults.custom;
+local tsLegend = tsOptions.legend;
 
 {
   grafanaDashboards+:: {
 
-    local prometheusTemplate =
-      template.datasource(
+    local datasourceVariable =
+      datasource.new(
         'datasource',
         'prometheus',
-        'Prometheus',
-        label='Data Source',
-        hide='',
-      ),
+      ) +
+      datasource.generalOptions.withLabel('Data Source'),
 
-    local namespaceTemplate =
-      template.new(
-        name='namespace',
-        label='Namespace',
-        datasource='$datasource',
-        query='label_values(argocd_notifications_deliveries_total{}, namespace)',
-        current='',
-        hide='',
-        refresh=2,
-        multi=true,
-        includeAll=true,
-        sort=1
-      ),
+    local namespaceVariable =
+      query.new(
+        'namespace',
+        'label_values(argocd_notifications_deliveries_total{}, namespace)'
+      ) +
+      query.withDatasourceFromVariable(datasourceVariable) +
+      query.withSort(1) +
+      query.generalOptions.withLabel('Namespace') +
+      query.selectionOptions.withMulti(true) +
+      query.selectionOptions.withIncludeAll(true) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
 
-    local jobTemplate =
-      template.new(
-        name='job',
-        label='Job',
-        datasource='$datasource',
-        query='label_values(argocd_notifications_deliveries_total{namespace=~"$namespace"}, job)',
-        hide='',
-        refresh=2,
-        multi=true,
-        includeAll=true,
-        sort=1
-      ),
+    local jobVariable =
+      query.new(
+        'job',
+        'label_values(argocd_notifications_deliveries_total{namespace=~"$namespace"}, job)',
+      ) +
+      query.withDatasourceFromVariable(datasourceVariable) +
+      query.withSort(1) +
+      query.generalOptions.withLabel('Job') +
+      query.selectionOptions.withMulti(true) +
+      query.selectionOptions.withIncludeAll(true) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
 
-    local exportedServiceTemplate =
-      template.new(
-        name='exported_service',
-        label='Notifications Service',
-        datasource='$datasource',
-        query='label_values(argocd_notifications_deliveries_total{namespace=~"$namespace", job=~"$job"}, exported_service)',
-        current='',
-        hide='',
-        refresh=2,
-        multi=true,
-        includeAll=true,
-        sort=1
-      ),
+    local exportedServiceVariable =
+      query.new(
+        'exported_service',
+        'label_values(argocd_notifications_deliveries_total{namespace=~"$namespace", job=~"$job"}, exported_service)',
+      ) +
+      query.withDatasourceFromVariable(datasourceVariable) +
+      query.withSort(1) +
+      query.generalOptions.withLabel('Notifications Service') +
+      query.selectionOptions.withMulti(true) +
+      query.selectionOptions.withIncludeAll(true) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
 
-    local templates = [
-      prometheusTemplate,
-      namespaceTemplate,
-      jobTemplate,
-      exportedServiceTemplate,
+    local variables = [
+      datasourceVariable,
+      namespaceVariable,
+      jobVariable,
+      exportedServiceVariable,
     ],
 
     local commonLabels = |||
@@ -82,28 +91,30 @@ local graphPanel = grafana.graphPanel;
         )
       ) by (job, exported_service, succeeded)
     ||| % commonLabels,
-    local deliveriesGraphPanel =
-      graphPanel.new(
+
+    local deliveriesTimeSeriesPanel =
+      timeSeriesPanel.new(
         'Notification Deliveries',
-        datasource='$datasource',
-        format='short',
-        legend_show=true,
-        legend_values=true,
-        legend_alignAsTable=true,
-        legend_rightSide=true,
-        legend_current=true,
-        legend_max=true,
-        legend_sort='current',
-        legend_sortDesc=true,
-        nullPointMode='null as zero',
-        fill=1,
-      )
-      .addTarget(
-        prometheus.target(
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
           deliveriesQuery,
-          legendFormat='{{ exported_service }} - Succeeded: {{ succeeded }}',
+        ) +
+        prometheus.withLegendFormat(
+          '{{ exported_service }} - Succeeded: {{ succeeded }}'
         )
-      ),
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last', 'max']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
 
     local triggerEvalQuery = |||
       sum(
@@ -116,28 +127,30 @@ local graphPanel = grafana.graphPanel;
         )
       ) by (job, name, triggered)
     ||| % commonLabels,
-    local triggerEvalGraphPanel =
-      graphPanel.new(
+
+    local triggerEvalTimeSeriesPanel =
+      timeSeriesPanel.new(
         'Trigger Evaluations',
-        datasource='$datasource',
-        format='short',
-        legend_show=true,
-        legend_values=true,
-        legend_alignAsTable=true,
-        legend_rightSide=true,
-        legend_current=true,
-        legend_max=true,
-        legend_sort='current',
-        legend_sortDesc=true,
-        nullPointMode='null as zero',
-        fill=1,
-      )
-      .addTarget(
-        prometheus.target(
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
           triggerEvalQuery,
-          legendFormat='{{ name }} - Triggered: {{ triggered }}',
+        ) +
+        prometheus.withLegendFormat(
+          '{{ name }} - Triggered: {{ triggered }}',
         )
-      ),
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last', 'max']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
 
     local summaryRow =
       row.new(
@@ -147,28 +160,31 @@ local graphPanel = grafana.graphPanel;
     'argo-cd-notifications-overview.json':
       dashboard.new(
         'ArgoCD / Notifications / Overview',
-        description='A dashboard that monitors ArgoCD notifications. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin).',
-        uid=$._config.notificationsOverviewDashboardUid,
-        tags=$._config.tags,
-        time_from='now-2d',
-        editable=false,
-        time_to='now',
-        timezone='utc'
-      )
-      .addPanel(summaryRow, gridPos={ h: 1, w: 24, x: 0, y: 0 })
-      .addPanel(deliveriesGraphPanel, gridPos={ h: 8, w: 12, x: 0, y: 1 })
-      .addPanel(triggerEvalGraphPanel, gridPos={ h: 8, w: 12, x: 12, y: 1 })
-
-      +
-      { templating+: { list+: templates } } +
+      ) +
+      dashboard.withDescription('A dashboard that monitors ArgoCD notifications. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin).') +
+      dashboard.withUid($._config.notificationsOverviewDashboardUid) +
+      dashboard.withTags($._config.tags) +
+      dashboard.withTimezone('utc') +
+      dashboard.withEditable(true) +
+      dashboard.time.withFrom('now-2d') +
+      dashboard.time.withTo('now') +
+      dashboard.withVariables(variables) +
+      dashboard.withPanels(
+        [
+          summaryRow,
+        ] +
+        grid.makeGrid(
+          [
+            deliveriesTimeSeriesPanel,
+            triggerEvalTimeSeriesPanel,
+          ],
+          panelWidth=12,
+          panelHeight=8,
+          startY=1
+        )
+      ) +
       if $._config.annotation.enabled then
-        {
-          annotations: {
-            list: [
-              $._config.customAnnotation,
-            ],
-          },
-        }
+        dashboard.withAnnotations($._config.customAnnotation)
       else {},
   },
 }

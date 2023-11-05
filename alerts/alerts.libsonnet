@@ -2,113 +2,115 @@
   prometheusAlerts+:: {
     groups+: [
       {
-        name: 'django',
+        name: 'argo-cd',
         rules: [
           {
-            alert: 'DjangoMigrationsUnapplied',
+            alert: 'ArgoCdAppOutOfSync',
             expr: |||
               sum(
-                django_migrations_unapplied_total{
-                  %(djangoSelector)s
+                argocd_app_info{
+                  %(argoCdSelector)s,
+                  sync_status!="true"
                 }
-              ) by (namespace, job)
+              ) by (job, dest_server, project, name, sync_status)
               > 0
             ||| % $._config,
             labels: {
               severity: 'warning',
             },
-            'for': '15m',
+            'for': $._config.argoCdAppOutOfSyncFor,
             annotations: {
-              summary: 'Django has unapplied migrations.',
-              description: 'The job {{ $labels.job }} has unapplied migrations.',
-              dashboard_url: $._config.overviewDashboardUrl + '?var-job={{ $labels.job }}',
+              summary: 'An ArgoCD Application is Out Of Sync.',
+              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status ${{ $labels.sync_status }} for the past %s.' % $._config.argoCdAppOutOfSyncFor,
+              dashboard_url: $._config.applicationOverviewDashboardUid + '?var-dest_server={{ $labels.dest_server }}&var-dest_project={{ $labels.project }}&var-dest_name={{ $labels.name }}',
             },
           },
           {
-            alert: 'DjangoDatabaseException',
+            alert: 'ArgoCdAppUnhealthy',
             expr: |||
-              sum (
-                increase(
-                  django_db_errors_total{
-                    %(djangoSelector)s
-                  }[10m]
-                )
-              ) by (type, namespace, job)
+              sum(
+                argocd_app_info{
+                  %(argoCdSelector)s,
+                  health_status!~"Healthy|Progressing"
+                }
+              ) by (job, dest_server, project, name, health_status)
               > 0
             ||| % $._config,
             labels: {
-              severity: 'info',
+              severity: 'warning',
             },
+            'for': $._config.argoCdAppUnhealthyFor,
             annotations: {
-              summary: 'Django database exception.',
-              description: 'The job {{ $labels.job }} has hit the database exception {{ $labels.type }}.',
-              dashboard_url: $._config.overviewDashboardUrl + '?var-job={{ $labels.job }}',
+              summary: 'An ArgoCD Application is Unhealthy.',
+              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status ${{ $labels.health_status }} for the past %s.' % $._config.argoCdAppUnhealthyFor,
+              dashboard_url: $._config.applicationOverviewDashboardUid + '?var-dest_server={{ $labels.dest_server }}&var-dest_project={{ $labels.project }}&var-dest_name={{ $labels.name }}',
             },
           },
           {
-            alert: 'DjangoHighHttp4xxErrorRate',
+            alert: 'ArgoCdAppAutoSyncDisabled',
             expr: |||
               sum(
-                rate(
-                  django_http_responses_total_by_status_view_method_total{
-                    %(djangoSelector)s,
-                    status=~"^4.*",
-                    view!~"%(djangoIgnoredViews)s"
-                  }[%(django4xxInterval)s]
-                )
-              )  by (namespace, job, view)
-              /
-              sum(
-                rate(
-                  django_http_responses_total_by_status_view_method_total{
-                    %(djangoSelector)s,
-                    view!~"%(djangoIgnoredViews)s"
-                  }[%(django4xxInterval)s]
-                )
-              )  by (namespace, job, view)
-              * 100 > %(django4xxThreshold)s
+                argocd_app_info{
+                  %(argoCdSelector)s,
+                  autosync_enabled!="true"
+                }
+              ) by (job, dest_server, project, name, autosync_enabled)
+              > 0
             ||| % $._config,
-            'for': '1m',
-            annotations: {
-              summary: 'Django high HTTP 4xx error rate.',
-              description: 'More than %(django4xxThreshold)s%% HTTP requests with status 4xx for {{ $labels.job }}/{{ $labels.view }} the past %(django4xxInterval)s.' % $._config,
-              dashboard_url: $._config.requestsByViewDashboardUrl + '?var-job={{ $labels.job }}&var-view={{ $labels.view }}',
-            },
             labels: {
-              severity: $._config.django4xxSeverity,
+              severity: 'warning',
+            },
+            'for': $._config.argoCdAppAutoSyncDisabledFor,
+            annotations: {
+              summary: 'An ArgoCD Application has AutoSync Disabled.',
+              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has autosync disabled for the past %s.' % $._config.argoCdAppAutoSyncDisabledFor,
+              dashboard_url: $._config.applicationOverviewDashboardUid + '?var-dest_server={{ $labels.dest_server }}&var-dest_project={{ $labels.project }}&var-dest_name={{ $labels.name }}',
             },
           },
           {
-            alert: 'DjangoHighHttp5xxErrorRate',
+            alert: 'ArgoCdAppSyncFailed',
             expr: |||
               sum(
-                rate(
-                  django_http_responses_total_by_status_view_method_total{
-                    %(djangoSelector)s,
-                    status=~"^5.*",
-                    view!~"%(djangoIgnoredViews)s"
-                  }[%(django5xxInterval)s]
+                round(
+                  increase(
+                    argocd_app_sync_total{
+                      %(argoCdSelector)s,
+                      phase!="Succeeded"
+                    }[%(argoCdAppSyncInterval)s]
+                  )
                 )
-              )  by (namespace, job, view)
-              /
-              sum(
-                rate(
-                  django_http_responses_total_by_status_view_method_total{
-                    %(djangoSelector)s,
-                    view!~"%(djangoIgnoredViews)s"
-                  }[%(django5xxInterval)s]
-                )
-              )  by (namespace, job, view)
-              * 100 > %(django5xxThreshold)s
+              ) by (job, dest_server, project, name, phase) > 0
             ||| % $._config,
-            'for': '1m',
-            annotations: {
-              summary: 'Django high HTTP 5xx error rate.',
-              description: 'More than %(django5xxThreshold)s%% HTTP requests with status 5xx for {{ $labels.job }}/{{ $labels.view }} the past %(django5xxInterval)s.' % $._config,
-              dashboard_url: $._config.requestsByViewDashboardUrl + '?var-job={{ $labels.job }}&var-view={{ $labels.view }}',
-            },
             labels: {
-              severity: $._config.django5xxSeverity,
+              severity: 'warning',
+            },
+            annotations: {
+              summary: 'An ArgoCD Application has Failed to Sync.',
+              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has failed to sync with the status ${{ $labels.phase }} for the past %s.' % $._config.argoCdAppSyncInterval,
+              dashboard_url: $._config.applicationOverviewDashboardUid + '?var-dest_server={{ $labels.dest_server }}&var-dest_project={{ $labels.project }}&var-dest_name={{ $labels.name }}',
+            },
+          },
+          {
+            alert: 'ArgoCdNotificationDeliveryFailed',
+            expr: |||
+              sum(
+                round(
+                  increase(
+                    argocd_notifications_deliveries_total{
+                      %(argoCdSelector)s,
+                      succeeded!="true"
+                    }[%(argoCdNotificationDeliveryInterval)s]
+                  )
+                )
+              ) by (job, exported_service, succeeded) > 0
+            ||| % $._config,
+            labels: {
+              severity: 'warning',
+            },
+            annotations: {
+              summary: 'ArgoCD Notification Delivery Failed.',
+              description: 'The notification job {{ $labels.job }} has failed to deliver to {{ $labels.exported_service }} for the past %s.' % $._config.argoCdNotificationDeliveryInterval,
+              dashboard_url: $._config.notificationsOverviewDashboardUid + '?var-job={{ $labels.job }}&var-exported_service={{ $labels.exported_service }}',
             },
           },
         ],

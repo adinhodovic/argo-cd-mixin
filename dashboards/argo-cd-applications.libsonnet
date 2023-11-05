@@ -4,7 +4,7 @@ local row = g.panel.row;
 local grid = g.util.grid;
 
 local tablePanel = g.panel.table;
-local timeSeries = g.panel.timeSeries;
+local timeSeriesPanel = g.panel.timeSeries;
 local textPanel = g.panel.text;
 
 local variable = dashboard.variable;
@@ -13,12 +13,21 @@ local query = variable.query;
 local prometheus = g.query.prometheus;
 
 // Timeseries
-local tsOptions = timeSeries.options;
-local tsStandardOptions = timeSeries.standardOptions;
-local tsQueryOptions = timeSeries.queryOptions;
-local tsFieldConfig = timeSeries.fieldConfig;
+local tsOptions = timeSeriesPanel.options;
+local tsStandardOptions = timeSeriesPanel.standardOptions;
+local tsQueryOptions = timeSeriesPanel.queryOptions;
+local tsFieldConfig = timeSeriesPanel.fieldConfig;
 local tsCustom = tsFieldConfig.defaults.custom;
 local tsLegend = tsOptions.legend;
+
+// Table
+local tbOptions = tablePanel.options;
+local tbStandardOptions = tablePanel.standardOptions;
+local tbPanelOptions = tablePanel.panelOptions;
+local tbQueryOptions = tablePanel.queryOptions;
+local tbFieldConfig = tablePanel.fieldConfig;
+local tbCustom = tbFieldConfig.defaults.custom;
+local tbOverride = tbStandardOptions.override;
 
 {
   grafanaDashboards+:: {
@@ -26,7 +35,7 @@ local tsLegend = tsOptions.legend;
     local datasourceVariable =
       datasource.new(
         'datasource',
-        'Prometheus',
+        'prometheus',
       ) +
       datasource.generalOptions.withLabel('Data Source'),
 
@@ -42,11 +51,6 @@ local tsLegend = tsOptions.legend;
       query.selectionOptions.withIncludeAll(true) +
       query.refresh.onLoad() +
       query.refresh.onTime(),
-    // query='label_values(argocd_app_info{}, namespace)',
-    // current='',
-    // hide='',
-    // refresh=2,
-    // sort=1
 
     local jobVariable =
       query.new(
@@ -100,7 +104,7 @@ local tsLegend = tsOptions.legend;
       query.refresh.onLoad() +
       query.refresh.onTime(),
 
-    local templates = [
+    local variables = [
       datasourceVariable,
       namespaceVariable,
       jobVariable,
@@ -124,8 +128,8 @@ local tsLegend = tsOptions.legend;
       ) by (job, dest_server, project, health_status)
     ||| % commonLabels,
 
-    local appHealthStatusGraphPanel =
-      timeSeries.new(
+    local appHealthStatusTimeSeriesPanel =
+      timeSeriesPanel.new(
         'Application Health Status',
       ) +
       tsQueryOptions.withTargets(
@@ -156,8 +160,8 @@ local tsLegend = tsOptions.legend;
       ) by (job, dest_server, project, sync_status)
     ||| % commonLabels,
 
-    local appSyncStatusGraphPanel =
-      timeSeries.new(
+    local appSyncStatusTimeSeriesPanel =
+      timeSeriesPanel.new(
         'Application Sync Status',
       ) +
       tsQueryOptions.withTargets(
@@ -192,8 +196,8 @@ local tsLegend = tsOptions.legend;
       ) by (job, dest_server, project, phase)
     ||| % commonLabels,
 
-    local appSyncGraphPanel =
-      timeSeries.new(
+    local appSyncTimeSeriesPanel =
+      timeSeriesPanel.new(
         'Application Syncs',
       ) +
       tsQueryOptions.withTargets(
@@ -224,8 +228,8 @@ local tsLegend = tsOptions.legend;
       ) by (job, dest_server, project, autosync_enabled)
     ||| % commonLabels,
 
-    local appAutoSyncStatusGraphPanel =
-      timeSeries.new(
+    local appAutoSyncStatusTimeSeriesPanel =
+      timeSeriesPanel.new(
         'Application Auto Sync Enabled',
       ) +
       tsQueryOptions.withTargets(
@@ -278,18 +282,13 @@ local tsLegend = tsOptions.legend;
       ) by (job, dest_server, project, name, health_status)
     ||| % commonLabels,
 
-    local standardOptions = tablePanel.standardOptions,
-    local panelOptions = tablePanel.panelOptions,
-    local queryOptions = tablePanel.queryOptions,
-    local override = standardOptions.override,
-    local custom = tablePanel.fieldConfig.defaults.custom,
-    local appUnhealthyTable =
+    local appUnhealthyTablePanel =
       tablePanel.new(
         'Applications Unhealthy',
       ) +
-      tablePanel.options.withSortBy(2) +
-      tablePanel.options.sortBy.withDesc(true) +
-      tablePanel.queryOptions.withTargets(
+      tbOptions.withSortBy(2) +
+      tbOptions.sortBy.withDesc(true) +
+      tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
           appUnhealthyQuery,
@@ -297,11 +296,11 @@ local tsLegend = tsOptions.legend;
         prometheus.withFormat('table') +
         prometheus.withInstant(true)
       ) +
-      tablePanel.queryOptions.withTransformations([
-        queryOptions.transformation.withId(
+      tbQueryOptions.withTransformations([
+        tbQueryOptions.transformation.withId(
           'organize'
         ) +
-        queryOptions.transformation.withOptions(
+        tbQueryOptions.transformation.withOptions(
           {
             renameByName: {
               job: 'Job',
@@ -324,21 +323,21 @@ local tsLegend = tsOptions.legend;
           }
         ),
       ]) +
-      tablePanel.standardOptions.withOverrides([
-        override.byName.new('name') +
-        override.byName.withPropertiesFromOptions(
-          standardOptions.withLinks(
-            panelOptions.link.withTitle('Go To Application') +
-            panelOptions.link.withUrl(
+      tbStandardOptions.withOverrides([
+        tbOverride.byName.new('name') +
+        tbOverride.byName.withPropertiesFromOptions(
+          tbStandardOptions.withLinks(
+            tbPanelOptions.link.withTitle('Go To Application') +
+            tbPanelOptions.link.withUrl(
               $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
             )
           )
         ),
-        override.byName.new('health_status') +
-        override.byName.withPropertiesFromOptions(
-          standardOptions.color.withMode('fixed') +
-          standardOptions.color.withFixedColor('yellow') +
-          custom.withDisplayMode('color-background')
+        tbOverride.byName.new('health_status') +
+        tbOverride.byName.withPropertiesFromOptions(
+          tbStandardOptions.color.withMode('fixed') +
+          tbStandardOptions.color.withFixedColor('yellow') +
+          tbCustom.withDisplayMode('color-background')
         ),
       ]),
 
@@ -348,16 +347,16 @@ local tsLegend = tsOptions.legend;
           %s
           sync_status!="Synced"
         }
-      ) by (job, dest_server, project, name, sync_status) == 1
+      ) by (job, dest_server, project, name, sync_status) > 0
     ||| % commonLabels,
 
-    local appOutOfSyncTable =
+    local appOutOfSyncTablePanel =
       tablePanel.new(
         'Applications Out Of Sync',
       ) +
-      tablePanel.options.withSortBy(2) +
-      tablePanel.options.sortBy.withDesc(true) +
-      tablePanel.queryOptions.withTargets(
+      tbOptions.withSortBy(2) +
+      tbOptions.sortBy.withDesc(true) +
+      tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
           appOutOfSyncQuery,
@@ -365,11 +364,11 @@ local tsLegend = tsOptions.legend;
         prometheus.withFormat('table') +
         prometheus.withInstant(true)
       ) +
-      tablePanel.queryOptions.withTransformations([
-        queryOptions.transformation.withId(
+      tbQueryOptions.withTransformations([
+        tbQueryOptions.transformation.withId(
           'organize'
         ) +
-        queryOptions.transformation.withOptions(
+        tbQueryOptions.transformation.withOptions(
           {
             renameByName: {
               job: 'Job',
@@ -392,21 +391,21 @@ local tsLegend = tsOptions.legend;
           }
         ),
       ]) +
-      tablePanel.standardOptions.withOverrides([
-        override.byName.new('name') +
-        override.byName.withPropertiesFromOptions(
-          standardOptions.withLinks(
-            panelOptions.link.withTitle('Go To Application') +
-            panelOptions.link.withUrl(
+      tbStandardOptions.withOverrides([
+        tbOverride.byName.new('name') +
+        tbOverride.byName.withPropertiesFromOptions(
+          tbStandardOptions.withLinks(
+            tbPanelOptions.link.withTitle('Go To Application') +
+            tbPanelOptions.link.withUrl(
               $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
             )
           )
         ),
-        override.byName.new('sync_status') +
-        override.byName.withPropertiesFromOptions(
-          standardOptions.color.withMode('fixed') +
-          standardOptions.color.withFixedColor('yellow') +
-          custom.withDisplayMode('color-background')
+        tbOverride.byName.new('sync_status') +
+        tbOverride.byName.withPropertiesFromOptions(
+          tbStandardOptions.color.withMode('fixed') +
+          tbStandardOptions.color.withFixedColor('yellow') +
+          tbCustom.withDisplayMode('color-background')
         ),
       ]),
 
@@ -420,16 +419,16 @@ local tsLegend = tsOptions.legend;
             }[7d]
           )
         )
-      ) by (job, dest_server, project, name, phase) == 1
+      ) by (job, dest_server, project, name, phase) > 0
     ||| % commonLabels,
 
-    local appSync7dTable =
+    local appSync7dTablePanel =
       tablePanel.new(
         'Applications That Failed to Sync[7d]',
       ) +
-      tablePanel.options.withSortBy(2) +
-      tablePanel.options.sortBy.withDesc(true) +
-      tablePanel.queryOptions.withTargets(
+      tbOptions.withSortBy(2) +
+      tbOptions.sortBy.withDesc(true) +
+      tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
           appSync7dQuery,
@@ -437,11 +436,11 @@ local tsLegend = tsOptions.legend;
         prometheus.withFormat('table') +
         prometheus.withInstant(true)
       ) +
-      tablePanel.queryOptions.withTransformations([
-        queryOptions.transformation.withId(
+      tbQueryOptions.withTransformations([
+        tbQueryOptions.transformation.withId(
           'organize'
         ) +
-        queryOptions.transformation.withOptions(
+        tbQueryOptions.transformation.withOptions(
           {
             renameByName: {
               job: 'Job',
@@ -464,21 +463,21 @@ local tsLegend = tsOptions.legend;
           }
         ),
       ]) +
-      tablePanel.standardOptions.withOverrides([
-        override.byName.new('name') +
-        override.byName.withPropertiesFromOptions(
-          standardOptions.withLinks(
-            panelOptions.link.withTitle('Go To Application') +
-            panelOptions.link.withUrl(
+      tbStandardOptions.withOverrides([
+        tbOverride.byName.new('name') +
+        tbOverride.byName.withPropertiesFromOptions(
+          tbStandardOptions.withLinks(
+            tbPanelOptions.link.withTitle('Go To Application') +
+            tbPanelOptions.link.withUrl(
               $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
             )
           )
         ),
-        override.byName.new('Value') +
-        override.byName.withPropertiesFromOptions(
-          standardOptions.color.withMode('fixed') +
-          standardOptions.color.withFixedColor('yellow') +
-          custom.withDisplayMode('color-background')
+        tbOverride.byName.new('Value') +
+        tbOverride.byName.withPropertiesFromOptions(
+          tbStandardOptions.color.withMode('fixed') +
+          tbStandardOptions.color.withFixedColor('yellow') +
+          tbCustom.withDisplayMode('color-background')
         ),
       ]),
 
@@ -488,16 +487,16 @@ local tsLegend = tsOptions.legend;
           %s
           autosync_enabled!="true"
         }
-      ) by (job, dest_server, project, name, autosync_enabled) == 1
+      ) by (job, dest_server, project, name, autosync_enabled) > 0
     ||| % commonLabels,
 
-    local appAutoSyncDisabledTable =
+    local appAutoSyncDisabledTablePanel =
       tablePanel.new(
         'Applications With Auto Sync Disabled',
       ) +
-      tablePanel.options.withSortBy(2) +
-      tablePanel.options.sortBy.withDesc(true) +
-      tablePanel.queryOptions.withTargets(
+      tbOptions.withSortBy(2) +
+      tbOptions.sortBy.withDesc(true) +
+      tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
           appAutoSyncDisabledQuery,
@@ -505,11 +504,11 @@ local tsLegend = tsOptions.legend;
         prometheus.withFormat('table') +
         prometheus.withInstant(true)
       ) +
-      tablePanel.queryOptions.withTransformations([
-        queryOptions.transformation.withId(
+      tbQueryOptions.withTransformations([
+        tbQueryOptions.transformation.withId(
           'organize'
         ) +
-        queryOptions.transformation.withOptions(
+        tbQueryOptions.transformation.withOptions(
           {
             renameByName: {
               job: 'Job',
@@ -532,21 +531,21 @@ local tsLegend = tsOptions.legend;
           }
         ),
       ]) +
-      tablePanel.standardOptions.withOverrides([
-        override.byName.new('name') +
-        override.byName.withPropertiesFromOptions(
-          standardOptions.withLinks(
-            panelOptions.link.withTitle('Go To Application') +
-            panelOptions.link.withUrl(
+      tbStandardOptions.withOverrides([
+        tbOverride.byName.new('name') +
+        tbOverride.byName.withPropertiesFromOptions(
+          tbStandardOptions.withLinks(
+            tbPanelOptions.link.withTitle('Go To Application') +
+            tbPanelOptions.link.withUrl(
               $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
             )
           )
         ),
-        override.byName.new('autosync_enabled') +
-        override.byName.withPropertiesFromOptions(
-          standardOptions.color.withMode('fixed') +
-          standardOptions.color.withFixedColor('yellow') +
-          custom.withDisplayMode('color-background')
+        tbOverride.byName.new('autosync_enabled') +
+        tbOverride.byName.withPropertiesFromOptions(
+          tbStandardOptions.color.withMode('fixed') +
+          tbStandardOptions.color.withFixedColor('yellow') +
+          tbCustom.withDisplayMode('color-background')
         ),
       ]),
 
@@ -559,8 +558,8 @@ local tsLegend = tsOptions.legend;
       ) by (namespace, job, dest_server, project, name, health_status)
     ||| % commonLabels,
 
-    local appHealthStatusByAppGraphPanel =
-      timeSeries.new(
+    local appHealthStatusByAppTimeSeriesPanel =
+      timeSeriesPanel.new(
         'Application Health Status',
       ) +
       tsQueryOptions.withTargets(
@@ -592,8 +591,8 @@ local tsLegend = tsOptions.legend;
       ) by (namespace, job, dest_server, project, name, sync_status)
     ||| % commonLabels,
 
-    local appSyncStatusByAppGraphPanel =
-      timeSeries.new(
+    local appSyncStatusByAppTimeSeriesPanel =
+      timeSeriesPanel.new(
         'Application Sync Status',
       ) +
       tsQueryOptions.withTargets(
@@ -629,8 +628,8 @@ local tsLegend = tsOptions.legend;
       ) by (namespace, job, dest_server, project, name, phase)
     ||| % commonLabels,
 
-    local appSyncByAppGraphPanel =
-      timeSeries.new(
+    local appSyncByAppTimeSeriesPanel =
+      timeSeriesPanel.new(
         'Application Sync Result',
       ) +
       tsQueryOptions.withTargets(
@@ -672,54 +671,54 @@ local tsLegend = tsOptions.legend;
       dashboard.new(
         'ArgoCD / Application / Overview',
       ) +
-      dashboard.withDescription('A dashboard that monitors Django which focuses on giving a overview for the system (requests, db, cache). It is created using the [Django-mixin](https://github.com/adinhodovic/django-mixin).') +
+      dashboard.withDescription('A dashboard that monitors ArgoCD with a focus on Application status. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin).') +
       dashboard.withUid($._config.applicationOverviewDashboardUid) +
       dashboard.withTags($._config.tags) +
       dashboard.withTimezone('utc') +
       dashboard.withEditable(true) +
       dashboard.time.withFrom('now-6h') +
       dashboard.time.withTo('now') +
-      dashboard.withVariables(templates) +
+      dashboard.withVariables(variables) +
       dashboard.withPanels(
         [
           summaryRow,
-          appHealthStatusGraphPanel +
-          timeSeries.gridPos.withX(0) +
-          timeSeries.gridPos.withY(1) +
-          timeSeries.gridPos.withW(9) +
-          timeSeries.gridPos.withH(5),
-          appSyncStatusGraphPanel +
-          timeSeries.gridPos.withX(9) +
-          timeSeries.gridPos.withY(1) +
-          timeSeries.gridPos.withW(9) +
-          timeSeries.gridPos.withH(5),
-          appSyncGraphPanel +
-          timeSeries.gridPos.withX(0) +
-          timeSeries.gridPos.withY(6) +
-          timeSeries.gridPos.withW(9) +
-          timeSeries.gridPos.withH(5),
-          appAutoSyncStatusGraphPanel +
-          timeSeries.gridPos.withX(9) +
-          timeSeries.gridPos.withY(6) +
-          timeSeries.gridPos.withW(9) +
-          timeSeries.gridPos.withH(5),
+          appHealthStatusTimeSeriesPanel +
+          timeSeriesPanel.gridPos.withX(0) +
+          timeSeriesPanel.gridPos.withY(1) +
+          timeSeriesPanel.gridPos.withW(9) +
+          timeSeriesPanel.gridPos.withH(5),
+          appSyncStatusTimeSeriesPanel +
+          timeSeriesPanel.gridPos.withX(9) +
+          timeSeriesPanel.gridPos.withY(1) +
+          timeSeriesPanel.gridPos.withW(9) +
+          timeSeriesPanel.gridPos.withH(5),
+          appSyncTimeSeriesPanel +
+          timeSeriesPanel.gridPos.withX(0) +
+          timeSeriesPanel.gridPos.withY(6) +
+          timeSeriesPanel.gridPos.withW(9) +
+          timeSeriesPanel.gridPos.withH(5),
+          appAutoSyncStatusTimeSeriesPanel +
+          timeSeriesPanel.gridPos.withX(9) +
+          timeSeriesPanel.gridPos.withY(6) +
+          timeSeriesPanel.gridPos.withW(9) +
+          timeSeriesPanel.gridPos.withH(5),
           appBadgeTextPanel +
           textPanel.gridPos.withX(18) +
           textPanel.gridPos.withY(1) +
           textPanel.gridPos.withW(6) +
           textPanel.gridPos.withH(10),
           appSummaryRow +
-          timeSeries.gridPos.withX(0) +
-          timeSeries.gridPos.withY(11) +
-          timeSeries.gridPos.withW(18) +
-          timeSeries.gridPos.withH(1),
+          timeSeriesPanel.gridPos.withX(0) +
+          timeSeriesPanel.gridPos.withY(11) +
+          timeSeriesPanel.gridPos.withW(18) +
+          timeSeriesPanel.gridPos.withH(1),
         ] +
         grid.makeGrid(
           [
-            appUnhealthyTable,
-            appOutOfSyncTable,
-            appSync7dTable,
-            appAutoSyncDisabledTable,
+            appUnhealthyTablePanel,
+            appOutOfSyncTablePanel,
+            appSync7dTablePanel,
+            appAutoSyncDisabledTablePanel,
           ],
           panelWidth=12,
           panelHeight=6,
@@ -727,32 +726,25 @@ local tsLegend = tsOptions.legend;
         ) +
         [
           appRow +
-          timeSeries.gridPos.withX(0) +
-          timeSeries.gridPos.withY(23) +
-          timeSeries.gridPos.withW(24) +
-          timeSeries.gridPos.withH(1),
+          timeSeriesPanel.gridPos.withX(0) +
+          timeSeriesPanel.gridPos.withY(23) +
+          timeSeriesPanel.gridPos.withW(24) +
+          timeSeriesPanel.gridPos.withH(1),
         ]
         +
         grid.makeGrid(
           [
-            appHealthStatusByAppGraphPanel,
-            appSyncStatusByAppGraphPanel,
-            appSyncByAppGraphPanel,
+            appHealthStatusByAppTimeSeriesPanel,
+            appSyncStatusByAppTimeSeriesPanel,
+            appSyncByAppTimeSeriesPanel,
           ],
           panelWidth=8,
           panelHeight=8,
           startY=24
         )
-      )
-      +
+      ) +
       if $._config.annotation.enabled then
-        {
-          annotations: {
-            list: [
-              $._config.customAnnotation,
-            ],
-          },
-        }
+        dashboard.withAnnotations($._config.customAnnotation)
       else {},
   },
 }

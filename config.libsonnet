@@ -1,55 +1,54 @@
-local grafana = import 'github.com/grafana/grafonnet-lib/grafonnet/grafana.libsonnet';
-local annotation = grafana.annotation;
+local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
+local annotation = g.dashboard.annotation;
 
 {
   _config+:: {
-    djangoSelector: 'job=~"django"',
+    argoCdSelector: 'job=~".*"',
 
     grafanaUrl: 'https://grafana.com',
+    argoCdUrl: 'https://argocd.com',
 
     applicationOverviewDashboardUid: 'argo-cd-application-overview-kask',
     notificationsOverviewDashboardUid: 'argo-cd-notifications-overview-kask',
-    requestsOverviewDashboardUid: 'django-requests-jkwq',
-    requestsByViewDashboardUid: 'django-requests-by-view-jkwq',
 
-    overviewDashboardUrl: '%s/d/%s/django-overview' % [self.grafanaUrl, self.overviewDashboardUid],
-    requestsByViewDashboardUrl: '%s/d/%s/django-requests-by-view' % [self.grafanaUrl, self.requestsByViewDashboardUid],
+    applicationOverviewDashboardUrl: '%s/d/%s/argocd-application-overview' % [self.grafanaUrl, self.applicationOverviewDashboardUid],
+    notificationsOverviewDashboardUrl: '%s/d/%s/argocd-notifications-overview' % [self.grafanaUrl, self.notificationsOverviewDashboardUid],
 
-    tags: ['django', 'django-mixin'],
+    tags: ['ci/cd', 'argo-cd'],
 
-    adminViewRegex: 'admin.*',
-    djangoIgnoredViews: '<unnamed view>|health_check:health_check_home|prometheus-django-metrics',
-    djangoIgnoredTemplates: ".*'health_check/index.html'.*|None",
-
-    django4xxSeverity: 'warning',
-    django4xxInterval: '5m',
-    django4xxThreshold: '5',  // percent
-    django5xxSeverity: 'warning',
-    django5xxInterval: '5m',
-    django5xxThreshold: '5',  // percent
+    argoCdAppOutOfSyncFor: '10m',
+    argoCdAppUnhealthyFor: '10m',
+    argoCdAppSyncInterval: '10m',
+    argoCdAppAutoSyncDisabledFor: '10m',
+    argoCdNotificationDeliveryInterval: '10m',
 
     // Custom annotations to display in graphs
     annotation: {
       enabled: false,
-      name: 'Deploys',
+      name: 'Custom Annotation',
       datasource: '-- Grafana --',
+      iconColor: 'green',
       tags: [],
     },
 
-    argoCdUrl: 'https://argocd.com',
+    // Render ArgoCD badges in the dashboards
+    // []struct
+    // {
+    //   name: 'ArgoCD',
+    //   applicationName: 'ArgoCD', // or self.name
+    //   environment: 'Production',
+    //   argoCdUrl: "https://argo-cd.example.com" // or $._config.argoCdUrl
+    // }
     applications: [],
 
     customAnnotation:: if $._config.annotation.enabled then
-      annotation.datasource(
-        $._config.annotation.name,
-        datasource=$._config.annotation.datasource,
-        hide=false,
-      ) + {
-        target: {
-          matchAny: true,
-          tags: $._config.annotation.tags,
-          type: 'tags',
-        },
-      } else {},
+      annotation.withName($._config.annotation.name) +
+      annotation.withIconColor($._config.annotation.iconColor) +
+      annotation.withHide(false) +
+      annotation.datasource.withUid($._config.annotation.datasource) +
+      annotation.target.withMatchAny(true) +
+      annotation.target.withTags($._config.annotation.tags) +
+      annotation.target.withType('tags')
+    else {},
   },
 }
