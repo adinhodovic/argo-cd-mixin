@@ -1,22 +1,6 @@
-# Prometheus Monitoring Mixin for Django
+# Prometheus Monitoring Mixin for ArgoCD
 
-A set of Grafana dashboards and Prometheus alerts for Django. [Blog post](https://hodovi.cc/blog/django-monitoring-with-prometheus-and-grafana/) covering Django monitoring with Prometheus and Grafana.
-
-## Dashboards
-
-- [Django Overview](https://grafana.com/grafana/dashboards/17617-django-overview/) - Django Overview, a simple overview of the database, cache and requests.
-
-![django-overview](images/django-overview.png)
-
-- [Django Requests Overview](https://grafana.com/grafana/dashboards/17616-django-requests-overview/) - Django request overview, providing insights of all requests filterable by view and method. Separate graphs for app and admin views, has as well weekly breakdowns for top templates, top exceptions by type, top exceptions by view and top responses by view.
-
-![django-requests-overview](images/django-requests-overview.png)
-
-- [Django Requests by View](https://grafana.com/grafana/dashboards/17613-django-requests-by-view/) - Django requests by view, a breakdown of requests by view that shows compute expensive metrics as latency buckets alongside requests, responses and status codes.
-
-![django-requests-by-view](images/django-requests-by-view.png)
-
-There are also generated dashboards in the `./dashboards_out` directory.
+A set of Grafana dashboards and Prometheus alerts for ArgoCD.
 
 ## How to use
 
@@ -44,21 +28,21 @@ brew install jsonnet
 Then, grab the mixin and its dependencies:
 
 ```sh
-git clone https://github.com/danihodovic/django-exporter
-cd django-exporter/django-mixin
+git clone https://github.com/adinhodovic/argo-cd-mixin
+cd argo-cd-mixin
 jb install
 ```
 
 Finally, build the mixin:
 
 ```sh
-make prometheus-alerts.yaml
+make prometheus_alerts.yaml
 make dashboards_out
 ```
 
-The `prometheus-alerts.yaml` file then need to passed
+The `prometheus_alerts.yaml` file then need to passed
 to your Prometheus server, and the files in `dashboards_out` need to be imported
-into you Grafana server.  The exact details will depending on how you deploy your
+into you Grafana server. The exact details will depending on how you deploy your
 monitoring stack.
 
 ## Alerts
