@@ -10,7 +10,7 @@
               sum(
                 argocd_app_info{
                   %(argoCdSelector)s,
-                  sync_status!="true"
+                  sync_status!="Synced"
                 }
               ) by (job, dest_server, project, name, sync_status)
               > 0
@@ -21,8 +21,8 @@
             'for': $._config.argoCdAppOutOfSyncFor,
             annotations: {
               summary: 'An ArgoCD Application is Out Of Sync.',
-              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status ${{ $labels.sync_status }} for the past %s.' % $._config.argoCdAppOutOfSyncFor,
-              dashboard_url: $._config.applicationOverviewDashboardUid + '?var-dest_server={{ $labels.dest_server }}&var-dest_project={{ $labels.project }}&var-dest_name={{ $labels.name }}',
+              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status {{ $labels.sync_status }} for the past %s.' % $._config.argoCdAppOutOfSyncFor,
+              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-name={{ $labels.name }}',
             },
           },
           {
@@ -42,8 +42,8 @@
             'for': $._config.argoCdAppUnhealthyFor,
             annotations: {
               summary: 'An ArgoCD Application is Unhealthy.',
-              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status ${{ $labels.health_status }} for the past %s.' % $._config.argoCdAppUnhealthyFor,
-              dashboard_url: $._config.applicationOverviewDashboardUid + '?var-dest_server={{ $labels.dest_server }}&var-dest_project={{ $labels.project }}&var-dest_name={{ $labels.name }}',
+              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status {{ $labels.health_status }} for the past %s.' % $._config.argoCdAppUnhealthyFor,
+              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-name={{ $labels.name }}',
             },
           },
           {
@@ -64,7 +64,7 @@
             annotations: {
               summary: 'An ArgoCD Application has AutoSync Disabled.',
               description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has autosync disabled for the past %s.' % $._config.argoCdAppAutoSyncDisabledFor,
-              dashboard_url: $._config.applicationOverviewDashboardUid + '?var-dest_server={{ $labels.dest_server }}&var-dest_project={{ $labels.project }}&var-dest_name={{ $labels.name }}',
+              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-name={{ $labels.name }}',
             },
           },
           {
@@ -86,8 +86,8 @@
             },
             annotations: {
               summary: 'An ArgoCD Application has Failed to Sync.',
-              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has failed to sync with the status ${{ $labels.phase }} for the past %s.' % $._config.argoCdAppSyncInterval,
-              dashboard_url: $._config.applicationOverviewDashboardUid + '?var-dest_server={{ $labels.dest_server }}&var-dest_project={{ $labels.project }}&var-dest_name={{ $labels.name }}',
+              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has failed to sync with the status {{ $labels.phase }} the past %s.' % $._config.argoCdAppSyncInterval,
+              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-name={{ $labels.name }}',
             },
           },
           {
@@ -110,7 +110,7 @@
             annotations: {
               summary: 'ArgoCD Notification Delivery Failed.',
               description: 'The notification job {{ $labels.job }} has failed to deliver to {{ $labels.exported_service }} for the past %s.' % $._config.argoCdNotificationDeliveryInterval,
-              dashboard_url: $._config.notificationsOverviewDashboardUid + '?var-job={{ $labels.job }}&var-exported_service={{ $labels.exported_service }}',
+              dashboard_url: $._config.notificationsOverviewDashboardUrl + '?var-job={{ $labels.job }}&var-exported_service={{ $labels.exported_service }}',
             },
           },
         ],

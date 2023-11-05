@@ -18,8 +18,8 @@ local annotation = g.dashboard.annotation;
 
     argoCdAppOutOfSyncFor: '10m',
     argoCdAppUnhealthyFor: '10m',
+    argoCdAppAutoSyncDisabledFor: '1h',
     argoCdAppSyncInterval: '10m',
-    argoCdAppAutoSyncDisabledFor: '10m',
     argoCdNotificationDeliveryInterval: '10m',
 
     // Custom annotations to display in graphs

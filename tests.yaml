@@ -6,68 +6,104 @@ rule_files:
 tests:
   - interval: 5m
     input_series:
-      - series: 'django_migrations_unapplied_total{job="django"}'
-        values: '1+0x4'
+      - series: 'argocd_app_info{autosync_enabled="false", dest_server="https://kubernetes.default.svc", health_status="Healthy", job="argo-cd-argocd-application-controller-metrics", name="ci-cd", namespace="ci-cd", project="ops", sync_status="OutOfSync"}'
+        values: "1+0x4"
+      - series: 'argocd_app_info{autosync_enabled="false", dest_server="https://kubernetes.default.svc", health_status="Healthy", job="argo-cd-argocd-application-controller-metrics", name="ci-cd-synced", namespace="ci-cd", project="ops", sync_status="Synced"}'
+        values: "1+0x4"
     alert_rule_test:
       - eval_time: 20m
-        alertname: DjangoMigrationsUnapplied
+        alertname: ArgoCdAppOutOfSync
         exp_alerts:
           - exp_labels:
-              job: django
               severity: warning
+              job: argo-cd-argocd-application-controller-metrics
+              dest_server: https://kubernetes.default.svc
+              project: ops
+              name: ci-cd
+              sync_status: OutOfSync
             exp_annotations:
-              summary: 'Django has unapplied migrations.'
-              description: 'The job django has unapplied migrations.'
-              dashboard_url: 'https://grafana.com/d/django-overview-jkwq/django-overview?var-job=django'
-  - interval: 1m
+              summary: "An ArgoCD Application is Out Of Sync."
+              description: "The application https://kubernetes.default.svc/ops/ci-cd is out of sync with the sync status OutOfSync for the past 10m."
+              dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-name=ci-cd"
+  - interval: 5m
     input_series:
-      - series: 'django_db_errors_total{job="django", type="IntegrityError"}'
-        values: '1+1x20'
+      - series: 'argocd_app_info{autosync_enabled="true", dest_server="https://kubernetes.default.svc", health_status="Degraded", job="argo-cd-argocd-application-controller-metrics", name="ci-cd", namespace="ci-cd", project="ops", sync_status="Synced"}'
+        values: "1+0x4"
+      - series: 'argocd_app_info{autosync_enabled="true", dest_server="https://kubernetes.default.svc", health_status="Healthy", job="argo-cd-argocd-application-controller-metrics", name="ci-cd-healthy", namespace="ci-cd", project="ops", sync_status="Synced"}'
+        values: "1+0x4"
     alert_rule_test:
-      - eval_time: 15m
-        alertname: DjangoDatabaseException
+      - eval_time: 20m
+        alertname: ArgoCdAppUnhealthy
         exp_alerts:
           - exp_labels:
-              job: django
-              severity: info
-              type: IntegrityError
-            exp_annotations:
-              summary: 'Django database exception.'
-              description: 'The job django has hit the database exception IntegrityError.'
-              dashboard_url: 'https://grafana.com/d/django-overview-jkwq/django-overview?var-job=django'
-  - interval: 1m
-    input_series:
-      - series: 'django_http_responses_total_by_status_view_method_total{job="django", view="alert-test", status="200"}'
-        values: '1+10x10'
-      - series: 'django_http_responses_total_by_status_view_method_total{job="django", view="alert-test", status="403"}'
-        values: '1+1x10'
-    alert_rule_test:
-      - eval_time: 10m
-        alertname: DjangoHighHttp4xxErrorRate
-        exp_alerts:
-          - exp_labels:
-              job: django
               severity: warning
-              view: alert-test
+              job: argo-cd-argocd-application-controller-metrics
+              dest_server: https://kubernetes.default.svc
+              project: ops
+              name: ci-cd
+              health_status: Degraded
             exp_annotations:
-              summary: 'Django high HTTP 4xx error rate.'
-              description: 'More than 5% HTTP requests with status 4xx for django/alert-test the past 5m.'
-              dashboard_url: 'https://grafana.com/d/django-requests-by-view-jkwq/django-requests-by-view?var-job=django&var-view=alert-test'
-  - interval: 1m
+              summary: "An ArgoCD Application is Unhealthy."
+              description: "The application https://kubernetes.default.svc/ops/ci-cd is unhealthy with the health status Degraded for the past 10m."
+              dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-name=ci-cd"
+  - interval: 5m
     input_series:
-      - series: 'django_http_responses_total_by_status_view_method_total{job="django", view="alert-test", status="200"}'
-        values: '1+10x10'
-      - series: 'django_http_responses_total_by_status_view_method_total{job="django", view="alert-test", status="503"}'
-        values: '1+1x10'
+      - series: 'argocd_app_info{autosync_enabled="false", dest_server="https://kubernetes.default.svc", health_status="Healthy", job="argo-cd-argocd-application-controller-metrics", name="ci-cd", namespace="ci-cd", project="ops", sync_status="Synced"}'
+        values: "1+0x40"
+      - series: 'argocd_app_info{autosync_enabled="true", dest_server="https://kubernetes.default.svc", health_status="Healthy", job="argo-cd-argocd-application-controller-metrics", name="ci-cd-sync-enabled", namespace="ci-cd", project="ops", sync_status="Synced"}'
+        values: "1+0x40"
     alert_rule_test:
-      - eval_time: 10m
-        alertname: DjangoHighHttp5xxErrorRate
+      - eval_time: 2h
+        alertname: ArgoCdAppAutoSyncDisabled
         exp_alerts:
           - exp_labels:
-              job: django
               severity: warning
-              view: alert-test
+              job: argo-cd-argocd-application-controller-metrics
+              dest_server: https://kubernetes.default.svc
+              project: ops
+              name: ci-cd
+              autosync_enabled: false
             exp_annotations:
-              summary: 'Django high HTTP 5xx error rate.'
-              description: 'More than 5% HTTP requests with status 5xx for django/alert-test the past 5m.'
-              dashboard_url: 'https://grafana.com/d/django-requests-by-view-jkwq/django-requests-by-view?var-job=django&var-view=alert-test'
+              summary: "An ArgoCD Application has AutoSync Disabled."
+              description: "The application https://kubernetes.default.svc/ops/ci-cd has autosync disabled for the past 1h."
+              dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-name=ci-cd"
+  - interval: 5m
+    input_series:
+      - series: 'argocd_app_sync_total{dest_server="https://kubernetes.default.svc", job="argo-cd-argocd-application-controller-metrics", name="ci-cd", namespace="ci-cd", phase="Failed", project="ops", service="argo-cd-argocd-application-controller-metrics"}'
+        values: "1+1x4"
+      - series: 'argocd_app_sync_total{dest_server="https://kubernetes.default.svc", job="argo-cd-argocd-application-controller-metrics", name="ci-cd-succeeded", namespace="ci-cd", phase="Succeeded", project="ops", service="argo-cd-argocd-application-controller-metrics"}'
+        values: "1+1x4"
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: ArgoCdAppSyncFailed
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: argo-cd-argocd-application-controller-metrics
+              dest_server: https://kubernetes.default.svc
+              project: ops
+              name: ci-cd
+              phase: "Failed"
+            exp_annotations:
+              summary: "An ArgoCD Application has Failed to Sync."
+              description: "The application https://kubernetes.default.svc/ops/ci-cd has failed to sync with the status Failed the past 10m."
+              dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-name=ci-cd"
+  - interval: 5m
+    input_series:
+      - series: 'argocd_notifications_deliveries_total{exported_service="grafana", job="argo-cd-argocd-notifications-controller-metrics", namespace="ci-cd", succeeded="false", trigger="on-deployed"}'
+        values: "1+1x4"
+      - series: 'argocd_notifications_deliveries_total{exported_service="grafana", job="argo-cd-argocd-notifications-controller-metrics", namespace="ci-cd", succeeded="true", trigger="on-deployed"}'
+        values: "1+1x4"
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: ArgoCdNotificationDeliveryFailed
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: argo-cd-argocd-notifications-controller-metrics
+              exported_service: grafana
+              succeeded: false
+            exp_annotations:
+              summary: "ArgoCD Notification Delivery Failed."
+              description: "The notification job argo-cd-argocd-notifications-controller-metrics has failed to deliver to grafana for the past 10m."
+              dashboard_url: "https://grafana.com/d/argo-cd-notifications-overview-kask/argocd-notifications-overview?var-job=argo-cd-argocd-notifications-controller-metrics&var-exported_service=grafana"

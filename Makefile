@@ -56,7 +56,7 @@ $(OUT_DIR)/.lint: $(OUT_DIR)
 .PHONY: dashboards-lint
 dashboards-lint: $(GRAFANA_DASHBOARD_LINTER_BIN) $(OUT_DIR)/.lint
 	# Replace rates var with $$__rate_interval to make dashboard-linter happy.
-	@sed -i -e 's/1w/$$__rate_interval/g' $(OUT_DIR)/*.json
+	@sed -i -e 's/7d/$$__rate_interval/g' $(OUT_DIR)/*.json
 	@find $(OUT_DIR) -name '*.json' -print0 | xargs -n 1 -0 $(GRAFANA_DASHBOARD_LINTER_BIN) lint --strict
 
 

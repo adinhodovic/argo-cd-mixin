@@ -503,12 +503,12 @@
                   "type": "prometheus",
                   "uid": "$datasource"
                },
-               "expr": "sum(\n  round(\n    increase(\n      argocd_app_sync_total{\n        namespace=~'$namespace',\njob=~'$job',\ndest_server=~'$cluster',\nproject=~'$project',\n\n        phase!=\"Succeeded\"\n      }[7d]\n    )\n  )\n) by (job, dest_server, project, name, phase) > 0\n",
+               "expr": "sum(\n  round(\n    increase(\n      argocd_app_sync_total{\n        namespace=~'$namespace',\njob=~'$job',\ndest_server=~'$cluster',\nproject=~'$project',\n\n        phase!=\"Succeeded\"\n      }[$__rate_interval]\n    )\n  )\n) by (job, dest_server, project, name, phase) > 0\n",
                "format": "table",
                "instant": true
             }
          ],
-         "title": "Applications That Failed to Sync[7d]",
+         "title": "Applications That Failed to Sync[$__rate_interval]",
          "transformations": [
             {
                "id": "organize",
