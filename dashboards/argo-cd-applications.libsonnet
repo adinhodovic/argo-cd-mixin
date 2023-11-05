@@ -1,102 +1,112 @@
-local grafana = import 'github.com/grafana/grafonnet-lib/grafonnet/grafana.libsonnet';
 local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
-local dashboard = grafana.dashboard;
-local row = grafana.row;
-local prometheus = grafana.prometheus;
-local template = grafana.template;
+local dashboard = g.dashboard;
+local row = g.panel.row;
+local grid = g.util.grid;
+
 local tablePanel = g.panel.table;
-local graphPanel = grafana.graphPanel;
-local statPanel = grafana.statPanel;
-local textPanel = grafana.text;
+local timeSeries = g.panel.timeSeries;
+local textPanel = g.panel.text;
+
+local variable = dashboard.variable;
+local datasource = variable.datasource;
+local query = variable.query;
+local prometheus = g.query.prometheus;
+
+// Timeseries
+local tsOptions = timeSeries.options;
+local tsStandardOptions = timeSeries.standardOptions;
+local tsQueryOptions = timeSeries.queryOptions;
+local tsFieldConfig = timeSeries.fieldConfig;
+local tsCustom = tsFieldConfig.defaults.custom;
+local tsLegend = tsOptions.legend;
 
 {
   grafanaDashboards+:: {
 
-    local prometheusTemplate =
-      template.datasource(
+    local datasourceVariable =
+      datasource.new(
         'datasource',
-        'prometheus',
         'Prometheus',
-        label='Data Source',
-        hide='',
-      ),
+      ) +
+      datasource.generalOptions.withLabel('Data Source'),
 
-    local namespaceTemplate =
-      template.new(
-        name='namespace',
-        label='Namespace',
-        datasource='$datasource',
-        query='label_values(argocd_app_info{}, namespace)',
-        current='',
-        hide='',
-        refresh=2,
-        multi=true,
-        includeAll=true,
-        sort=1
-      ),
+    local namespaceVariable =
+      query.new(
+        'namespace',
+        'label_values(argocd_app_info{}, namespace)'
+      ) +
+      query.withDatasourceFromVariable(datasourceVariable) +
+      query.withSort(1) +
+      query.generalOptions.withLabel('Namespace') +
+      query.selectionOptions.withMulti(true) +
+      query.selectionOptions.withIncludeAll(true) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
+    // query='label_values(argocd_app_info{}, namespace)',
+    // current='',
+    // hide='',
+    // refresh=2,
+    // sort=1
 
-    local jobTemplate =
-      template.new(
-        name='job',
-        label='Job',
-        datasource='$datasource',
-        query='label_values(argocd_app_info{namespace=~"$namespace"}, job)',
-        hide='',
-        refresh=2,
-        multi=true,
-        includeAll=true,
-        sort=1
-      ),
+    local jobVariable =
+      query.new(
+        'job',
+        'label_values(argocd_app_info{namespace=~"$namespace"}, job)',
+      ) +
+      query.withDatasourceFromVariable(datasourceVariable) +
+      query.withSort(1) +
+      query.generalOptions.withLabel('Job') +
+      query.selectionOptions.withMulti(true) +
+      query.selectionOptions.withIncludeAll(true) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
 
-    local clusterTemplate =
-      template.new(
-        name='cluster',
-        label='Cluster',
-        datasource='$datasource',
-        query='label_values(argocd_app_info{namespace=~"$namespace", job=~"$job"}, dest_server)',
-        current='',
-        hide='',
-        refresh=2,
-        multi=true,
-        includeAll=true,
-        sort=1
-      ),
+    local clusterVariable =
+      query.new(
+        'cluster',
+        'label_values(argocd_app_info{namespace=~"$namespace", job=~"$job"}, dest_server)',
+      ) +
+      query.withDatasourceFromVariable(datasourceVariable) +
+      query.withSort(1) +
+      query.generalOptions.withLabel('Cluster') +
+      query.selectionOptions.withMulti(true) +
+      query.selectionOptions.withIncludeAll(true) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
 
-    local projectTemplate =
-      template.new(
-        name='project',
-        label='Project',
-        datasource='$datasource',
-        query='label_values(argocd_app_info{namespace=~"$namespace", job=~"$job", dest_server=~"$cluster"}, project)',
-        current='',
-        hide='',
-        refresh=2,
-        multi=true,
-        includeAll=true,
-        sort=1
-      ),
+    local projectVariable =
+      query.new(
+        'project',
+        'label_values(argocd_app_info{namespace=~"$namespace", job=~"$job", dest_server=~"$cluster"}, project)',
+      ) +
+      query.withDatasourceFromVariable(datasourceVariable) +
+      query.withSort(1) +
+      query.generalOptions.withLabel('Project') +
+      query.selectionOptions.withMulti(true) +
+      query.selectionOptions.withIncludeAll(true) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
 
-    local applicationTemplate =
-      template.new(
-        name='application',
-        label='Application',
-        datasource='$datasource',
-        query='label_values(argocd_app_info{namespace=~"$namespace", job=~"$job", dest_server=~"$cluster", project=~"$project"}, name)',
-        current='',
-        hide='',
-        refresh=2,
-        multi=true,
-        includeAll=false,
-        sort=1
-      ),
+    local applicationVariable =
+      query.new(
+        'application',
+        'label_values(argocd_app_info{namespace=~"$namespace", job=~"$job", dest_server=~"$cluster", project=~"$project"}, name)',
+      ) +
+      query.withDatasourceFromVariable(datasourceVariable) +
+      query.withSort(1) +
+      query.generalOptions.withLabel('Application') +
+      query.selectionOptions.withMulti(true) +
+      query.selectionOptions.withIncludeAll(false) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
 
     local templates = [
-      prometheusTemplate,
-      namespaceTemplate,
-      jobTemplate,
-      clusterTemplate,
-      projectTemplate,
-      applicationTemplate,
+      datasourceVariable,
+      namespaceVariable,
+      jobVariable,
+      clusterVariable,
+      projectVariable,
+      applicationVariable,
     ],
 
     local commonLabels = |||
@@ -105,32 +115,6 @@ local textPanel = grafana.text;
       dest_server=~'$cluster',
       project=~'$project',
     |||,
-
-    local appQuery = |||
-      sum(
-        argocd_app_info{
-          %s
-        }
-      ) by (job, dest_server, project)
-    ||| % commonLabels,
-
-    local appStatPanel =
-      statPanel.new(
-        'Applications',
-        datasource='$datasource',
-        unit='short',
-        reducerFunction='lastNotNull',
-      )
-      .addTarget(
-        prometheus.target(
-          appQuery,
-          legendFormat='{{ dest_server }}/{{ project }}',
-        )
-      )
-      .addThresholds([
-        { color: 'yellow', value: 0 },
-        { color: 'green', value: 0.1 },
-      ]),
 
     local appHealthStatusQuery = |||
       sum(
@@ -141,27 +125,28 @@ local textPanel = grafana.text;
     ||| % commonLabels,
 
     local appHealthStatusGraphPanel =
-      graphPanel.new(
+      timeSeries.new(
         'Application Health Status',
-        datasource='$datasource',
-        format='short',
-        legend_show=true,
-        legend_values=true,
-        legend_alignAsTable=true,
-        legend_rightSide=true,
-        legend_current=true,
-        legend_max=true,
-        legend_sort='current',
-        legend_sortDesc=true,
-        nullPointMode='null as zero',
-        fill=1,
-      )
-      .addTarget(
-        prometheus.target(
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
           appHealthStatusQuery,
-          legendFormat='{{ dest_server }}/{{ project }} - {{ health_status }}',
+        ) +
+        prometheus.withLegendFormat(
+          '{{ dest_server }}/{{ project }} - {{ health_status }}'
         )
-      ),
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last', 'max']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
 
     local appSyncStatusQuery = |||
       sum(
@@ -172,27 +157,28 @@ local textPanel = grafana.text;
     ||| % commonLabels,
 
     local appSyncStatusGraphPanel =
-      graphPanel.new(
+      timeSeries.new(
         'Application Sync Status',
-        datasource='$datasource',
-        format='short',
-        legend_show=true,
-        legend_values=true,
-        legend_alignAsTable=true,
-        legend_rightSide=true,
-        legend_current=true,
-        legend_max=true,
-        legend_sort='current',
-        legend_sortDesc=true,
-        nullPointMode='null as zero',
-        fill=1,
-      )
-      .addTarget(
-        prometheus.target(
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
           appSyncStatusQuery,
-          legendFormat='{{ dest_server }}/{{ project }} - {{ sync_status }}',
+        ) +
+        prometheus.withLegendFormat(
+          '{{ dest_server }}/{{ project }} - {{ sync_status }}',
         )
-      ),
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last', 'max']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
 
     local appSyncQuery = |||
       sum(
@@ -207,27 +193,28 @@ local textPanel = grafana.text;
     ||| % commonLabels,
 
     local appSyncGraphPanel =
-      graphPanel.new(
+      timeSeries.new(
         'Application Syncs',
-        datasource='$datasource',
-        format='short',
-        legend_show=true,
-        legend_values=true,
-        legend_alignAsTable=true,
-        legend_rightSide=true,
-        legend_current=true,
-        legend_max=true,
-        legend_sort='current',
-        legend_sortDesc=true,
-        nullPointMode='null as zero',
-        fill=1,
-      )
-      .addTarget(
-        prometheus.target(
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
           appSyncQuery,
-          legendFormat='{{ dest_server }}/{{ project }} - {{ phase }}',
+        ) +
+        prometheus.withLegendFormat(
+          '{{ dest_server }}/{{ project }} - {{ phase }}',
         )
-      ),
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last', 'max']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
 
     local appAutoSyncStatusQuery = |||
       sum(
@@ -238,27 +225,28 @@ local textPanel = grafana.text;
     ||| % commonLabels,
 
     local appAutoSyncStatusGraphPanel =
-      graphPanel.new(
+      timeSeries.new(
         'Application Auto Sync Enabled',
-        datasource='$datasource',
-        format='short',
-        legend_show=true,
-        legend_values=true,
-        legend_alignAsTable=true,
-        legend_rightSide=true,
-        legend_current=true,
-        legend_max=true,
-        legend_sort='current',
-        legend_sortDesc=true,
-        nullPointMode='null as zero',
-        fill=1,
-      )
-      .addTarget(
-        prometheus.target(
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
           appAutoSyncStatusQuery,
-          legendFormat='{{ dest_server }}/{{ project }} - {{ autosync_enabled }}',
+        ) +
+        prometheus.withLegendFormat(
+          '{{ dest_server }}/{{ project }} - {{ autosync_enabled }}',
         )
-      ),
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last', 'max']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
 
     local appsDefined = std.length($._config.applications) != 0,
     local appBadgeContent = [
@@ -271,7 +259,10 @@ local textPanel = grafana.text;
     local appBadgeTextPanel =
       textPanel.new(
         'Application Badges',
-        content=if appsDefined then |||
+      ) +
+      textPanel.options.withMode('markdown') +
+      textPanel.options.withContent(
+        if appsDefined then |||
           | Application | Environment | Status |
           | --- | --- | --- |
           %s
@@ -287,64 +278,69 @@ local textPanel = grafana.text;
       ) by (job, dest_server, project, name, health_status)
     ||| % commonLabels,
 
+    local standardOptions = tablePanel.standardOptions,
+    local panelOptions = tablePanel.panelOptions,
+    local queryOptions = tablePanel.queryOptions,
+    local override = standardOptions.override,
+    local custom = tablePanel.fieldConfig.defaults.custom,
     local appUnhealthyTable =
-      grafana.tablePanel.new(
+      tablePanel.new(
         'Applications Unhealthy',
-        datasource='$datasource',
-        sort={
-          col: 2,
-          desc: true,
-        },
-        styles=[
+      ) +
+      tablePanel.options.withSortBy(2) +
+      tablePanel.options.sortBy.withDesc(true) +
+      tablePanel.queryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          appUnhealthyQuery,
+        ) +
+        prometheus.withFormat('table') +
+        prometheus.withInstant(true)
+      ) +
+      tablePanel.queryOptions.withTransformations([
+        queryOptions.transformation.withId(
+          'organize'
+        ) +
+        queryOptions.transformation.withOptions(
           {
-            alias: 'Time',
-            dateFormat: 'YYYY-MM-DD HH:mm:ss',
-            type: 'hidden',
-            pattern: 'Time',
-          },
-          {
-            alias: 'Health Status',
-            pattern: 'health_status',
-            type: 'string',
-            colorMode: 'value',
-            colors: [
-              'null',
-              'orange',
-            ],
-            thresholds: [
-              0.1,
-            ],
-          },
-          {
-            alias: 'Job',
-            pattern: 'job',
-            type: 'hidden',
-          },
-          {
-            alias: 'Cluster',
-            pattern: 'dest_server',
-            type: 'hidden',
-          },
-          {
-            alias: 'Project',
-            pattern: 'project',
-          },
-          {
-            alias: 'Application',
-            pattern: 'name',
-            link: true,
-            linkTargetBlank: true,
-            linkTooltip: 'Go To Application',
-            linkUrl: $._config.argoCdUrl + '/applications/${__cell_4}/${__cell}',
-          },
-          {
-            alias: 'Value',
-            pattern: 'Value',
-            type: 'hidden',
-          },
-        ]
-      )
-      .addTarget(prometheus.target(appUnhealthyQuery, format='table', instant=true)),
+            renameByName: {
+              job: 'Job',
+              dest_server: 'Cluster',
+              project: 'Project',
+              name: 'Application',
+              health_status: 'Sync Status',
+            },
+            indexByName: {
+              name: 0,
+              project: 1,
+              health_status: 2,
+            },
+            excludeByName: {
+              Time: true,
+              job: true,
+              dest_server: true,
+              Value: true,
+            },
+          }
+        ),
+      ]) +
+      tablePanel.standardOptions.withOverrides([
+        override.byName.new('name') +
+        override.byName.withPropertiesFromOptions(
+          standardOptions.withLinks(
+            panelOptions.link.withTitle('Go To Application') +
+            panelOptions.link.withUrl(
+              $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
+            )
+          )
+        ),
+        override.byName.new('health_status') +
+        override.byName.withPropertiesFromOptions(
+          standardOptions.color.withMode('fixed') +
+          standardOptions.color.withFixedColor('yellow') +
+          custom.withDisplayMode('color-background')
+        ),
+      ]),
 
     local appOutOfSyncQuery = |||
       sum(
@@ -356,63 +352,63 @@ local textPanel = grafana.text;
     ||| % commonLabels,
 
     local appOutOfSyncTable =
-      grafana.tablePanel.new(
+      tablePanel.new(
         'Applications Out Of Sync',
-        datasource='$datasource',
-        sort={
-          col: 2,
-          desc: true,
-        },
-        styles=[
+      ) +
+      tablePanel.options.withSortBy(2) +
+      tablePanel.options.sortBy.withDesc(true) +
+      tablePanel.queryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          appOutOfSyncQuery,
+        ) +
+        prometheus.withFormat('table') +
+        prometheus.withInstant(true)
+      ) +
+      tablePanel.queryOptions.withTransformations([
+        queryOptions.transformation.withId(
+          'organize'
+        ) +
+        queryOptions.transformation.withOptions(
           {
-            alias: 'Time',
-            dateFormat: 'YYYY-MM-DD HH:mm:ss',
-            type: 'hidden',
-            pattern: 'Time',
-          },
-          {
-            alias: 'Sync Status',
-            pattern: 'sync_status',
-            type: 'string',
-            colorMode: 'cell',
-            colors: [
-              'null',
-              'orange',
-            ],
-            thresholds: [
-              0.1,
-            ],
-          },
-          {
-            alias: 'Job',
-            pattern: 'job',
-            type: 'hidden',
-          },
-          {
-            alias: 'Cluster',
-            pattern: 'dest_server',
-            type: 'hidden',
-          },
-          {
-            alias: 'Project',
-            pattern: 'project',
-          },
-          {
-            alias: 'Application',
-            pattern: 'name',
-            link: true,
-            linkTargetBlank: true,
-            linkTooltip: 'Go To Application',
-            linkUrl: $._config.argoCdUrl + '/applications/${__cell_4}/${__cell}',
-          },
-          {
-            alias: 'Value',
-            pattern: 'Value',
-            type: 'hidden',
-          },
-        ]
-      )
-      .addTarget(prometheus.target(appOutOfSyncQuery, format='table', instant=true)),
+            renameByName: {
+              job: 'Job',
+              dest_server: 'Cluster',
+              project: 'Project',
+              name: 'Application',
+              sync_status: 'Sync Status',
+            },
+            indexByName: {
+              name: 0,
+              project: 1,
+              sync_status: 2,
+            },
+            excludeByName: {
+              Time: true,
+              job: true,
+              dest_server: true,
+              Value: true,
+            },
+          }
+        ),
+      ]) +
+      tablePanel.standardOptions.withOverrides([
+        override.byName.new('name') +
+        override.byName.withPropertiesFromOptions(
+          standardOptions.withLinks(
+            panelOptions.link.withTitle('Go To Application') +
+            panelOptions.link.withUrl(
+              $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
+            )
+          )
+        ),
+        override.byName.new('sync_status') +
+        override.byName.withPropertiesFromOptions(
+          standardOptions.color.withMode('fixed') +
+          standardOptions.color.withFixedColor('yellow') +
+          custom.withDisplayMode('color-background')
+        ),
+      ]),
 
     local appSync7dQuery = |||
       sum(
@@ -428,62 +424,63 @@ local textPanel = grafana.text;
     ||| % commonLabels,
 
     local appSync7dTable =
-      grafana.tablePanel.new(
+      tablePanel.new(
         'Applications That Failed to Sync[7d]',
-        datasource='$datasource',
-        sort={
-          col: 2,
-          desc: true,
-        },
-        styles=[
+      ) +
+      tablePanel.options.withSortBy(2) +
+      tablePanel.options.sortBy.withDesc(true) +
+      tablePanel.queryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          appSync7dQuery,
+        ) +
+        prometheus.withFormat('table') +
+        prometheus.withInstant(true)
+      ) +
+      tablePanel.queryOptions.withTransformations([
+        queryOptions.transformation.withId(
+          'organize'
+        ) +
+        queryOptions.transformation.withOptions(
           {
-            alias: 'Time',
-            dateFormat: 'YYYY-MM-DD HH:mm:ss',
-            type: 'hidden',
-            pattern: 'Time',
-          },
-          {
-            alias: 'Phase',
-            pattern: 'phase',
-          },
-          {
-            alias: 'Job',
-            pattern: 'job',
-            type: 'hidden',
-          },
-          {
-            alias: 'Cluster',
-            pattern: 'dest_server',
-            type: 'hidden',
-          },
-          {
-            alias: 'Project',
-            pattern: 'project',
-          },
-          {
-            alias: 'Application',
-            pattern: 'name',
-            link: true,
-            linkTargetBlank: true,
-            linkTooltip: 'Go To Application',
-            linkUrl: $._config.argoCdUrl + '/applications/${__cell_5}/${__cell}',
-          },
-          {
-            alias: 'Count',
-            pattern: 'Value',
-            type: 'number',
-            colorMode: 'cell',
-            colors: [
-              'null',
-              'orange',
-            ],
-            thresholds: [
-              0.1,
-            ],
-          },
-        ]
-      )
-      .addTarget(prometheus.target(appSync7dQuery, format='table', instant=true)),
+            renameByName: {
+              job: 'Job',
+              dest_server: 'Cluster',
+              project: 'Project',
+              name: 'Application',
+              phase: 'Phase',
+              Value: 'Count',
+            },
+            indexByName: {
+              name: 0,
+              project: 1,
+              phase: 2,
+            },
+            excludeByName: {
+              Time: true,
+              job: true,
+              dest_server: true,
+            },
+          }
+        ),
+      ]) +
+      tablePanel.standardOptions.withOverrides([
+        override.byName.new('name') +
+        override.byName.withPropertiesFromOptions(
+          standardOptions.withLinks(
+            panelOptions.link.withTitle('Go To Application') +
+            panelOptions.link.withUrl(
+              $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
+            )
+          )
+        ),
+        override.byName.new('Value') +
+        override.byName.withPropertiesFromOptions(
+          standardOptions.color.withMode('fixed') +
+          standardOptions.color.withFixedColor('yellow') +
+          custom.withDisplayMode('color-background')
+        ),
+      ]),
 
     local appAutoSyncDisabledQuery = |||
       sum(
@@ -495,63 +492,63 @@ local textPanel = grafana.text;
     ||| % commonLabels,
 
     local appAutoSyncDisabledTable =
-      grafana.tablePanel.new(
+      tablePanel.new(
         'Applications With Auto Sync Disabled',
-        datasource='$datasource',
-        sort={
-          col: 2,
-          desc: true,
-        },
-        styles=[
+      ) +
+      tablePanel.options.withSortBy(2) +
+      tablePanel.options.sortBy.withDesc(true) +
+      tablePanel.queryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          appAutoSyncDisabledQuery,
+        ) +
+        prometheus.withFormat('table') +
+        prometheus.withInstant(true)
+      ) +
+      tablePanel.queryOptions.withTransformations([
+        queryOptions.transformation.withId(
+          'organize'
+        ) +
+        queryOptions.transformation.withOptions(
           {
-            alias: 'Time',
-            dateFormat: 'YYYY-MM-DD HH:mm:ss',
-            type: 'hidden',
-            pattern: 'Time',
-          },
-          {
-            alias: 'Auto Sync Enabled',
-            pattern: 'autosync_enabled',
-            type: 'string',
-            colorMode: 'value',
-            colors: [
-              'null',
-              'orange',
-            ],
-            thresholds: [
-              0.1,
-            ],
-          },
-          {
-            alias: 'Job',
-            pattern: 'job',
-            type: 'hidden',
-          },
-          {
-            alias: 'Cluster',
-            pattern: 'dest_server',
-            type: 'hidden',
-          },
-          {
-            alias: 'Project',
-            pattern: 'project',
-          },
-          {
-            alias: 'Application',
-            pattern: 'name',
-            link: true,
-            linkTargetBlank: true,
-            linkTooltip: 'Go To Application',
-            linkUrl: $._config.argoCdUrl + '/applications/${__cell_5}/${__cell}',
-          },
-          {
-            alias: 'Value',
-            pattern: 'Value',
-            type: 'hidden',
-          },
-        ]
-      )
-      .addTarget(prometheus.target(appAutoSyncDisabledQuery, format='table', instant=true)),
+            renameByName: {
+              job: 'Job',
+              dest_server: 'Cluster',
+              project: 'Project',
+              name: 'Application',
+              autosync_enabled: 'Auto Sync Enabled',
+            },
+            indexByName: {
+              name: 0,
+              project: 1,
+              autosync_enabled: 2,
+            },
+            excludeByName: {
+              Time: true,
+              job: true,
+              dest_server: true,
+              Value: true,
+            },
+          }
+        ),
+      ]) +
+      tablePanel.standardOptions.withOverrides([
+        override.byName.new('name') +
+        override.byName.withPropertiesFromOptions(
+          standardOptions.withLinks(
+            panelOptions.link.withTitle('Go To Application') +
+            panelOptions.link.withUrl(
+              $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
+            )
+          )
+        ),
+        override.byName.new('autosync_enabled') +
+        override.byName.withPropertiesFromOptions(
+          standardOptions.color.withMode('fixed') +
+          standardOptions.color.withFixedColor('yellow') +
+          custom.withDisplayMode('color-background')
+        ),
+      ]),
 
     local appHealthStatusByAppQuery = |||
       sum(
@@ -563,27 +560,28 @@ local textPanel = grafana.text;
     ||| % commonLabels,
 
     local appHealthStatusByAppGraphPanel =
-      graphPanel.new(
+      timeSeries.new(
         'Application Health Status',
-        datasource='$datasource',
-        format='short',
-        legend_show=true,
-        legend_values=true,
-        legend_alignAsTable=true,
-        legend_rightSide=false,
-        legend_current=true,
-        legend_sort='current',
-        legend_sortDesc=true,
-        nullPointMode='null as zero',
-        fill=0,
-      )
-      .addTarget(
-        prometheus.target(
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
           appHealthStatusByAppQuery,
-          legendFormat='{{ dest_server }}/{{ project }}/{{ name }} - {{ health_status }}',
-          interval='2m'
+        ) +
+        prometheus.withLegendFormat(
+          '{{ dest_server }}/{{ project }}/{{ name }} - {{ health_status }}'
         )
-      ),
+      ) +
+      tsQueryOptions.withInterval('5m') +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withCalcs(['last']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
 
     local appSyncStatusByAppQuery = |||
       sum(
@@ -595,27 +593,28 @@ local textPanel = grafana.text;
     ||| % commonLabels,
 
     local appSyncStatusByAppGraphPanel =
-      graphPanel.new(
+      timeSeries.new(
         'Application Sync Status',
-        datasource='$datasource',
-        format='short',
-        legend_show=true,
-        legend_values=true,
-        legend_alignAsTable=true,
-        legend_rightSide=false,
-        legend_current=true,
-        legend_sort='current',
-        legend_sortDesc=true,
-        nullPointMode='null as zero',
-        fill=0,
-      )
-      .addTarget(
-        prometheus.target(
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
           appSyncStatusByAppQuery,
-          legendFormat='{{ dest_server }}/{{ project }}/{{ name }} - {{ sync_status }}',
-          interval='2m'
+        ) +
+        prometheus.withLegendFormat(
+          '{{ dest_server }}/{{ project }}/{{ name }} - {{ sync_status }}'
         )
-      ),
+      ) +
+      tsQueryOptions.withInterval('5m') +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withCalcs(['last']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
 
     local appSyncByAppQuery = |||
       sum(
@@ -631,71 +630,121 @@ local textPanel = grafana.text;
     ||| % commonLabels,
 
     local appSyncByAppGraphPanel =
-      graphPanel.new(
+      timeSeries.new(
         'Application Sync Result',
-        datasource='$datasource',
-        format='short',
-        legend_show=true,
-        legend_values=true,
-        legend_alignAsTable=true,
-        legend_rightSide=false,
-        legend_current=true,
-        legend_sort='current',
-        legend_sortDesc=true,
-        nullPointMode='null as zero',
-        fill=0,
-      )
-      .addTarget(
-        prometheus.target(
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
           appSyncByAppQuery,
-          legendFormat='{{ dest_server }}/{{ project }}/{{ name }} - {{ phase }}',
-          interval='2m'
+        ) +
+        prometheus.withLegendFormat(
+          '{{ dest_server }}/{{ project }}/{{ name }} - {{ phase }}'
         )
-      ),
+      ) +
+      tsQueryOptions.withInterval('5m') +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withCalcs(['last']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
 
     local summaryRow =
       row.new(
-        title='Summary by Cluster, Project'
+        'Summary by Cluster, Project'
       ),
 
     local appSummaryRow =
       row.new(
-        title='Applications (Unhealthy/OutOfSync/AutoSyncDisabled) Summary',
+        'Applications (Unhealthy/OutOfSync/AutoSyncDisabled) Summary',
       ),
 
     local appRow =
       row.new(
-        title='Application ($application)',
+        'Application ($application)',
       ),
 
     'argo-cd-application-overview.json':
       dashboard.new(
         'ArgoCD / Application / Overview',
-        description='A dashboard that monitors Django which focuses on giving a overview for the system (requests, db, cache). It is created using the [Django-mixin](https://github.com/adinhodovic/django-mixin).',
-        uid=$._config.applicationOverviewDashboardUid,
-        tags=$._config.tags,
-        time_from='now-6h',
-        editable=true,
-        time_to='now',
-        timezone='utc'
+      ) +
+      dashboard.withDescription('A dashboard that monitors Django which focuses on giving a overview for the system (requests, db, cache). It is created using the [Django-mixin](https://github.com/adinhodovic/django-mixin).') +
+      dashboard.withUid($._config.applicationOverviewDashboardUid) +
+      dashboard.withTags($._config.tags) +
+      dashboard.withTimezone('utc') +
+      dashboard.withEditable(true) +
+      dashboard.time.withFrom('now-6h') +
+      dashboard.time.withTo('now') +
+      dashboard.withVariables(templates) +
+      dashboard.withPanels(
+        [
+          summaryRow,
+          appHealthStatusGraphPanel +
+          timeSeries.gridPos.withX(0) +
+          timeSeries.gridPos.withY(1) +
+          timeSeries.gridPos.withW(9) +
+          timeSeries.gridPos.withH(5),
+          appSyncStatusGraphPanel +
+          timeSeries.gridPos.withX(9) +
+          timeSeries.gridPos.withY(1) +
+          timeSeries.gridPos.withW(9) +
+          timeSeries.gridPos.withH(5),
+          appSyncGraphPanel +
+          timeSeries.gridPos.withX(0) +
+          timeSeries.gridPos.withY(6) +
+          timeSeries.gridPos.withW(9) +
+          timeSeries.gridPos.withH(5),
+          appAutoSyncStatusGraphPanel +
+          timeSeries.gridPos.withX(9) +
+          timeSeries.gridPos.withY(6) +
+          timeSeries.gridPos.withW(9) +
+          timeSeries.gridPos.withH(5),
+          appBadgeTextPanel +
+          textPanel.gridPos.withX(18) +
+          textPanel.gridPos.withY(1) +
+          textPanel.gridPos.withW(6) +
+          textPanel.gridPos.withH(10),
+          appSummaryRow +
+          timeSeries.gridPos.withX(0) +
+          timeSeries.gridPos.withY(11) +
+          timeSeries.gridPos.withW(18) +
+          timeSeries.gridPos.withH(1),
+        ] +
+        grid.makeGrid(
+          [
+            appUnhealthyTable,
+            appOutOfSyncTable,
+            appSync7dTable,
+            appAutoSyncDisabledTable,
+          ],
+          panelWidth=12,
+          panelHeight=6,
+          startY=12
+        ) +
+        [
+          appRow +
+          timeSeries.gridPos.withX(0) +
+          timeSeries.gridPos.withY(23) +
+          timeSeries.gridPos.withW(24) +
+          timeSeries.gridPos.withH(1),
+        ]
+        +
+        grid.makeGrid(
+          [
+            appHealthStatusByAppGraphPanel,
+            appSyncStatusByAppGraphPanel,
+            appSyncByAppGraphPanel,
+          ],
+          panelWidth=8,
+          panelHeight=8,
+          startY=24
+        )
       )
-      .addPanel(summaryRow, gridPos={ h: 1, w: 24, x: 0, y: 0 })
-      .addPanel(appHealthStatusGraphPanel, gridPos={ h: 5, w: 9, x: 0, y: 1 })
-      .addPanel(appSyncStatusGraphPanel, gridPos={ h: 5, w: 9, x: 9, y: 1 })
-      .addPanel(appSyncGraphPanel, gridPos={ h: 5, w: 9, x: 0, y: 6 })
-      .addPanel(appAutoSyncStatusGraphPanel, gridPos={ h: 5, w: 9, x: 9, y: 6 })
-      .addPanel(appBadgeTextPanel, gridPos={ h: 10, w: 6, x: 18, y: 1 })
-      .addPanel(appSummaryRow, gridPos={ h: 1, w: 24, x: 0, y: 11 })
-      .addPanel(appUnhealthyTable, gridPos={ h: 6, w: 12, x: 0, y: 12 })
-      .addPanel(appOutOfSyncTable, gridPos={ h: 6, w: 12, x: 12, y: 12 })
-      .addPanel(appSync7dTable, gridPos={ h: 6, w: 12, x: 0, y: 18 })
-      .addPanel(appAutoSyncDisabledTable, gridPos={ h: 6, w: 12, x: 12, y: 18 })
-      .addPanel(appRow, gridPos={ h: 1, w: 24, x: 0, y: 23 })
-      .addPanel(appHealthStatusByAppGraphPanel, gridPos={ h: 8, w: 8, x: 0, y: 23 })
-      .addPanel(appSyncStatusByAppGraphPanel, gridPos={ h: 8, w: 8, x: 8, y: 23 })
-      .addPanel(appSyncByAppGraphPanel, gridPos={ h: 8, w: 8, x: 16, y: 23 })
       +
-      { templating+: { list+: templates } } +
       if $._config.annotation.enabled then
         {
           annotations: {
