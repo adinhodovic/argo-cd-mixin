@@ -32,13 +32,15 @@ local annotation = g.dashboard.annotation;
     },
 
     // Render ArgoCD badges in the dashboards
-    // []struct
-    // {
-    //   name: 'ArgoCD',
-    //   applicationName: 'ArgoCD', // or self.name
-    //   environment: 'Production',
-    //   argoCdUrl: "https://argo-cd.example.com" // or $._config.argoCdUrl
-    // }
+    // []struct{}
+    // [
+    //   {
+    //     name: 'ArgoCD',
+    //     applicationName: 'ArgoCD', // or self.name
+    //     environment: 'Production',
+    //     argoCdUrl: "https://argo-cd.example.com" // or $._config.argoCdUrl
+    //   }
+    // ]
     applications: [],
 
     customAnnotation:: if $._config.annotation.enabled then
