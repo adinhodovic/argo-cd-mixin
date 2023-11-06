@@ -22,6 +22,9 @@ local annotation = g.dashboard.annotation;
     argoCdAppSyncInterval: '10m',
     argoCdNotificationDeliveryInterval: '10m',
 
+    // List of applications to ignore in the auto sync disabled alert
+    argoAutoSyncDisabledIgnoredApps: '',
+
     // Custom annotations to display in graphs
     annotation: {
       enabled: false,

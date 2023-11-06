@@ -52,7 +52,8 @@
               sum(
                 argocd_app_info{
                   %(argoCdSelector)s,
-                  autosync_enabled!="true"
+                  autosync_enabled!="true",
+                  name!~"%(argoAutoSyncDisabledIgnoredApps)s"
                 }
               ) by (job, dest_server, project, name, autosync_enabled)
               > 0

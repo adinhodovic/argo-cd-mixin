@@ -42,7 +42,8 @@
       sum(
         argocd_app_info{
           job=~".*",
-          autosync_enabled!="true"
+          autosync_enabled!="true",
+          name!~""
         }
       ) by (job, dest_server, project, name, autosync_enabled)
       > 0
