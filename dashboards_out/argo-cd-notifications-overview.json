@@ -51,7 +51,7 @@
                   "type": "prometheus",
                   "uid": "$datasource"
                },
-               "expr": "sum(\n  round(\n    increase(\n      argocd_notifications_deliveries_total{\n        namespace=~'$namespace',\njob=~'$job',\n\n        exported_service=~\"$exported_service|\",\n      }[$__rate_interval]\n    )\n  )\n) by (job, exported_service, succeeded)\n",
+               "expr": "sum(\n  round(\n    increase(\n      argocd_notifications_deliveries_total{\n        namespace=~'$namespace',\njob=~'$job',\n\n        exported_service=~\"$exported_service\",\n      }[$__rate_interval]\n    )\n  )\n) by (job, exported_service, succeeded)\n",
                "legendFormat": "{{ exported_service }} - Succeeded: {{ succeeded }}"
             }
          ],
