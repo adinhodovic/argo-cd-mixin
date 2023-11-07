@@ -50,7 +50,7 @@ local tsLegend = tsOptions.legend;
       query.withSort(1) +
       query.generalOptions.withLabel('Job') +
       query.selectionOptions.withMulti(true) +
-      query.selectionOptions.withIncludeAll(true) +
+      query.selectionOptions.withIncludeAll(true, '.*') +
       query.refresh.onLoad() +
       query.refresh.onTime(),
 
@@ -85,7 +85,7 @@ local tsLegend = tsOptions.legend;
           increase(
             argocd_notifications_deliveries_total{
               %s
-              exported_service =~"$exported_service",
+              exported_service=~"$exported_service",
             }[$__rate_interval]
           )
         )
