@@ -85,6 +85,7 @@
             labels: {
               severity: 'warning',
             },
+            'for': '1m',
             annotations: {
               summary: 'An ArgoCD Application has Failed to Sync.',
               description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has failed to sync with the status {{ $labels.phase }} the past %s.' % $._config.argoCdAppSyncInterval,
@@ -105,6 +106,7 @@
                 )
               ) by (job, exported_service, succeeded) > 0
             ||| % $._config,
+            'for': '1m',
             labels: {
               severity: 'warning',
             },
