@@ -668,10 +668,11 @@ local tbOverride = tbStandardOptions.override;
       ),
 
     'argo-cd-application-overview.json':
+      $._config.bypassDashboardValidation +
       dashboard.new(
         'ArgoCD / Application / Overview',
       ) +
-      dashboard.withDescription('A dashboard that monitors ArgoCD with a focus on Application status. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin).') +
+      dashboard.withDescription('A dashboard that monitors ArgoCD with a focus on Application status. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin). Requires custom configuration to add application badges. Please refer to the mixin.') +
       dashboard.withUid($._config.applicationOverviewDashboardUid) +
       dashboard.withTags($._config.tags) +
       dashboard.withTimezone('utc') +

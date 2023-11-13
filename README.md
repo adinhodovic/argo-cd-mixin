@@ -48,3 +48,13 @@ monitoring stack.
 ## Alerts
 
 The mixin follows the [monitoring-mixins guidelines](https://github.com/monitoring-mixins/docs#guidelines-for-alert-names-labels-and-annotations) for alerts.
+
+## Preview
+
+### Application Dashboard
+
+![argo-cd-application-overview](images/argo-cd-application-overview.png)
+
+### Notification Dashboard
+
+![argo-cd-notifications-overview](images/argo-cd-notifications-overview.png)
