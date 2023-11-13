@@ -16,9 +16,9 @@ local annotation = g.dashboard.annotation;
 
     tags: ['ci/cd', 'argo-cd'],
 
-    argoCdAppOutOfSyncFor: '10m',
-    argoCdAppUnhealthyFor: '10m',
-    argoCdAppAutoSyncDisabledFor: '1h',
+    argoCdAppOutOfSyncFor: '15m',
+    argoCdAppUnhealthyFor: '15m',
+    argoCdAppAutoSyncDisabledFor: '2h',
     argoCdAppSyncInterval: '10m',
     argoCdNotificationDeliveryInterval: '10m',
 
