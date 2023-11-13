@@ -23,7 +23,7 @@ tests:
               sync_status: OutOfSync
             exp_annotations:
               summary: "An ArgoCD Application is Out Of Sync."
-              description: "The application https://kubernetes.default.svc/ops/ci-cd is out of sync with the sync status OutOfSync for the past 10m."
+              description: "The application https://kubernetes.default.svc/ops/ci-cd is out of sync with the sync status OutOfSync for the past 15m."
               dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-application=ci-cd"
   - interval: 5m
     input_series:
@@ -44,7 +44,7 @@ tests:
               health_status: Degraded
             exp_annotations:
               summary: "An ArgoCD Application is Unhealthy."
-              description: "The application https://kubernetes.default.svc/ops/ci-cd is unhealthy with the health status Degraded for the past 10m."
+              description: "The application https://kubernetes.default.svc/ops/ci-cd is unhealthy with the health status Degraded for the past 15m."
               dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-application=ci-cd"
   - interval: 5m
     input_series:
@@ -53,7 +53,7 @@ tests:
       - series: 'argocd_app_info{autosync_enabled="true", dest_server="https://kubernetes.default.svc", health_status="Healthy", job="argo-cd-argocd-application-controller-metrics", name="ci-cd-sync-enabled", namespace="ci-cd", project="ops", sync_status="Synced"}'
         values: "1+0x40"
     alert_rule_test:
-      - eval_time: 2h
+      - eval_time: 3h
         alertname: ArgoCdAppAutoSyncDisabled
         exp_alerts:
           - exp_labels:
@@ -65,7 +65,7 @@ tests:
               autosync_enabled: false
             exp_annotations:
               summary: "An ArgoCD Application has AutoSync Disabled."
-              description: "The application https://kubernetes.default.svc/ops/ci-cd has autosync disabled for the past 1h."
+              description: "The application https://kubernetes.default.svc/ops/ci-cd has autosync disabled for the past 2h."
               dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-application=ci-cd"
   - interval: 5m
     input_series:

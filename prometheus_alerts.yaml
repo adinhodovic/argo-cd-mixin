@@ -4,7 +4,7 @@
   - "alert": "ArgoCdAppOutOfSync"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}"
-      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status {{ $labels.sync_status }} for the past 10m."
+      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status {{ $labels.sync_status }} for the past 15m."
       "summary": "An ArgoCD Application is Out Of Sync."
     "expr": |
       sum(
@@ -14,13 +14,13 @@
         }
       ) by (job, dest_server, project, name, sync_status)
       > 0
-    "for": "10m"
+    "for": "15m"
     "labels":
       "severity": "warning"
   - "alert": "ArgoCdAppUnhealthy"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}"
-      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status {{ $labels.health_status }} for the past 10m."
+      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status {{ $labels.health_status }} for the past 15m."
       "summary": "An ArgoCD Application is Unhealthy."
     "expr": |
       sum(
@@ -30,13 +30,13 @@
         }
       ) by (job, dest_server, project, name, health_status)
       > 0
-    "for": "10m"
+    "for": "15m"
     "labels":
       "severity": "warning"
   - "alert": "ArgoCdAppAutoSyncDisabled"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}"
-      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has autosync disabled for the past 1h."
+      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has autosync disabled for the past 2h."
       "summary": "An ArgoCD Application has AutoSync Disabled."
     "expr": |
       sum(
@@ -47,7 +47,7 @@
         }
       ) by (job, dest_server, project, name, autosync_enabled)
       > 0
-    "for": "1h"
+    "for": "2h"
     "labels":
       "severity": "warning"
   - "alert": "ArgoCdAppSyncFailed"
