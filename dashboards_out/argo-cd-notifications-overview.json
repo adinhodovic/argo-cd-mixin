@@ -1,4 +1,6 @@
 {
+   "__inputs": [ ],
+   "__requires": [ ],
    "description": "A dashboard that monitors ArgoCD notifications. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin).",
    "editable": true,
    "panels": [

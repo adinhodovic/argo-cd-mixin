@@ -1,5 +1,7 @@
 {
-   "description": "A dashboard that monitors ArgoCD with a focus on Application status. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin).",
+   "__inputs": [ ],
+   "__requires": [ ],
+   "description": "A dashboard that monitors ArgoCD with a focus on Application status. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin). Requires custom configuration to add application badges. Please refer to the mixin.",
    "editable": true,
    "panels": [
       {

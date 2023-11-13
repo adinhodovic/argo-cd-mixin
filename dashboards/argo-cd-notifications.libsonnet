@@ -158,6 +158,7 @@ local tsLegend = tsOptions.legend;
       ),
 
     'argo-cd-notifications-overview.json':
+      $._config.bypassDashboardValidation +
       dashboard.new(
         'ArgoCD / Notifications / Overview',
       ) +

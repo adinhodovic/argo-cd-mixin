@@ -3,6 +3,12 @@ local annotation = g.dashboard.annotation;
 
 {
   _config+:: {
+    // Bypasses grafana.com/dashboards validator
+    bypassDashboardValidation: {
+      __inputs: [],
+      __requires: [],
+    },
+
     argoCdSelector: 'job=~".*"',
 
     grafanaUrl: 'https://grafana.com',
