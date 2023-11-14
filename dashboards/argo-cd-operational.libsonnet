@@ -3,9 +3,10 @@ local dashboard = g.dashboard;
 local row = g.panel.row;
 local grid = g.util.grid;
 
+local statPanel = g.panel.stat;
 local tablePanel = g.panel.table;
 local timeSeriesPanel = g.panel.timeSeries;
-local textPanel = g.panel.text;
+local heatmapPanel = g.panel.heatmap;
 
 local variable = dashboard.variable;
 local datasource = variable.datasource;
@@ -25,6 +26,15 @@ local tbOptions = tablePanel.options;
 local tbStandardOptions = tablePanel.standardOptions;
 local tbPanelOptions = tablePanel.panelOptions;
 local tbQueryOptions = tablePanel.queryOptions;
+local tbFieldConfig = tablePanel.fieldConfig;
+local tbCustom = tbFieldConfig.defaults.custom;
+local tbOverride = tbStandardOptions.override;
+
+// HeatmapPanel
+local hmOptions = heatmapPanel.options;
+local hmStandardOptions = heatmapPanel.standardOptions;
+local tbPanelOptions = tablePanel.panelOptions;
+local hmQueryOptions = heatmapPanel.queryOptions;
 local tbFieldConfig = tablePanel.fieldConfig;
 local tbCustom = tbFieldConfig.defaults.custom;
 local tbOverride = tbStandardOptions.override;
@@ -55,13 +65,14 @@ local tbOverride = tbStandardOptions.override;
     local jobVariable =
       query.new(
         'job',
-        'label_values(argocd_app_info{namespace=~"$namespace"}, job)',
+        'label_values(job)',
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
+      query.withRegex('argo.*') +
       query.generalOptions.withLabel('Job') +
       query.selectionOptions.withMulti(true) +
-      query.selectionOptions.withIncludeAll(true) +
+      query.selectionOptions.withIncludeAll(true, '.*') +
       query.refresh.onLoad() +
       query.refresh.onTime(),
 
@@ -91,26 +102,12 @@ local tbOverride = tbStandardOptions.override;
       query.refresh.onLoad() +
       query.refresh.onTime(),
 
-    local applicationVariable =
-      query.new(
-        'application',
-        'label_values(argocd_app_info{namespace=~"$namespace", job=~"$job", dest_server=~"$cluster", project=~"$project"}, name)',
-      ) +
-      query.withDatasourceFromVariable(datasourceVariable) +
-      query.withSort(1) +
-      query.generalOptions.withLabel('Application') +
-      query.selectionOptions.withMulti(true) +
-      query.selectionOptions.withIncludeAll(false) +
-      query.refresh.onLoad() +
-      query.refresh.onTime(),
-
     local variables = [
       datasourceVariable,
       namespaceVariable,
       jobVariable,
       clusterVariable,
       projectVariable,
-      applicationVariable,
     ],
 
     local commonLabels = |||
@@ -120,71 +117,134 @@ local tbOverride = tbStandardOptions.override;
       project=~'$project',
     |||,
 
-    local appHealthStatusQuery = |||
+    local clustersCountQuery = |||
+      sum(
+        argocd_cluster_info{
+          namespace=~'$namespace',
+          job=~'$job'
+        }
+      )
+    |||,
+
+    local clustersCountStatPanel =
+      statPanel.new(
+        'Clusters',
+      ) +
+      statPanel.queryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          clustersCountQuery,
+        )
+      ),
+
+    local repositoriesCountQuery = |||
+      count(
+        count(
+          argocd_app_info{
+            namespace=~'$namespace',
+            job=~'$job'
+          }
+        )
+        by (repo)
+      )
+    |||,
+
+    local repositoriesCountStatPanel =
+      statPanel.new(
+        'Repositories',
+      ) +
+      statPanel.queryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          repositoriesCountQuery,
+        )
+      ),
+
+    local appsCountQuery = |||
       sum(
         argocd_app_info{
           %s
         }
-      ) by (job, dest_server, project, health_status)
+      )
     ||| % commonLabels,
 
-    local appHealthStatusTimeSeriesPanel =
-      timeSeriesPanel.new(
-        'Application Health Status',
+    local appsCountStatPanel =
+      statPanel.new(
+        'Applications',
       ) +
-      tsQueryOptions.withTargets(
+      statPanel.queryOptions.withTargets(
         prometheus.new(
           '$datasource',
-          appHealthStatusQuery,
-        ) +
-        prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }} - {{ health_status }}'
+          appsCountQuery,
         )
-      ) +
-      tsStandardOptions.withUnit('short') +
-      tsOptions.tooltip.withMode('multi') +
-      tsOptions.tooltip.withSort('desc') +
-      tsLegend.withShowLegend(true) +
-      tsLegend.withDisplayMode('table') +
-      tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last', 'max']) +
-      tsLegend.withSortBy('Last') +
-      tsLegend.withSortDesc(true) +
-      tsCustom.withFillOpacity(10),
+      ),
 
-    local appSyncStatusQuery = |||
+    local appsQuery = |||
       sum(
         argocd_app_info{
           %s
         }
-      ) by (job, dest_server, project, sync_status)
+      ) by (job, dest_server, project, name, health_status, sync_status)
     ||| % commonLabels,
 
-    local appSyncStatusTimeSeriesPanel =
-      timeSeriesPanel.new(
-        'Application Sync Status',
+    local appsTablePanel =
+      tablePanel.new(
+        'Applications',
       ) +
-      tsQueryOptions.withTargets(
+      tbOptions.withSortBy(
+        tbOptions.sortBy.withDisplayName('Application')
+      ) +
+      tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
-          appSyncStatusQuery,
+          appsQuery,
         ) +
-        prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }} - {{ sync_status }}',
-        )
+        prometheus.withFormat('table') +
+        prometheus.withInstant(true)
       ) +
-      tsStandardOptions.withUnit('short') +
-      tsOptions.tooltip.withMode('multi') +
-      tsOptions.tooltip.withSort('desc') +
-      tsLegend.withShowLegend(true) +
-      tsLegend.withDisplayMode('table') +
-      tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last', 'max']) +
-      tsLegend.withSortBy('Last') +
-      tsLegend.withSortDesc(true) +
-      tsCustom.withFillOpacity(10),
+      tbQueryOptions.withTransformations([
+        tbQueryOptions.transformation.withId(
+          'organize'
+        ) +
+        tbQueryOptions.transformation.withOptions(
+          {
+            renameByName: {
+              job: 'Job',
+              dest_server: 'Cluster',
+              project: 'Project',
+              name: 'Application',
+              health_status: 'Health Status',
+              sync_status: 'Sync Status',
+            },
+            indexByName: {
+              name: 0,
+              project: 1,
+              health_status: 2,
+              sync_status: 3,
+            },
+            excludeByName: {
+              Time: true,
+              job: true,
+              dest_server: true,
+              Value: true,
+            },
+          }
+        ),
+      ]) +
+      tbStandardOptions.withOverrides([
+        tbOverride.byName.new('name') +
+        tbOverride.byName.withPropertiesFromOptions(
+          tbStandardOptions.withLinks(
+            tbPanelOptions.link.withTitle('Go To Application') +
+            tbPanelOptions.link.withType('dashboard') +
+            tbPanelOptions.link.withUrl(
+              '/d/%s/argocd-notifications-overview?&var-project=${__data.fields.Project}&var-application=${__value.raw}' % $._config.applicationOverviewDashboardUid
+            )
+          )
+        ),
+      ]),
 
-    local appSyncQuery = |||
+    local syncActivityQuery = |||
       sum(
         round(
           increase(
@@ -193,20 +253,20 @@ local tbOverride = tbStandardOptions.override;
             }[$__rate_interval]
           )
         )
-      ) by (job, dest_server, project, phase)
+      ) by (job, dest_server, project, name)
     ||| % commonLabels,
 
-    local appSyncTimeSeriesPanel =
+    local syncActivityTimeSeriesPanel =
       timeSeriesPanel.new(
-        'Application Syncs',
+        'Sync Activity',
       ) +
       tsQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
-          appSyncQuery,
+          syncActivityQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }} - {{ phase }}',
+          '{{ dest_server }}/{{ project }}/{{ name }}'
         )
       ) +
       tsStandardOptions.withUnit('short') +
@@ -215,30 +275,35 @@ local tbOverride = tbStandardOptions.override;
       tsLegend.withShowLegend(true) +
       tsLegend.withDisplayMode('table') +
       tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last', 'max']) +
+      tsLegend.withCalcs(['last']) +
       tsLegend.withSortBy('Last') +
       tsLegend.withSortDesc(true) +
       tsCustom.withFillOpacity(10),
 
-    local appAutoSyncStatusQuery = |||
+    local syncFailuresQuery = |||
       sum(
-        argocd_app_info{
-          %s
-        }
-      ) by (job, dest_server, project, autosync_enabled)
+        round(
+          increase(
+            argocd_app_sync_total{
+              %s
+              phase=~"Error|Failed"
+            }[$__rate_interval]
+          )
+        )
+      ) by (job, dest_server, project, application, phase)
     ||| % commonLabels,
 
-    local appAutoSyncStatusTimeSeriesPanel =
+    local syncFailuresTimeSeriesPanel =
       timeSeriesPanel.new(
-        'Application Auto Sync Enabled',
+        'Sync Failures',
       ) +
       tsQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
-          appAutoSyncStatusQuery,
+          syncFailuresQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }} - {{ autosync_enabled }}',
+          '{{ dest_server }}/{{ project }}/{{ application }} - {{ phase }}'
         )
       ) +
       tsStandardOptions.withUnit('short') +
@@ -247,10 +312,379 @@ local tbOverride = tbStandardOptions.override;
       tsLegend.withShowLegend(true) +
       tsLegend.withDisplayMode('table') +
       tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last', 'max']) +
+      tsLegend.withCalcs(['last']) +
       tsLegend.withSortBy('Last') +
       tsLegend.withSortDesc(true) +
       tsCustom.withFillOpacity(10),
+
+    local reconcilationActivityQuery = |||
+      sum(
+        round(
+          increase(
+            argocd_app_reconcile_count{
+              namespace=~'$namespace',
+              job=~'$job',
+              dest_server=~'$cluster'
+            }[$__rate_interval]
+          )
+        )
+      ) by (namespace, job, dest_server)
+    |||,
+
+    local reconcilationActivtyTimeSeriesPanel =
+      timeSeriesPanel.new(
+        'Recociliation Activity',
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          reconcilationActivityQuery,
+        ) +
+        prometheus.withLegendFormat(
+          '{{ namespace }}/{{ dest_server }}'
+        )
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
+
+    local reconcilationPerformanceQuery = |||
+      sum(
+        increase(
+          argocd_app_reconcile_bucket{
+            namespace=~'$namespace',
+            job=~'$job',
+            dest_server=~'$cluster'
+          }[$__rate_interval]
+        )
+      ) by (le)
+    |||,
+
+    local reconcilationPerformanceHeatmapPanel =
+      heatmapPanel.new(
+        'Reconciliation Performance',
+      ) +
+      hmQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          reconcilationPerformanceQuery,
+        ) +
+        prometheus.withLegendFormat(
+          '{{ le }}'
+        ) +
+        prometheus.withFormat('heatmap')
+      ) +
+      hmStandardOptions.withUnit('short'),
+
+    local k8sApiActivityQuery = |||
+      sum(
+        round(
+          increase(
+            argocd_app_k8s_request_total{
+              namespace=~'$namespace',
+              job=~'$job',
+              project=~'$project'
+            }[$__rate_interval]
+          )
+        )
+      ) by (job, server, project, verb, resource_kind)
+    |||,
+
+    local k8sApiActivityTimeSeriesPanel =
+      timeSeriesPanel.new(
+        'K8s API Activity',
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          k8sApiActivityQuery,
+        ) +
+        prometheus.withLegendFormat(
+          '{{ server }}/{{ project }} - {{ verb }}/{{ resource_kind }}'
+        )
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
+
+    local pendingKubectlRunQuery = |||
+      sum(
+        argocd_kubectl_exec_pending{
+          namespace=~'$namespace',
+          job=~'$job'
+        }
+      ) by (job, command)
+    |||,
+
+    local pendingKubectlTimeSeriesPanel =
+      timeSeriesPanel.new(
+        'Pending Kubectl Runs',
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          pendingKubectlRunQuery,
+        ) +
+        prometheus.withLegendFormat(
+          '{{ dest_server }} - {{ command }}'
+        )
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
+
+    local resourceObjectsQuery = |||
+      sum(
+        argocd_cluster_api_resource_objects{
+          namespace=~'$namespace',
+          job=~'$job',
+          server=~'$cluster'
+        }
+      ) by (namespace, job, server)
+    |||,
+
+    local resourceObjectsTimeSeriesPanel =
+      timeSeriesPanel.new(
+        'Resource Objects',
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          resourceObjectsQuery,
+        ) +
+        prometheus.withLegendFormat(
+          '{{ server }}'
+        )
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
+
+    local apiResourcesQuery = |||
+      sum(
+        argocd_cluster_api_resources{
+          namespace=~'$namespace',
+          job=~'$job',
+          server=~'$cluster'
+        }
+      ) by (namespace, job, server)
+    |||,
+
+    local apiResourcesTimeSeriesPanel =
+      timeSeriesPanel.new(
+        'API Resources',
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          apiResourcesQuery,
+        ) +
+        prometheus.withLegendFormat(
+          '{{ server }}'
+        )
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
+
+    local clusterEventsQuery = |||
+      sum(
+        increase(
+          argocd_cluster_events_total{
+            namespace=~'$namespace',
+            job=~'$job',
+            server=~'$cluster'
+          }[$__rate_interval]
+        )
+      ) by (namespace, job, server)
+    |||,
+
+    local clusterEventsTimeSeriesPanel =
+      timeSeriesPanel.new(
+        'Cluster Events',
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          clusterEventsQuery,
+        ) +
+        prometheus.withLegendFormat(
+          '{{ server }}'
+        )
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
+
+    local gitRequestsLsRemoteQuery = |||
+      sum(
+        increase(
+          argocd_git_request_total{
+            namespace=~'$namespace',
+            job=~'$job',
+            request_type="ls-remote"
+          }[$__rate_interval]
+        )
+      ) by (namespace, job, repo)
+    |||,
+
+    local gitRequestsLsRemoteTimeSeriesPanel =
+      timeSeriesPanel.new(
+        'Git Requests (ls-remote)',
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          gitRequestsLsRemoteQuery,
+        ) +
+        prometheus.withLegendFormat(
+          '{{ namespace }} - {{ repo }}'
+        )
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
+
+    local gitRequestsCheckoutQuery = |||
+      sum(
+        increase(
+          argocd_git_request_total{
+            namespace=~'$namespace',
+            job=~'$job',
+            request_type="fetch"
+          }[$__rate_interval]
+        )
+      ) by (namespace, job, repo)
+    |||,
+
+    local gitRequestsCheckoutTimeSeriesPanel =
+      timeSeriesPanel.new(
+        'Git Requests (checkout)',
+      ) +
+      tsQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          gitRequestsCheckoutQuery,
+        ) +
+        prometheus.withLegendFormat(
+          '{{ namespace }} - {{ repo }}'
+        )
+      ) +
+      tsStandardOptions.withUnit('short') +
+      tsOptions.tooltip.withMode('multi') +
+      tsOptions.tooltip.withSort('desc') +
+      tsLegend.withShowLegend(true) +
+      tsLegend.withDisplayMode('table') +
+      tsLegend.withPlacement('right') +
+      tsLegend.withCalcs(['last']) +
+      tsLegend.withSortBy('Last') +
+      tsLegend.withSortDesc(true) +
+      tsCustom.withFillOpacity(10),
+
+    local gitFetchPerformanceQuery = |||
+      sum(
+        increase(
+          argocd_git_request_duration_seconds_bucket{
+            namespace=~'$namespace',
+            job=~'$job',
+            request_type="fetch"
+          }[$__rate_interval]
+        )
+      ) by (le)
+    |||,
+
+    local gitFetchPerformanceHeatmapPanel =
+      heatmapPanel.new(
+        'Git Fetch Performance',
+      ) +
+      hmQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          gitFetchPerformanceQuery,
+        ) +
+        prometheus.withLegendFormat(
+          '{{ le }}'
+        ) +
+        prometheus.withFormat('heatmap')
+      ) +
+      hmStandardOptions.withUnit('short'),
+
+    local gitLsRemotePerformanceQuery = |||
+      sum(
+        increase(
+          argocd_git_request_duration_seconds_bucket{
+            namespace=~'$namespace',
+            job=~'$job',
+            request_type="ls-remote"
+          }[$__rate_interval]
+        )
+      ) by (le)
+    |||,
+
+    local gitLsRemotePerformanceHeatmapPanel =
+      heatmapPanel.new(
+        'Git Ls-remote Performance',
+      ) +
+      hmQueryOptions.withTargets(
+        prometheus.new(
+          '$datasource',
+          gitLsRemotePerformanceQuery,
+        ) +
+        prometheus.withLegendFormat(
+          '{{ le }}'
+        ) +
+        prometheus.withFormat('heatmap')
+      ) +
+      hmStandardOptions.withUnit('short'),
 
     local appsDefined = std.length($._config.applications) != 0,
     local appBadgeContent = [
@@ -260,18 +694,6 @@ local tbOverride = tbStandardOptions.override;
       }
       for application in $._config.applications
     ],
-    local appBadgeTextPanel =
-      textPanel.new(
-        'Application Badges',
-      ) +
-      textPanel.options.withMode('markdown') +
-      textPanel.options.withContent(
-        if appsDefined then |||
-          | Application | Environment | Status |
-          | --- | --- | --- |
-          %s
-        ||| % std.join('\n', appBadgeContent) else 'No applications defined',
-      ),
 
     local appUnhealthyQuery = |||
       sum(
@@ -286,9 +708,8 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications Unhealthy',
       ) +
-      tbOptions.withSortBy(
-        tbOptions.sortBy.withDisplayName('Application') +
-      ) +
+      tbOptions.withSortBy(2) +
+      tbOptions.sortBy.withDesc(true) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -308,7 +729,7 @@ local tbOverride = tbStandardOptions.override;
               dest_server: 'Cluster',
               project: 'Project',
               name: 'Application',
-              health_status: 'Health Status',
+              health_status: 'Sync Status',
             },
             indexByName: {
               name: 0,
@@ -355,9 +776,8 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications Out Of Sync',
       ) +
-      tbOptions.withSortBy(
-        tbOptions.sortBy.withDisplayName('Application') +
-      ) +
+      tbOptions.withSortBy(2) +
+      tbOptions.sortBy.withDesc(true) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -428,9 +848,8 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications That Failed to Sync[7d]',
       ) +
-      tbOptions.withSortBy(
-        tbOptions.sortBy.withDisplayName('Application') +
-      ) +
+      tbOptions.withSortBy(2) +
+      tbOptions.sortBy.withDesc(true) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -497,9 +916,8 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications With Auto Sync Disabled',
       ) +
-      tbOptions.withSortBy(
-        tbOptions.sortBy.withDisplayName('Application') +
-      ) +
+      tbOptions.withSortBy(2) +
+      tbOptions.sortBy.withDesc(true) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -658,26 +1076,36 @@ local tbOverride = tbStandardOptions.override;
 
     local summaryRow =
       row.new(
-        'Summary by Cluster, Project'
+        'Summary'
       ),
 
-    local appSummaryRow =
+    local syncStatsRow =
       row.new(
-        'Applications (Unhealthy/OutOfSync/AutoSyncDisabled) Summary',
+        'Sync Stats'
       ),
 
-    local appRow =
+    local controllerStatsRow =
       row.new(
-        'Application ($application)',
+        'Controller Stats'
       ),
 
-    'argo-cd-application-overview.json':
+    local clusterStatsRow =
+      row.new(
+        'Cluster Stats'
+      ),
+
+    local repoServerStatsRow =
+      row.new(
+        'Repo Server Stats',
+      ),
+
+    'argo-cd-operational-overview.json':
       $._config.bypassDashboardValidation +
       dashboard.new(
-        'ArgoCD / Application / Overview',
+        'ArgoCD / Operational / Overview',
       ) +
-      dashboard.withDescription('A dashboard that monitors ArgoCD with a focus on Application status. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin). Requires custom configuration to add application badges. Please refer to the mixin.') +
-      dashboard.withUid($._config.applicationOverviewDashboardUid) +
+      dashboard.withDescription('A dashboard that monitors ArgoCD with a focus on the operational. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin).') +
+      dashboard.withUid($._config.operationalOverviewDashboardUid) +
       dashboard.withTags($._config.tags) +
       dashboard.withTimezone('utc') +
       dashboard.withEditable(true) +
@@ -691,65 +1119,88 @@ local tbOverride = tbStandardOptions.override;
           row.gridPos.withY(0) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1),
-          appHealthStatusTimeSeriesPanel +
-          timeSeriesPanel.gridPos.withX(0) +
-          timeSeriesPanel.gridPos.withY(1) +
-          timeSeriesPanel.gridPos.withW(9) +
-          timeSeriesPanel.gridPos.withH(5),
-          appSyncStatusTimeSeriesPanel +
-          timeSeriesPanel.gridPos.withX(9) +
-          timeSeriesPanel.gridPos.withY(1) +
-          timeSeriesPanel.gridPos.withW(9) +
-          timeSeriesPanel.gridPos.withH(5),
-          appSyncTimeSeriesPanel +
-          timeSeriesPanel.gridPos.withX(0) +
-          timeSeriesPanel.gridPos.withY(6) +
-          timeSeriesPanel.gridPos.withW(9) +
-          timeSeriesPanel.gridPos.withH(5),
-          appAutoSyncStatusTimeSeriesPanel +
-          timeSeriesPanel.gridPos.withX(9) +
-          timeSeriesPanel.gridPos.withY(6) +
-          timeSeriesPanel.gridPos.withW(9) +
-          timeSeriesPanel.gridPos.withH(5),
-          appBadgeTextPanel +
-          textPanel.gridPos.withX(18) +
-          textPanel.gridPos.withY(1) +
-          textPanel.gridPos.withW(6) +
-          textPanel.gridPos.withH(10),
-          appSummaryRow +
-          timeSeriesPanel.gridPos.withX(0) +
-          timeSeriesPanel.gridPos.withY(11) +
-          timeSeriesPanel.gridPos.withW(18) +
-          timeSeriesPanel.gridPos.withH(1),
+          clustersCountStatPanel +
+          tablePanel.gridPos.withX(0) +
+          tablePanel.gridPos.withY(1) +
+          tablePanel.gridPos.withW(6) +
+          tablePanel.gridPos.withH(4),
+          repositoriesCountStatPanel +
+          tablePanel.gridPos.withX(6) +
+          tablePanel.gridPos.withY(1) +
+          tablePanel.gridPos.withW(6) +
+          tablePanel.gridPos.withH(4),
+          appsCountStatPanel +
+          tablePanel.gridPos.withX(0) +
+          tablePanel.gridPos.withY(5) +
+          tablePanel.gridPos.withW(6) +
+          tablePanel.gridPos.withH(4),
+          appsTablePanel +
+          tablePanel.gridPos.withX(12) +
+          tablePanel.gridPos.withY(1) +
+          tablePanel.gridPos.withW(12) +
+          tablePanel.gridPos.withH(8),
+        ] +
+        [
+          syncStatsRow +
+          row.gridPos.withX(0) +
+          row.gridPos.withY(9) +
+          row.gridPos.withW(24) +
+          row.gridPos.withH(1),
+        ] +
+        grid.makeGrid(
+          [syncActivityTimeSeriesPanel, syncFailuresTimeSeriesPanel],
+          panelWidth=12,
+          panelHeight=6,
+          startY=10
+        ) +
+        [
+          controllerStatsRow +
+          row.gridPos.withX(0) +
+          row.gridPos.withY(16) +
+          row.gridPos.withW(24) +
+          row.gridPos.withH(1),
         ] +
         grid.makeGrid(
           [
-            appUnhealthyTablePanel,
-            appOutOfSyncTablePanel,
-            appSync7dTablePanel,
-            appAutoSyncDisabledTablePanel,
+            reconcilationActivtyTimeSeriesPanel,
+            reconcilationPerformanceHeatmapPanel,
+            k8sApiActivityTimeSeriesPanel,
+            pendingKubectlTimeSeriesPanel,
           ],
           panelWidth=12,
           panelHeight=6,
-          startY=12
+          startY=17
         ) +
         [
-          appRow +
+          clusterStatsRow +
           row.gridPos.withX(0) +
-          row.gridPos.withY(23) +
+          row.gridPos.withY(29) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1),
-        ]
-        +
+        ] +
+        grid.makeGrid(
+          [resourceObjectsTimeSeriesPanel, apiResourcesTimeSeriesPanel, clusterEventsTimeSeriesPanel],
+          panelWidth=8,
+          panelHeight=6,
+          startY=30
+        ) +
+        [
+          repoServerStatsRow +
+          row.gridPos.withX(0) +
+          row.gridPos.withY(36) +
+          row.gridPos.withW(24) +
+          row.gridPos.withH(1),
+        ] +
         grid.makeGrid(
           [
-            appHealthStatusByAppTimeSeriesPanel,
-            appSyncStatusByAppTimeSeriesPanel,
-            appSyncByAppTimeSeriesPanel,
+            gitRequestsLsRemoteTimeSeriesPanel,
+            gitRequestsCheckoutTimeSeriesPanel,
+            gitFetchPerformanceHeatmapPanel,
+            gitLsRemotePerformanceHeatmapPanel,
           ],
-          panelWidth=8,
-          panelHeight=8,
-          startY=24
+          panelWidth=12,
+          panelHeight=6,
+          startY=37
         )
       ) +
       if $._config.annotation.enabled then

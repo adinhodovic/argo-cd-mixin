@@ -173,6 +173,10 @@ local tsLegend = tsOptions.legend;
       dashboard.withPanels(
         [
           summaryRow,
+          row.gridPos.withX(0) +
+          row.gridPos.withY(0) +
+          row.gridPos.withW(24) +
+          row.gridPos.withH(1),
         ] +
         grid.makeGrid(
           [

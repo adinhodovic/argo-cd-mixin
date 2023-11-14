@@ -14,6 +14,7 @@ local annotation = g.dashboard.annotation;
     grafanaUrl: 'https://grafana.com',
     argoCdUrl: 'https://argocd.com',
 
+    operationalOverviewDashboardUid: 'argo-cd-operational-overview-kask',
     applicationOverviewDashboardUid: 'argo-cd-application-overview-kask',
     notificationsOverviewDashboardUid: 'argo-cd-notifications-overview-kask',
 
