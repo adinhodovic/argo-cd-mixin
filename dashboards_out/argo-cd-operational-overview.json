@@ -3,6 +3,17 @@
    "__requires": [ ],
    "description": "A dashboard that monitors ArgoCD with a focus on the operational. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin).",
    "editable": true,
+   "links": [
+      {
+         "tags": [
+            "ci/cd",
+            "argo-cd"
+         ],
+         "targetBlank": true,
+         "title": "ArgoCD Dashboards",
+         "type": "dashboards"
+      }
+   ],
    "panels": [
       {
          "gridPos": {

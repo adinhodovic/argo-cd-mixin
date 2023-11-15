@@ -170,6 +170,12 @@ local tsLegend = tsOptions.legend;
       dashboard.time.withFrom('now-2d') +
       dashboard.time.withTo('now') +
       dashboard.withVariables(variables) +
+      dashboard.withLinks(
+        [
+          dashboard.link.dashboards.new('ArgoCD Dashboards', $._config.tags) +
+          dashboard.link.link.options.withTargetBlank(true),
+        ]
+      ) +
       dashboard.withPanels(
         [
           summaryRow +

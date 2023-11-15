@@ -684,6 +684,12 @@ local tbOverride = tbStandardOptions.override;
       dashboard.time.withFrom('now-6h') +
       dashboard.time.withTo('now') +
       dashboard.withVariables(variables) +
+      dashboard.withLinks(
+        [
+          dashboard.link.dashboards.new('ArgoCD Dashboards', $._config.tags) +
+          dashboard.link.link.options.withTargetBlank(true),
+        ]
+      ) +
       dashboard.withPanels(
         [
           summaryRow +
