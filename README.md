@@ -51,6 +51,10 @@ The mixin follows the [monitoring-mixins guidelines](https://github.com/monitori
 
 ## Preview
 
+### Operational Dashboard
+
+![argo-cd-operational-overview](images/argo-cd-operational-overview.png)
+
 ### Application Dashboard
 
 ![argo-cd-application-overview](images/argo-cd-application-overview.png)
