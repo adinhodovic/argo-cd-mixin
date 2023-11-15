@@ -5,6 +5,12 @@
    "editable": true,
    "panels": [
       {
+         "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+         },
          "id": 1,
          "title": "Summary by Cluster, Project",
          "type": "row"
@@ -249,7 +255,6 @@
             "type": "datasource",
             "uid": "-- Mixed --"
          },
-         "desc": true,
          "fieldConfig": {
             "overrides": [
                {
@@ -299,7 +304,9 @@
          "id": 8,
          "options": {
             "sortBy": [
-               2
+               {
+                  "displayName": "Application"
+               }
             ]
          },
          "pluginVersion": "v10.1.0",
@@ -332,7 +339,7 @@
                   },
                   "renameByName": {
                      "dest_server": "Cluster",
-                     "health_status": "Sync Status",
+                     "health_status": "Health Status",
                      "job": "Job",
                      "name": "Application",
                      "project": "Project"
@@ -347,7 +354,6 @@
             "type": "datasource",
             "uid": "-- Mixed --"
          },
-         "desc": true,
          "fieldConfig": {
             "overrides": [
                {
@@ -397,7 +403,9 @@
          "id": 9,
          "options": {
             "sortBy": [
-               2
+               {
+                  "displayName": "Application"
+               }
             ]
          },
          "pluginVersion": "v10.1.0",
@@ -445,7 +453,6 @@
             "type": "datasource",
             "uid": "-- Mixed --"
          },
-         "desc": true,
          "fieldConfig": {
             "overrides": [
                {
@@ -495,7 +502,9 @@
          "id": 10,
          "options": {
             "sortBy": [
-               2
+               {
+                  "displayName": "Application"
+               }
             ]
          },
          "pluginVersion": "v10.1.0",
@@ -543,7 +552,6 @@
             "type": "datasource",
             "uid": "-- Mixed --"
          },
-         "desc": true,
          "fieldConfig": {
             "overrides": [
                {
@@ -593,7 +601,9 @@
          "id": 11,
          "options": {
             "sortBy": [
-               2
+               {
+                  "displayName": "Application"
+               }
             ]
          },
          "pluginVersion": "v10.1.0",

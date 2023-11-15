@@ -287,7 +287,7 @@ local tbOverride = tbStandardOptions.override;
         'Applications Unhealthy',
       ) +
       tbOptions.withSortBy(
-        tbOptions.sortBy.withDisplayName('Application') +
+        tbOptions.sortBy.withDisplayName('Application')
       ) +
       tbQueryOptions.withTargets(
         prometheus.new(
@@ -356,7 +356,7 @@ local tbOverride = tbStandardOptions.override;
         'Applications Out Of Sync',
       ) +
       tbOptions.withSortBy(
-        tbOptions.sortBy.withDisplayName('Application') +
+        tbOptions.sortBy.withDisplayName('Application')
       ) +
       tbQueryOptions.withTargets(
         prometheus.new(
@@ -429,7 +429,7 @@ local tbOverride = tbStandardOptions.override;
         'Applications That Failed to Sync[7d]',
       ) +
       tbOptions.withSortBy(
-        tbOptions.sortBy.withDisplayName('Application') +
+        tbOptions.sortBy.withDisplayName('Application')
       ) +
       tbQueryOptions.withTargets(
         prometheus.new(
@@ -498,7 +498,7 @@ local tbOverride = tbStandardOptions.override;
         'Applications With Auto Sync Disabled',
       ) +
       tbOptions.withSortBy(
-        tbOptions.sortBy.withDisplayName('Application') +
+        tbOptions.sortBy.withDisplayName('Application')
       ) +
       tbQueryOptions.withTargets(
         prometheus.new(
