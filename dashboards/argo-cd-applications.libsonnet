@@ -286,8 +286,9 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications Unhealthy',
       ) +
-      tbOptions.withSortBy(2) +
-      tbOptions.sortBy.withDesc(true) +
+      tbOptions.withSortBy(
+        tbOptions.sortBy.withDisplayName('Application')
+      ) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -307,7 +308,7 @@ local tbOverride = tbStandardOptions.override;
               dest_server: 'Cluster',
               project: 'Project',
               name: 'Application',
-              health_status: 'Sync Status',
+              health_status: 'Health Status',
             },
             indexByName: {
               name: 0,
@@ -354,8 +355,9 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications Out Of Sync',
       ) +
-      tbOptions.withSortBy(2) +
-      tbOptions.sortBy.withDesc(true) +
+      tbOptions.withSortBy(
+        tbOptions.sortBy.withDisplayName('Application')
+      ) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -426,8 +428,9 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications That Failed to Sync[7d]',
       ) +
-      tbOptions.withSortBy(2) +
-      tbOptions.sortBy.withDesc(true) +
+      tbOptions.withSortBy(
+        tbOptions.sortBy.withDisplayName('Application')
+      ) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -494,8 +497,9 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications With Auto Sync Disabled',
       ) +
-      tbOptions.withSortBy(2) +
-      tbOptions.sortBy.withDesc(true) +
+      tbOptions.withSortBy(
+        tbOptions.sortBy.withDisplayName('Application')
+      ) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -682,7 +686,11 @@ local tbOverride = tbStandardOptions.override;
       dashboard.withVariables(variables) +
       dashboard.withPanels(
         [
-          summaryRow,
+          summaryRow +
+          row.gridPos.withX(0) +
+          row.gridPos.withY(0) +
+          row.gridPos.withW(24) +
+          row.gridPos.withH(1),
           appHealthStatusTimeSeriesPanel +
           timeSeriesPanel.gridPos.withX(0) +
           timeSeriesPanel.gridPos.withY(1) +
@@ -727,10 +735,10 @@ local tbOverride = tbStandardOptions.override;
         ) +
         [
           appRow +
-          timeSeriesPanel.gridPos.withX(0) +
-          timeSeriesPanel.gridPos.withY(23) +
-          timeSeriesPanel.gridPos.withW(24) +
-          timeSeriesPanel.gridPos.withH(1),
+          row.gridPos.withX(0) +
+          row.gridPos.withY(23) +
+          row.gridPos.withW(24) +
+          row.gridPos.withH(1),
         ]
         +
         grid.makeGrid(
