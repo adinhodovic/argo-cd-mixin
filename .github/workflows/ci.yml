@@ -80,5 +80,3 @@ jobs:
         with:
           go-version: ${{ env.golang-version }}
       - run: make --always-make test
-        with:
-          persist-credentials: false
