@@ -1,5 +1,13 @@
+---
 exclusions:
- template-job-rule:
- panel-job-instance-rule:
- target-rate-interval-rule:
- panel-datasource-rule:
+  template-job-rule:
+    reason: Jobs are set to multi in our case.
+  target-job-rule:
+    reason: Jobs are set to multi in our case.
+  template-instance-rule:
+    reason: We don't use instances.
+  panel-datasource-rule:
+    reason: Using a datasource for each panel.
+  panel-title-description-rule:
+    reason: TODO(adinhodovic)
+  target-instance-rule:

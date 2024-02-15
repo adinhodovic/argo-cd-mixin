@@ -137,7 +137,7 @@
    "templating": {
       "list": [
          {
-            "label": "Data Source",
+            "label": "Data source",
             "name": "datasource",
             "query": "prometheus",
             "type": "datasource"

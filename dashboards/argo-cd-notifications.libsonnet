@@ -26,7 +26,7 @@ local tsLegend = tsOptions.legend;
         'datasource',
         'prometheus',
       ) +
-      datasource.generalOptions.withLabel('Data Source'),
+      datasource.generalOptions.withLabel('Data source'),
 
     local namespaceVariable =
       query.new(

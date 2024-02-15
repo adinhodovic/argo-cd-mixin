@@ -32,12 +32,12 @@ local tsLegend = tsOptions.legend;
 local tbOptions = tablePanel.options;
 local tbStandardOptions = tablePanel.standardOptions;
 local tbQueryOptions = tablePanel.queryOptions;
+local tbPanelOptions = tablePanel.panelOptions;
+local tbOverride = tbStandardOptions.override;
 
 // HeatmapPanel
 local hmStandardOptions = heatmapPanel.standardOptions;
-local tbPanelOptions = tablePanel.panelOptions;
 local hmQueryOptions = heatmapPanel.queryOptions;
-local tbOverride = tbStandardOptions.override;
 
 {
   grafanaDashboards+:: {
@@ -47,7 +47,7 @@ local tbOverride = tbStandardOptions.override;
         'datasource',
         'prometheus',
       ) +
-      datasource.generalOptions.withLabel('Data Source'),
+      datasource.generalOptions.withLabel('Data source'),
 
     local namespaceVariable =
       query.new(
@@ -130,6 +130,7 @@ local tbOverride = tbStandardOptions.override;
       statPanel.new(
         'Clusters',
       ) +
+      statPanel.standardOptions.withUnit('short') +
       statPanel.queryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -153,6 +154,7 @@ local tbOverride = tbStandardOptions.override;
       statPanel.new(
         'Repositories',
       ) +
+      statPanel.standardOptions.withUnit('short') +
       statPanel.queryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -172,6 +174,7 @@ local tbOverride = tbStandardOptions.override;
       statPanel.new(
         'Applications',
       ) +
+      statPanel.standardOptions.withUnit('short') +
       statPanel.queryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -283,9 +286,11 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications',
       ) +
+      tbStandardOptions.withUnit('short') +
       tbOptions.withSortBy(
         tbOptions.sortBy.withDisplayName('Application')
       ) +
+      tbOptions.footer.TableFooterOptions.withEnablePagination(true) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -331,7 +336,8 @@ local tbOverride = tbStandardOptions.override;
             tbPanelOptions.link.withType('dashboard') +
             tbPanelOptions.link.withUrl(
               '/d/%s/argocd-notifications-overview?&var-project=${__data.fields.Project}&var-application=${__value.raw}' % $._config.applicationOverviewDashboardUid
-            )
+            ) +
+            tbPanelOptions.link.withTargetBlank(true)
           )
         ),
       ]),

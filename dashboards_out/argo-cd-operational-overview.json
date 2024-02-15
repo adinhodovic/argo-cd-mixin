@@ -31,6 +31,11 @@
             "type": "datasource",
             "uid": "-- Mixed --"
          },
+         "fieldConfig": {
+            "defaults": {
+               "unit": "short"
+            }
+         },
          "gridPos": {
             "h": 4,
             "w": 4,
@@ -56,6 +61,11 @@
             "type": "datasource",
             "uid": "-- Mixed --"
          },
+         "fieldConfig": {
+            "defaults": {
+               "unit": "short"
+            }
+         },
          "gridPos": {
             "h": 4,
             "w": 4,
@@ -80,6 +90,11 @@
          "datasource": {
             "type": "datasource",
             "uid": "-- Mixed --"
+         },
+         "fieldConfig": {
+            "defaults": {
+               "unit": "short"
+            }
          },
          "gridPos": {
             "h": 4,
@@ -291,6 +306,9 @@
             "uid": "-- Mixed --"
          },
          "fieldConfig": {
+            "defaults": {
+               "unit": "short"
+            },
             "overrides": [
                {
                   "matcher": {
@@ -302,6 +320,7 @@
                         "id": "links",
                         "value": [
                            {
+                              "targetBlank": true,
                               "title": "Go To Application",
                               "type": "dashboard",
                               "url": "/d/argo-cd-application-overview-kask/argocd-notifications-overview?&var-project=${__data.fields.Project}&var-application=${__value.raw}"
@@ -320,6 +339,9 @@
          },
          "id": 7,
          "options": {
+            "footer": {
+               "enablePagination": true
+            },
             "sortBy": [
                {
                   "displayName": "Application"
@@ -1017,7 +1039,7 @@
    "templating": {
       "list": [
          {
-            "label": "Data Source",
+            "label": "Data source",
             "name": "datasource",
             "query": "prometheus",
             "type": "datasource"
