@@ -37,7 +37,7 @@ local tbOverride = tbStandardOptions.override;
         'datasource',
         'prometheus',
       ) +
-      datasource.generalOptions.withLabel('Data Source'),
+      datasource.generalOptions.withLabel('Data source'),
 
     local namespaceVariable =
       query.new(
@@ -286,9 +286,11 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications Unhealthy',
       ) +
+      tbStandardOptions.withUnit('short') +
       tbOptions.withSortBy(
         tbOptions.sortBy.withDisplayName('Application')
       ) +
+      tbOptions.footer.TableFooterOptions.withEnablePagination(true) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -331,7 +333,8 @@ local tbOverride = tbStandardOptions.override;
             tbPanelOptions.link.withTitle('Go To Application') +
             tbPanelOptions.link.withUrl(
               $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
-            )
+            ) +
+            tbPanelOptions.link.withTargetBlank(true)
           )
         ),
         tbOverride.byName.new('health_status') +
@@ -355,9 +358,11 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications Out Of Sync',
       ) +
+      tbStandardOptions.withUnit('short') +
       tbOptions.withSortBy(
         tbOptions.sortBy.withDisplayName('Application')
       ) +
+      tbOptions.footer.TableFooterOptions.withEnablePagination(true) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -400,7 +405,8 @@ local tbOverride = tbStandardOptions.override;
             tbPanelOptions.link.withTitle('Go To Application') +
             tbPanelOptions.link.withUrl(
               $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
-            )
+            ) +
+            tbPanelOptions.link.withTargetBlank(true)
           )
         ),
         tbOverride.byName.new('sync_status') +
@@ -428,9 +434,11 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications That Failed to Sync[7d]',
       ) +
+      tbStandardOptions.withUnit('short') +
       tbOptions.withSortBy(
         tbOptions.sortBy.withDisplayName('Application')
       ) +
+      tbOptions.footer.TableFooterOptions.withEnablePagination(true) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -473,7 +481,8 @@ local tbOverride = tbStandardOptions.override;
             tbPanelOptions.link.withTitle('Go To Application') +
             tbPanelOptions.link.withUrl(
               $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
-            )
+            ) +
+            tbPanelOptions.link.withTargetBlank(true)
           )
         ),
         tbOverride.byName.new('Value') +
@@ -497,9 +506,11 @@ local tbOverride = tbStandardOptions.override;
       tablePanel.new(
         'Applications With Auto Sync Disabled',
       ) +
+      tbStandardOptions.withUnit('short') +
       tbOptions.withSortBy(
         tbOptions.sortBy.withDisplayName('Application')
       ) +
+      tbOptions.footer.TableFooterOptions.withEnablePagination(true) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -542,7 +553,8 @@ local tbOverride = tbStandardOptions.override;
             tbPanelOptions.link.withTitle('Go To Application') +
             tbPanelOptions.link.withUrl(
               $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
-            )
+            ) +
+            tbPanelOptions.link.withTargetBlank(true)
           )
         ),
         tbOverride.byName.new('autosync_enabled') +
