@@ -16,6 +16,7 @@
    ],
    "panels": [
       {
+         "collapsed": false,
          "gridPos": {
             "h": 1,
             "w": 24,
@@ -43,7 +44,7 @@
             "y": 1
          },
          "id": 2,
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -73,7 +74,7 @@
             "y": 1
          },
          "id": 3,
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -103,7 +104,7 @@
             "y": 1
          },
          "id": 4,
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -193,7 +194,7 @@
                "mode": "multi"
             }
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -285,7 +286,7 @@
                "mode": "multi"
             }
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -348,7 +349,7 @@
                }
             ]
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -391,6 +392,7 @@
          "type": "table"
       },
       {
+         "collapsed": false,
          "gridPos": {
             "h": 1,
             "w": 24,
@@ -437,7 +439,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -487,7 +489,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -502,6 +504,7 @@
          "type": "timeseries"
       },
       {
+         "collapsed": false,
          "gridPos": {
             "h": 1,
             "w": 24,
@@ -548,7 +551,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -579,7 +582,7 @@
             "y": 19
          },
          "id": 13,
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -611,7 +614,7 @@
             "h": 6,
             "w": 12,
             "x": 0,
-            "y": 26
+            "y": 25
          },
          "id": 14,
          "options": {
@@ -630,7 +633,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -661,7 +664,7 @@
             "h": 6,
             "w": 12,
             "x": 12,
-            "y": 26
+            "y": 25
          },
          "id": 15,
          "options": {
@@ -680,7 +683,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -695,6 +698,7 @@
          "type": "timeseries"
       },
       {
+         "collapsed": false,
          "gridPos": {
             "h": 1,
             "w": 24,
@@ -741,7 +745,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -791,7 +795,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -841,7 +845,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -856,6 +860,7 @@
          "type": "timeseries"
       },
       {
+         "collapsed": false,
          "gridPos": {
             "h": 1,
             "w": 24,
@@ -902,7 +907,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -952,7 +957,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -980,10 +985,10 @@
             "h": 6,
             "w": 12,
             "x": 0,
-            "y": 46
+            "y": 45
          },
          "id": 23,
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
@@ -1012,10 +1017,10 @@
             "h": 6,
             "w": 12,
             "x": 12,
-            "y": 46
+            "y": 45
          },
          "id": 24,
-         "pluginVersion": "v10.1.0",
+         "pluginVersion": "v10.2.0",
          "targets": [
             {
                "datasource": {
