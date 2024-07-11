@@ -290,7 +290,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       tbOptions.withSortBy(
         tbOptions.sortBy.withDisplayName('Application')
       ) +
-      tbOptions.footer.TableFooterOptions.withEnablePagination(true) +
+      tbOptions.footer.withEnablePagination(true) +
       tbQueryOptions.withTargets(
         prometheus.new(
           '$datasource',
@@ -373,8 +373,8 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       tsLegend.withShowLegend(true) +
       tsLegend.withDisplayMode('table') +
       tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
+      tsLegend.withCalcs(['lastNotNull', 'mean', 'max']) +
+      tsLegend.withSortBy('Mean') +
       tsLegend.withSortDesc(true) +
       tsCustom.withFillOpacity(10),
 
@@ -410,8 +410,8 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       tsLegend.withShowLegend(true) +
       tsLegend.withDisplayMode('table') +
       tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
+      tsLegend.withCalcs(['lastNotNull', 'mean', 'max']) +
+      tsLegend.withSortBy('Mean') +
       tsLegend.withSortDesc(true) +
       tsCustom.withFillOpacity(10),
 
@@ -448,8 +448,8 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       tsLegend.withShowLegend(true) +
       tsLegend.withDisplayMode('table') +
       tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
+      tsLegend.withCalcs(['lastNotNull', 'mean', 'max']) +
+      tsLegend.withSortBy('Mean') +
       tsLegend.withSortDesc(true) +
       tsCustom.withFillOpacity(10),
 
@@ -514,8 +514,8 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       tsLegend.withShowLegend(true) +
       tsLegend.withDisplayMode('table') +
       tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
+      tsLegend.withCalcs(['lastNotNull', 'mean', 'max']) +
+      tsLegend.withSortBy('Mean') +
       tsLegend.withSortDesc(true) +
       tsCustom.withFillOpacity(10),
 
@@ -547,8 +547,8 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       tsLegend.withShowLegend(true) +
       tsLegend.withDisplayMode('table') +
       tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
+      tsLegend.withCalcs(['lastNotNull', 'mean', 'max']) +
+      tsLegend.withSortBy('Mean') +
       tsLegend.withSortDesc(true) +
       tsCustom.withFillOpacity(10),
 
@@ -581,8 +581,8 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       tsLegend.withShowLegend(true) +
       tsLegend.withDisplayMode('table') +
       tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
+      tsLegend.withCalcs(['lastNotNull', 'mean', 'max']) +
+      tsLegend.withSortBy('Mean') +
       tsLegend.withSortDesc(true) +
       tsCustom.withFillOpacity(10),
 
@@ -615,8 +615,8 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       tsLegend.withShowLegend(true) +
       tsLegend.withDisplayMode('table') +
       tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
+      tsLegend.withCalcs(['lastNotNull', 'mean', 'max']) +
+      tsLegend.withSortBy('Mean') +
       tsLegend.withSortDesc(true) +
       tsCustom.withFillOpacity(10),
 
@@ -651,8 +651,8 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       tsLegend.withShowLegend(true) +
       tsLegend.withDisplayMode('table') +
       tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
+      tsLegend.withCalcs(['lastNotNull', 'mean', 'max']) +
+      tsLegend.withSortBy('Mean') +
       tsLegend.withSortDesc(true) +
       tsCustom.withFillOpacity(10),
 
@@ -687,8 +687,8 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       tsLegend.withShowLegend(true) +
       tsLegend.withDisplayMode('table') +
       tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
+      tsLegend.withCalcs(['lastNotNull', 'mean', 'max']) +
+      tsLegend.withSortBy('Mean') +
       tsLegend.withSortDesc(true) +
       tsCustom.withFillOpacity(10),
 
@@ -723,8 +723,8 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       tsLegend.withShowLegend(true) +
       tsLegend.withDisplayMode('table') +
       tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
+      tsLegend.withCalcs(['lastNotNull', 'mean', 'max']) +
+      tsLegend.withSortBy('Mean') +
       tsLegend.withSortDesc(true) +
       tsCustom.withFillOpacity(10),
 

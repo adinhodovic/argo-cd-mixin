@@ -64,7 +64,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -115,7 +115,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -130,7 +130,7 @@
          "type": "timeseries"
       }
    ],
-   "schemaVersion": 36,
+   "schemaVersion": 39,
    "tags": [
       "ci/cd",
       "argo-cd"
