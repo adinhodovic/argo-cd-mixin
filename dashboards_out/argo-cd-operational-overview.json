@@ -44,7 +44,7 @@
             "y": 1
          },
          "id": 2,
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -74,7 +74,7 @@
             "y": 1
          },
          "id": 3,
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -104,7 +104,7 @@
             "y": 1
          },
          "id": 4,
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -194,7 +194,7 @@
                "mode": "multi"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -286,7 +286,7 @@
                "mode": "multi"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -349,7 +349,7 @@
                }
             ]
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -426,12 +426,14 @@
          "options": {
             "legend": {
                "calcs": [
-                  "last"
+                  "lastNotNull",
+                  "mean",
+                  "max"
                ],
                "displayMode": "table",
                "placement": "right",
                "showLegend": true,
-               "sortBy": "Last",
+               "sortBy": "Mean",
                "sortDesc": true
             },
             "tooltip": {
@@ -439,7 +441,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -476,12 +478,14 @@
          "options": {
             "legend": {
                "calcs": [
-                  "last"
+                  "lastNotNull",
+                  "mean",
+                  "max"
                ],
                "displayMode": "table",
                "placement": "right",
                "showLegend": true,
-               "sortBy": "Last",
+               "sortBy": "Mean",
                "sortDesc": true
             },
             "tooltip": {
@@ -489,7 +493,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -538,12 +542,14 @@
          "options": {
             "legend": {
                "calcs": [
-                  "last"
+                  "lastNotNull",
+                  "mean",
+                  "max"
                ],
                "displayMode": "table",
                "placement": "right",
                "showLegend": true,
-               "sortBy": "Last",
+               "sortBy": "Mean",
                "sortDesc": true
             },
             "tooltip": {
@@ -551,7 +557,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -582,7 +588,7 @@
             "y": 19
          },
          "id": 13,
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -620,12 +626,14 @@
          "options": {
             "legend": {
                "calcs": [
-                  "last"
+                  "lastNotNull",
+                  "mean",
+                  "max"
                ],
                "displayMode": "table",
                "placement": "right",
                "showLegend": true,
-               "sortBy": "Last",
+               "sortBy": "Mean",
                "sortDesc": true
             },
             "tooltip": {
@@ -633,7 +641,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -670,12 +678,14 @@
          "options": {
             "legend": {
                "calcs": [
-                  "last"
+                  "lastNotNull",
+                  "mean",
+                  "max"
                ],
                "displayMode": "table",
                "placement": "right",
                "showLegend": true,
-               "sortBy": "Last",
+               "sortBy": "Mean",
                "sortDesc": true
             },
             "tooltip": {
@@ -683,7 +693,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -732,12 +742,14 @@
          "options": {
             "legend": {
                "calcs": [
-                  "last"
+                  "lastNotNull",
+                  "mean",
+                  "max"
                ],
                "displayMode": "table",
                "placement": "right",
                "showLegend": true,
-               "sortBy": "Last",
+               "sortBy": "Mean",
                "sortDesc": true
             },
             "tooltip": {
@@ -745,7 +757,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -782,12 +794,14 @@
          "options": {
             "legend": {
                "calcs": [
-                  "last"
+                  "lastNotNull",
+                  "mean",
+                  "max"
                ],
                "displayMode": "table",
                "placement": "right",
                "showLegend": true,
-               "sortBy": "Last",
+               "sortBy": "Mean",
                "sortDesc": true
             },
             "tooltip": {
@@ -795,7 +809,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -832,12 +846,14 @@
          "options": {
             "legend": {
                "calcs": [
-                  "last"
+                  "lastNotNull",
+                  "mean",
+                  "max"
                ],
                "displayMode": "table",
                "placement": "right",
                "showLegend": true,
-               "sortBy": "Last",
+               "sortBy": "Mean",
                "sortDesc": true
             },
             "tooltip": {
@@ -845,7 +861,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -894,12 +910,14 @@
          "options": {
             "legend": {
                "calcs": [
-                  "last"
+                  "lastNotNull",
+                  "mean",
+                  "max"
                ],
                "displayMode": "table",
                "placement": "right",
                "showLegend": true,
-               "sortBy": "Last",
+               "sortBy": "Mean",
                "sortDesc": true
             },
             "tooltip": {
@@ -907,7 +925,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -944,12 +962,14 @@
          "options": {
             "legend": {
                "calcs": [
-                  "last"
+                  "lastNotNull",
+                  "mean",
+                  "max"
                ],
                "displayMode": "table",
                "placement": "right",
                "showLegend": true,
-               "sortBy": "Last",
+               "sortBy": "Mean",
                "sortDesc": true
             },
             "tooltip": {
@@ -957,7 +977,7 @@
                "sort": "desc"
             }
          },
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -988,7 +1008,7 @@
             "y": 45
          },
          "id": 23,
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -1020,7 +1040,7 @@
             "y": 45
          },
          "id": 24,
-         "pluginVersion": "v10.2.0",
+         "pluginVersion": "v11.0.0",
          "targets": [
             {
                "datasource": {
@@ -1036,7 +1056,7 @@
          "type": "heatmap"
       }
    ],
-   "schemaVersion": 36,
+   "schemaVersion": 39,
    "tags": [
       "ci/cd",
       "argo-cd"
