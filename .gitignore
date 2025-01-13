@@ -1,4 +1,4 @@
 vendor
 tmp
 jsonnetfile.lock.json
-./dashboards_out/lint
+dashboards_out/.lint
