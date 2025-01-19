@@ -3,71 +3,7 @@
     groups+: [
       {
         name: 'argo-cd',
-        rules: [
-          {
-            alert: 'ArgoCdAppOutOfSync',
-            expr: |||
-              sum(
-                argocd_app_info{
-                  %(argoCdSelector)s,
-                  sync_status!="Synced"
-                }
-              ) by (job, dest_server, project, name, sync_status)
-              > 0
-            ||| % $._config,
-            labels: {
-              severity: 'warning',
-            },
-            'for': $._config.argoCdAppOutOfSyncFor,
-            annotations: {
-              summary: 'An ArgoCD Application is Out Of Sync.',
-              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status {{ $labels.sync_status }} for the past %s.' % $._config.argoCdAppOutOfSyncFor,
-              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}',
-            },
-          },
-          {
-            alert: 'ArgoCdAppUnhealthy',
-            expr: |||
-              sum(
-                argocd_app_info{
-                  %(argoCdSelector)s,
-                  health_status!~"Healthy|Progressing"
-                }
-              ) by (job, dest_server, project, name, health_status)
-              > 0
-            ||| % $._config,
-            labels: {
-              severity: 'warning',
-            },
-            'for': $._config.argoCdAppUnhealthyFor,
-            annotations: {
-              summary: 'An ArgoCD Application is Unhealthy.',
-              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status {{ $labels.health_status }} for the past %s.' % $._config.argoCdAppUnhealthyFor,
-              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}',
-            },
-          },
-          {
-            alert: 'ArgoCdAppAutoSyncDisabled',
-            expr: |||
-              sum(
-                argocd_app_info{
-                  %(argoCdSelector)s,
-                  autosync_enabled!="true",
-                  name!~"%(argoAutoSyncDisabledIgnoredApps)s"
-                }
-              ) by (job, dest_server, project, name, autosync_enabled)
-              > 0
-            ||| % $._config,
-            labels: {
-              severity: 'warning',
-            },
-            'for': $._config.argoCdAppAutoSyncDisabledFor,
-            annotations: {
-              summary: 'An ArgoCD Application has AutoSync Disabled.',
-              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has autosync disabled for the past %s.' % $._config.argoCdAppAutoSyncDisabledFor,
-              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}',
-            },
-          },
+        rules: std.prune([
           {
             alert: 'ArgoCdAppSyncFailed',
             expr: |||
@@ -89,6 +25,70 @@
             annotations: {
               summary: 'An ArgoCD Application has Failed to Sync.',
               description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has failed to sync with the status {{ $labels.phase }} the past %s.' % $._config.argoCdAppSyncInterval,
+              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}',
+            },
+          },
+          if $._config.argoCdAppUnhealthyEnabled then {
+            alert: 'ArgoCdAppUnhealthy',
+            expr: |||
+              sum(
+                argocd_app_info{
+                  %(argoCdSelector)s,
+                  health_status!~"Healthy|Progressing"
+                }
+              ) by (job, dest_server, project, name, health_status)
+              > 0
+            ||| % $._config,
+            labels: {
+              severity: 'warning',
+            },
+            'for': $._config.argoCdAppUnhealthyFor,
+            annotations: {
+              summary: 'An ArgoCD Application is Unhealthy.',
+              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status {{ $labels.health_status }} for the past %s.' % $._config.argoCdAppUnhealthyFor,
+              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}',
+            },
+          },
+          if $._config.argoCdAppOutOfSyncEnabled then {
+            alert: 'ArgoCdAppOutOfSync',
+            expr: |||
+              sum(
+                argocd_app_info{
+                  %(argoCdSelector)s,
+                  sync_status!="Synced"
+                }
+              ) by (job, dest_server, project, name, sync_status)
+              > 0
+            ||| % $._config,
+            labels: {
+              severity: 'warning',
+            },
+            'for': $._config.argoCdAppOutOfSyncFor,
+            annotations: {
+              summary: 'An ArgoCD Application is Out Of Sync.',
+              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status {{ $labels.sync_status }} for the past %s.' % $._config.argoCdAppOutOfSyncFor,
+              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}',
+            },
+          },
+          if $._config.argoCdAppAutoSyncDisabledEnabled then {
+            alert: 'ArgoCdAppAutoSyncDisabled',
+            expr: |||
+              sum(
+                argocd_app_info{
+                  %(argoCdSelector)s,
+                  autosync_enabled!="true",
+                  name!~"%(argoAutoSyncDisabledIgnoredApps)s"
+                }
+              ) by (job, dest_server, project, name, autosync_enabled)
+              > 0
+            ||| % $._config,
+            labels: {
+              severity: 'warning',
+            },
+            'for': $._config.argoCdAppAutoSyncDisabledFor,
+            annotations: {
+              summary: 'An ArgoCD Application has AutoSync Disabled.',
+              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has autosync disabled for the past %s.' % $._config.argoCdAppAutoSyncDisabledFor,
               dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}',
             },
           },
@@ -116,7 +116,7 @@
               dashboard_url: $._config.notificationsOverviewDashboardUrl + '?var-job={{ $labels.job }}&var-exported_service={{ $labels.exported_service }}',
             },
           },
-        ],
+        ]),
       },
     ],
   },
