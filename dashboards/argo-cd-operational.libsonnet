@@ -47,12 +47,35 @@ local hmQueryOptions = heatmapPanel.queryOptions;
         'datasource',
         'prometheus',
       ) +
-      datasource.generalOptions.withLabel('Data source'),
+      datasource.generalOptions.withLabel('Data source') +
+      {
+        current: {
+          selected: true,
+          text: $._config.datasourceName,
+          value: $._config.datasourceName,
+        },
+      },
+
+    local clusterVariable =
+      query.new(
+        $._config.clusterLabel,
+        'label_values(argocd_app_info{}, cluster)' % $._config,
+      ) +
+      query.withDatasourceFromVariable(datasourceVariable) +
+      query.withSort() +
+      query.generalOptions.withLabel('Cluster') +
+      query.refresh.onLoad() +
+      query.refresh.onTime() +
+      (
+        if $._config.showMultiCluster
+        then query.generalOptions.showOnDashboard.withLabelAndValue()
+        else query.generalOptions.showOnDashboard.withNothing()
+      ),
 
     local namespaceVariable =
       query.new(
         'namespace',
-        'label_values(argocd_app_info{}, namespace)'
+        'label_values(argocd_app_info{%(clusterLabel)s="$cluster"}, namespace)' % $._config,
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
@@ -62,6 +85,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       query.refresh.onLoad() +
       query.refresh.onTime(),
 
+    // We use operational metrics from multiple Argo CD jobs, hence we need to use a regex.
     local jobVariable =
       query.new(
         'job',
@@ -76,14 +100,14 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       query.refresh.onLoad() +
       query.refresh.onTime(),
 
-    local clusterVariable =
+    local kubernetesClusterVariable =
       query.new(
-        'cluster',
-        'label_values(argocd_app_info{namespace=~"$namespace", job=~"$job"}, dest_server)',
+        'kubernetes_cluster',
+        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job"}, dest_server)' % $._config,
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
-      query.generalOptions.withLabel('Cluster') +
+      query.generalOptions.withLabel('Kubernetes Cluster') +
       query.selectionOptions.withMulti(true) +
       query.selectionOptions.withIncludeAll(true) +
       query.refresh.onLoad() +
@@ -92,7 +116,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
     local projectVariable =
       query.new(
         'project',
-        'label_values(argocd_app_info{namespace=~"$namespace", job=~"$job", dest_server=~"$cluster"}, project)',
+        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job", dest_server=~"$kubernetes_cluster"}, project)' % $._config
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
@@ -104,27 +128,30 @@ local hmQueryOptions = heatmapPanel.queryOptions;
 
     local variables = [
       datasourceVariable,
+      clusterVariable,
       namespaceVariable,
       jobVariable,
-      clusterVariable,
+      kubernetesClusterVariable,
       projectVariable,
     ],
 
     local commonLabels = |||
+      %(clusterLabel)s="$cluster",
       namespace=~'$namespace',
       job=~'$job',
-      dest_server=~'$cluster',
+      dest_server=~'$kubernetes_cluster',
       project=~'$project',
-    |||,
+    ||| % $._config,
 
     local clustersCountQuery = |||
       sum(
         argocd_cluster_info{
+          %(clusterLabel)s="$cluster",
           namespace=~'$namespace',
           job=~'$job'
         }
       )
-    |||,
+    ||| % $._config,
 
     local clustersCountStatPanel =
       statPanel.new(
@@ -142,13 +169,14 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       count(
         count(
           argocd_app_info{
+            %(clusterLabel)s="$cluster",
             namespace=~'$namespace',
             job=~'$job'
           }
         )
         by (repo)
       )
-    |||,
+    ||| % $._config,
 
     local repositoriesCountStatPanel =
       statPanel.new(
@@ -307,7 +335,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
           {
             renameByName: {
               job: 'Job',
-              dest_server: 'Cluster',
+              dest_server: 'Kubernetes Cluster',
               project: 'Project',
               name: 'Application',
               health_status: 'Health Status',
@@ -420,14 +448,15 @@ local hmQueryOptions = heatmapPanel.queryOptions;
         round(
           increase(
             argocd_app_reconcile_count{
+              %(clusterLabel)s="$cluster",
               namespace=~'$namespace',
               job=~'$job',
-              dest_server=~'$cluster'
+              dest_server=~'$kubernetes_cluster'
             }[$__rate_interval]
           )
         )
       ) by (namespace, job, dest_server)
-    |||,
+    ||| % $._config,
 
     local reconcilationActivtyTimeSeriesPanel =
       timeSeriesPanel.new(
@@ -457,13 +486,14 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       sum(
         increase(
           argocd_app_reconcile_bucket{
+            %(clusterLabel)s="$cluster",
             namespace=~'$namespace',
             job=~'$job',
-            dest_server=~'$cluster'
+            dest_server=~'$kubernetes_cluster'
           }[$__rate_interval]
         )
       ) by (le)
-    |||,
+    ||| % $._config,
 
     local reconcilationPerformanceHeatmapPanel =
       heatmapPanel.new(
@@ -486,6 +516,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
         round(
           increase(
             argocd_app_k8s_request_total{
+              %(clusterLabel)s="$cluster",
               namespace=~'$namespace',
               job=~'$job',
               project=~'$project'
@@ -493,7 +524,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
           )
         )
       ) by (job, server, project, verb, resource_kind)
-    |||,
+    ||| % $._config,
 
     local k8sApiActivityTimeSeriesPanel =
       timeSeriesPanel.new(
@@ -522,11 +553,12 @@ local hmQueryOptions = heatmapPanel.queryOptions;
     local pendingKubectlRunQuery = |||
       sum(
         argocd_kubectl_exec_pending{
+          %(clusterLabel)s="$cluster",
           namespace=~'$namespace',
           job=~'$job'
         }
       ) by (job, command)
-    |||,
+    ||| % $._config,
 
     local pendingKubectlTimeSeriesPanel =
       timeSeriesPanel.new(
@@ -555,12 +587,13 @@ local hmQueryOptions = heatmapPanel.queryOptions;
     local resourceObjectsQuery = |||
       sum(
         argocd_cluster_api_resource_objects{
+          %(clusterLabel)s="$cluster",
           namespace=~'$namespace',
           job=~'$job',
-          server=~'$cluster'
+          server=~'$kubernetes_cluster'
         }
       ) by (namespace, job, server)
-    |||,
+    ||| % $._config,
 
     local resourceObjectsTimeSeriesPanel =
       timeSeriesPanel.new(
@@ -589,12 +622,13 @@ local hmQueryOptions = heatmapPanel.queryOptions;
     local apiResourcesQuery = |||
       sum(
         argocd_cluster_api_resources{
+          %(clusterLabel)s="$cluster",
           namespace=~'$namespace',
           job=~'$job',
-          server=~'$cluster'
+          server=~'$kubernetes_cluster'
         }
       ) by (namespace, job, server)
-    |||,
+    ||| % $._config,
 
     local apiResourcesTimeSeriesPanel =
       timeSeriesPanel.new(
@@ -624,13 +658,14 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       sum(
         increase(
           argocd_cluster_events_total{
+            %(clusterLabel)s="$cluster",
             namespace=~'$namespace',
             job=~'$job',
-            server=~'$cluster'
+            server=~'$kubernetes_cluster'
           }[$__rate_interval]
         )
       ) by (namespace, job, server)
-    |||,
+    ||| % $._config,
 
     local clusterEventsTimeSeriesPanel =
       timeSeriesPanel.new(
@@ -660,13 +695,14 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       sum(
         increase(
           argocd_git_request_total{
+            %(clusterLabel)s="$cluster",
             namespace=~'$namespace',
             job=~'$job',
             request_type="ls-remote"
           }[$__rate_interval]
         )
       ) by (namespace, job, repo)
-    |||,
+    ||| % $._config,
 
     local gitRequestsLsRemoteTimeSeriesPanel =
       timeSeriesPanel.new(
@@ -696,13 +732,14 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       sum(
         increase(
           argocd_git_request_total{
+            %(clusterLabel)s="$cluster",
             namespace=~'$namespace',
             job=~'$job',
             request_type="fetch"
           }[$__rate_interval]
         )
       ) by (namespace, job, repo)
-    |||,
+    ||| % $._config,
 
     local gitRequestsCheckoutTimeSeriesPanel =
       timeSeriesPanel.new(
@@ -732,13 +769,14 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       sum(
         increase(
           argocd_git_request_duration_seconds_bucket{
+            %(clusterLabel)s="$cluster",
             namespace=~'$namespace',
             job=~'$job',
             request_type="fetch"
           }[$__rate_interval]
         )
       ) by (le)
-    |||,
+    ||| % $._config,
 
     local gitFetchPerformanceHeatmapPanel =
       heatmapPanel.new(
@@ -760,13 +798,14 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       sum(
         increase(
           argocd_git_request_duration_seconds_bucket{
+            %(clusterLabel)s="$cluster",
             namespace=~'$namespace',
             job=~'$job',
             request_type="ls-remote"
           }[$__rate_interval]
         )
       ) by (le)
-    |||,
+    ||| % $._config,
 
     local gitLsRemotePerformanceHeatmapPanel =
       heatmapPanel.new(

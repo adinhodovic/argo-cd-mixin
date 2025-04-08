@@ -37,12 +37,35 @@ local tbOverride = tbStandardOptions.override;
         'datasource',
         'prometheus',
       ) +
-      datasource.generalOptions.withLabel('Data source'),
+      datasource.generalOptions.withLabel('Data source') +
+      {
+        current: {
+          selected: true,
+          text: $._config.datasourceName,
+          value: $._config.datasourceName,
+        },
+      },
+
+    local clusterVariable =
+      query.new(
+        $._config.clusterLabel,
+        'label_values(argocd_app_info{}, cluster)' % $._config,
+      ) +
+      query.withDatasourceFromVariable(datasourceVariable) +
+      query.withSort() +
+      query.generalOptions.withLabel('Cluster') +
+      query.refresh.onLoad() +
+      query.refresh.onTime() +
+      (
+        if $._config.showMultiCluster
+        then query.generalOptions.showOnDashboard.withLabelAndValue()
+        else query.generalOptions.showOnDashboard.withNothing()
+      ),
 
     local namespaceVariable =
       query.new(
         'namespace',
-        'label_values(argocd_app_info{}, namespace)'
+        'label_values(argocd_app_info{%(clusterLabel)s="$cluster"}, namespace)' % $._config,
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
@@ -55,7 +78,7 @@ local tbOverride = tbStandardOptions.override;
     local jobVariable =
       query.new(
         'job',
-        'label_values(argocd_app_info{namespace=~"$namespace"}, job)',
+        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace"}, job)' % $._config,
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
@@ -65,14 +88,14 @@ local tbOverride = tbStandardOptions.override;
       query.refresh.onLoad() +
       query.refresh.onTime(),
 
-    local clusterVariable =
+    local kubernetesClusterVariable =
       query.new(
-        'cluster',
-        'label_values(argocd_app_info{namespace=~"$namespace", job=~"$job"}, dest_server)',
+        'kubernetes_cluster',
+        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job"}, dest_server)' % $._config,
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
-      query.generalOptions.withLabel('Cluster') +
+      query.generalOptions.withLabel('Kubernetes Cluster') +
       query.selectionOptions.withMulti(true) +
       query.selectionOptions.withIncludeAll(true) +
       query.refresh.onLoad() +
@@ -81,7 +104,7 @@ local tbOverride = tbStandardOptions.override;
     local projectVariable =
       query.new(
         'project',
-        'label_values(argocd_app_info{namespace=~"$namespace", job=~"$job", dest_server=~"$cluster"}, project)',
+        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job", dest_server=~"$kubernetes_cluster"}, project)' % $._config
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
@@ -94,7 +117,7 @@ local tbOverride = tbStandardOptions.override;
     local applicationVariable =
       query.new(
         'application',
-        'label_values(argocd_app_info{namespace=~"$namespace", job=~"$job", dest_server=~"$cluster", project=~"$project"}, name)',
+        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job", dest_server=~"$kubernetes_cluster", project=~"$project"}, name)' % $._config
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
@@ -106,19 +129,21 @@ local tbOverride = tbStandardOptions.override;
 
     local variables = [
       datasourceVariable,
+      clusterVariable,
       namespaceVariable,
       jobVariable,
-      clusterVariable,
+      kubernetesClusterVariable,
       projectVariable,
       applicationVariable,
     ],
 
     local commonLabels = |||
+      %(clusterLabel)s="$cluster",
       namespace=~'$namespace',
       job=~'$job',
-      dest_server=~'$cluster',
+      dest_server=~'$kubernetes_cluster',
       project=~'$project',
-    |||,
+    ||| % $._config,
 
     local appHealthStatusQuery = |||
       sum(
@@ -527,7 +552,7 @@ local tbOverride = tbStandardOptions.override;
           {
             renameByName: {
               job: 'Job',
-              dest_server: 'Cluster',
+              dest_server: 'Kubernetes Cluster',
               project: 'Project',
               name: 'Application',
               autosync_enabled: 'Auto Sync Enabled',
@@ -670,7 +695,7 @@ local tbOverride = tbStandardOptions.override;
 
     local summaryRow =
       row.new(
-        'Summary by Cluster, Project'
+        'Summary by Kubernetes Cluster, Project'
       ),
 
     local appSummaryRow =

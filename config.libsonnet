@@ -11,6 +11,13 @@ local annotation = g.dashboard.annotation;
 
     argoCdSelector: 'job=~".*"',
 
+    // Default datasource name
+    datasourceName: 'default',
+
+    // Opt-in to multiCluster dashboards by overriding this and the clusterLabel.
+    showMultiCluster: false,
+    clusterLabel: 'cluster',
+
     grafanaUrl: 'https://grafana.com',
     argoCdUrl: 'https://argocd.com',
 

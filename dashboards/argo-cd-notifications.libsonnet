@@ -26,12 +26,35 @@ local tsLegend = tsOptions.legend;
         'datasource',
         'prometheus',
       ) +
-      datasource.generalOptions.withLabel('Data source'),
+      datasource.generalOptions.withLabel('Data source') +
+      {
+        current: {
+          selected: true,
+          text: $._config.datasourceName,
+          value: $._config.datasourceName,
+        },
+      },
+
+    local clusterVariable =
+      query.new(
+        $._config.clusterLabel,
+        'label_values(argocd_notifications_deliveries_total{}, cluster)' % $._config,
+      ) +
+      query.withDatasourceFromVariable(datasourceVariable) +
+      query.withSort() +
+      query.generalOptions.withLabel('Cluster') +
+      query.refresh.onLoad() +
+      query.refresh.onTime() +
+      (
+        if $._config.showMultiCluster
+        then query.generalOptions.showOnDashboard.withLabelAndValue()
+        else query.generalOptions.showOnDashboard.withNothing()
+      ),
 
     local namespaceVariable =
       query.new(
         'namespace',
-        'label_values(argocd_notifications_deliveries_total{}, namespace)'
+        'label_values(argocd_notifications_deliveries_total{%(clusterLabel)s="$cluster"}, namespace)' % $._config,
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
@@ -44,7 +67,7 @@ local tsLegend = tsOptions.legend;
     local jobVariable =
       query.new(
         'job',
-        'label_values(argocd_notifications_deliveries_total{namespace=~"$namespace"}, job)',
+        'label_values(argocd_notifications_deliveries_total{%(clusterLabel)s="$cluster", namespace=~"$namespace"}, job)' % $._config,
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
@@ -57,7 +80,7 @@ local tsLegend = tsOptions.legend;
     local exportedServiceVariable =
       query.new(
         'exported_service',
-        'label_values(argocd_notifications_deliveries_total{namespace=~"$namespace", job=~"$job"}, exported_service)',
+        'label_values(argocd_notifications_deliveries_total{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job"}, exported_service)' % $._config,
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
@@ -69,15 +92,17 @@ local tsLegend = tsOptions.legend;
 
     local variables = [
       datasourceVariable,
+      clusterVariable,
       namespaceVariable,
       jobVariable,
       exportedServiceVariable,
     ],
 
     local commonLabels = |||
+      %(clusterLabel)s="$cluster",
       namespace=~'$namespace',
       job=~'$job',
-    |||,
+    ||| % $._config,
 
     local deliveriesQuery = |||
       sum(
