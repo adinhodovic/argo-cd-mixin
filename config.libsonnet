@@ -37,6 +37,7 @@ local annotation = g.dashboard.annotation;
     argoCdAppAutoSyncDisabledEnabled: true,
     argoCdAppAutoSyncDisabledFor: '2h',
     argoCdAppSyncInterval: '10m',
+    argoCdNotificationDeliveryEnabled: true,
     argoCdNotificationDeliveryInterval: '10m',
 
     // List of applications to ignore in the unhealthy alert
