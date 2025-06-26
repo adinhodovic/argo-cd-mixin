@@ -35,7 +35,8 @@
               sum(
                 argocd_app_info{
                   %(argoCdSelector)s,
-                  health_status!~"Healthy|Progressing"
+                  health_status!~"Healthy|Progressing",
+                  name!~"%(argoCdAppUnhealthyIgnoredApps)s"
                 }
               ) by (%(clusterLabel)s, job, dest_server, project, name, health_status)
               > 0
@@ -78,7 +79,7 @@
                 argocd_app_info{
                   %(argoCdSelector)s,
                   autosync_enabled!="true",
-                  name!~"%(argoAutoSyncDisabledIgnoredApps)s"
+                  name!~"%(argoCdAutoSyncDisabledIgnoredApps)s"
                 }
               ) by (%(clusterLabel)s, job, dest_server, project, name, autosync_enabled)
               > 0
