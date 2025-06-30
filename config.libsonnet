@@ -52,6 +52,8 @@ local annotation = g.dashboard.annotation;
     argoCdAutoSyncDisabledIgnoredApps: '',
     // Backwards compability
     argoAutoSyncDisabledIgnoredApps: self.argoCdAutoSyncDisabledIgnoredApps,
+    // List of applications to ignore in the unknown alert
+    argoCdAppUnknownIgnoredApps: '',
 
     // Custom annotations to display in graphs
     annotation: {

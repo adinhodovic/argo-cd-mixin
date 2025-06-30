@@ -78,7 +78,8 @@
               sum(
                 argocd_app_info{
                   %(argoCdSelector)s,
-                  sync_status="Unknown"
+                  sync_status="Unknown",
+                  name!~"%(argoCdAppUnknownIgnoredApps)s"
                 }
               ) by (%(clusterLabel)s, job, dest_server, project, name, sync_status)
               > 0
