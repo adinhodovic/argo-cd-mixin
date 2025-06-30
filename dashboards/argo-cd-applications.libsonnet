@@ -150,7 +150,7 @@ local tbOverride = tbStandardOptions.override;
         argocd_app_info{
           %s
         }
-      ) by (job, dest_server, project, health_status)
+      ) by (job, project, health_status)
     ||| % commonLabels,
 
     local appHealthStatusTimeSeriesPanel =
@@ -163,7 +163,7 @@ local tbOverride = tbStandardOptions.override;
           appHealthStatusQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }} - {{ health_status }}'
+          '{{ project }} - {{ health_status }}'
         )
       ) +
       tsStandardOptions.withUnit('short') +
@@ -182,7 +182,7 @@ local tbOverride = tbStandardOptions.override;
         argocd_app_info{
           %s
         }
-      ) by (job, dest_server, project, sync_status)
+      ) by (job, project, sync_status)
     ||| % commonLabels,
 
     local appSyncStatusTimeSeriesPanel =
@@ -195,7 +195,7 @@ local tbOverride = tbStandardOptions.override;
           appSyncStatusQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }} - {{ sync_status }}',
+          '{{ project }} - {{ sync_status }}',
         )
       ) +
       tsStandardOptions.withUnit('short') +
@@ -218,7 +218,7 @@ local tbOverride = tbStandardOptions.override;
             }[$__rate_interval]
           )
         )
-      ) by (job, dest_server, project, phase)
+      ) by (job, project, phase)
     ||| % commonLabels,
 
     local appSyncTimeSeriesPanel =
@@ -231,7 +231,7 @@ local tbOverride = tbStandardOptions.override;
           appSyncQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }} - {{ phase }}',
+          '{{ project }} - {{ phase }}',
         )
       ) +
       tsStandardOptions.withUnit('short') +
@@ -250,7 +250,7 @@ local tbOverride = tbStandardOptions.override;
         argocd_app_info{
           %s
         }
-      ) by (job, dest_server, project, autosync_enabled)
+      ) by (job, project, autosync_enabled)
     ||| % commonLabels,
 
     local appAutoSyncStatusTimeSeriesPanel =
@@ -263,7 +263,7 @@ local tbOverride = tbStandardOptions.override;
           appAutoSyncStatusQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }} - {{ autosync_enabled }}',
+          '{{ project }} - {{ autosync_enabled }}',
         )
       ) +
       tsStandardOptions.withUnit('short') +
@@ -291,11 +291,11 @@ local tbOverride = tbStandardOptions.override;
       ) +
       textPanel.options.withMode('markdown') +
       textPanel.options.withContent(
-        if appsDefined then |||
+        |||
           | Application | Environment | Status |
           | --- | --- | --- |
           %s
-        ||| % std.join('\n', appBadgeContent) else 'No applications defined',
+        ||| % std.join('\n', appBadgeContent),
       ),
 
     local appUnhealthyQuery = |||
@@ -609,7 +609,7 @@ local tbOverride = tbStandardOptions.override;
           appHealthStatusByAppQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }}/{{ name }} - {{ health_status }}'
+          '{{ project }}/{{ name }} - {{ health_status }}'
         )
       ) +
       tsQueryOptions.withInterval('5m') +
@@ -642,7 +642,7 @@ local tbOverride = tbStandardOptions.override;
           appSyncStatusByAppQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }}/{{ name }} - {{ sync_status }}'
+          '{{ project }}/{{ name }} - {{ sync_status }}'
         )
       ) +
       tsQueryOptions.withInterval('5m') +
@@ -679,7 +679,7 @@ local tbOverride = tbStandardOptions.override;
           appSyncByAppQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }}/{{ name }} - {{ phase }}'
+          '{{ project }}/{{ name }} - {{ phase }}'
         )
       ) +
       tsQueryOptions.withInterval('5m') +
@@ -695,7 +695,7 @@ local tbOverride = tbStandardOptions.override;
 
     local summaryRow =
       row.new(
-        'Summary by Kubernetes Cluster, Project'
+        'Summary by Project'
       ),
 
     local appSummaryRow =
@@ -706,7 +706,8 @@ local tbOverride = tbStandardOptions.override;
     local appRow =
       row.new(
         'Application ($application)',
-      ),
+      ) +
+      row.withRepeat('application'),
 
     'argo-cd-application-overview.json':
       $._config.bypassDashboardValidation +
@@ -734,31 +735,29 @@ local tbOverride = tbStandardOptions.override;
           row.gridPos.withY(0) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1),
-          appHealthStatusTimeSeriesPanel +
-          timeSeriesPanel.gridPos.withX(0) +
-          timeSeriesPanel.gridPos.withY(1) +
-          timeSeriesPanel.gridPos.withW(9) +
-          timeSeriesPanel.gridPos.withH(5),
-          appSyncStatusTimeSeriesPanel +
-          timeSeriesPanel.gridPos.withX(9) +
-          timeSeriesPanel.gridPos.withY(1) +
-          timeSeriesPanel.gridPos.withW(9) +
-          timeSeriesPanel.gridPos.withH(5),
-          appSyncTimeSeriesPanel +
-          timeSeriesPanel.gridPos.withX(0) +
-          timeSeriesPanel.gridPos.withY(6) +
-          timeSeriesPanel.gridPos.withW(9) +
-          timeSeriesPanel.gridPos.withH(5),
-          appAutoSyncStatusTimeSeriesPanel +
-          timeSeriesPanel.gridPos.withX(9) +
-          timeSeriesPanel.gridPos.withY(6) +
-          timeSeriesPanel.gridPos.withW(9) +
-          timeSeriesPanel.gridPos.withH(5),
-          appBadgeTextPanel +
-          textPanel.gridPos.withX(18) +
-          textPanel.gridPos.withY(1) +
-          textPanel.gridPos.withW(6) +
-          textPanel.gridPos.withH(10),
+        ] +
+        grid.makeGrid(
+          [
+            appHealthStatusTimeSeriesPanel,
+            appSyncStatusTimeSeriesPanel,
+            appSyncTimeSeriesPanel,
+            appAutoSyncStatusTimeSeriesPanel,
+          ],
+          panelWidth=if appsDefined then 9 else 12,
+          panelHeight=6,
+          startY=1
+        ) +
+        (
+          if appsDefined then
+            [
+              appBadgeTextPanel +
+              textPanel.gridPos.withX(18) +
+              textPanel.gridPos.withY(1) +
+              textPanel.gridPos.withW(6) +
+              textPanel.gridPos.withH(6),
+            ] else []
+        ) +
+        [
           appSummaryRow +
           timeSeriesPanel.gridPos.withX(0) +
           timeSeriesPanel.gridPos.withY(11) +
@@ -773,13 +772,13 @@ local tbOverride = tbStandardOptions.override;
             appAutoSyncDisabledTablePanel,
           ],
           panelWidth=12,
-          panelHeight=6,
+          panelHeight=8,
           startY=12
         ) +
         [
           appRow +
           row.gridPos.withX(0) +
-          row.gridPos.withY(23) +
+          row.gridPos.withY(25) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1),
         ]
@@ -792,7 +791,7 @@ local tbOverride = tbStandardOptions.override;
           ],
           panelWidth=8,
           panelHeight=8,
-          startY=24
+          startY=27
         )
       ) +
       if $._config.annotation.enabled then
