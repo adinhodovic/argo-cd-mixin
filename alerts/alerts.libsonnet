@@ -72,6 +72,27 @@
               dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
             },
           },
+          if $._config.argoCdAppUnknownEnabled then {
+            alert: 'ArgoCdAppUnknown',
+            expr: |||
+              sum(
+                argocd_app_info{
+                  %(argoCdSelector)s,
+                  sync_status="Unknown"
+                }
+              ) by (%(clusterLabel)s, job, dest_server, project, name, sync_status)
+              > 0
+            ||| % $._config,
+            labels: {
+              severity: 'warning',
+            },
+            'for': $._config.ArgoCdAppUnknownFor,
+            annotations: {
+              summary: 'An ArgoCD Application is in a Unknown state.',
+              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is in a `Unknown` state for the past %s.' % $._config.argoCdAppOutOfSyncFor,
+              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
+            },
+          },
           if $._config.argoCdAppAutoSyncDisabledEnabled then {
             alert: 'ArgoCdAppAutoSyncDisabled',
             expr: |||

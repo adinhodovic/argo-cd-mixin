@@ -32,6 +32,12 @@ local annotation = g.dashboard.annotation;
 
     argoCdAppOutOfSyncEnabled: true,
     argoCdAppOutOfSyncFor: '15m',
+    // The above OutOfSync alert also includes applications in an Unknown state.
+    // However, that alert may not be appropriate in all scenarios.
+    // This alert specifically targets applications that are Unknown to ArgoCD,
+    // without triggering on other OutOfSync conditions.
+    argoCdAppUnknownEnabled: false,
+    argoCdAppUnknownFor: '15m',
     argoCdAppUnhealthyEnabled: true,
     argoCdAppUnhealthyFor: '15m',
     argoCdAppAutoSyncDisabledEnabled: true,
