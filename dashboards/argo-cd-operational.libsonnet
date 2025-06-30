@@ -392,7 +392,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
           syncActivityQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }}/{{ name }}'
+          '{{ project }}/{{ name }}'
         )
       ) +
       tsStandardOptions.withUnit('short') +
@@ -416,7 +416,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
             }[$__rate_interval]
           )
         )
-      ) by (job, dest_server, project, application, phase)
+      ) by (job, dest_server, project, name, phase)
     ||| % commonLabels,
 
     local syncFailuresTimeSeriesPanel =
@@ -429,7 +429,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
           syncFailuresQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ dest_server }}/{{ project }}/{{ application }} - {{ phase }}'
+          '{{ project }}/{{ name }} - {{ phase }}'
         )
       ) +
       tsStandardOptions.withUnit('short') +
@@ -455,7 +455,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
             }[$__rate_interval]
           )
         )
-      ) by (namespace, job, dest_server)
+      ) by (namespace, job)
     ||| % $._config,
 
     local reconcilationActivtyTimeSeriesPanel =
@@ -468,7 +468,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
           reconcilationActivityQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ namespace }}/{{ dest_server }}'
+          '{{ namespace }}/{{ job }}'
         )
       ) +
       tsStandardOptions.withUnit('short') +
@@ -523,7 +523,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
             }[$__rate_interval]
           )
         )
-      ) by (job, server, project, verb, resource_kind)
+      ) by (job, verb, resource_kind)
     ||| % $._config,
 
     local k8sApiActivityTimeSeriesPanel =
@@ -536,7 +536,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
           k8sApiActivityQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ server }}/{{ project }} - {{ verb }}/{{ resource_kind }}'
+          '{{ verb }} {{ resource_kind }}'
         )
       ) +
       tsStandardOptions.withUnit('short') +
@@ -570,7 +570,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
           pendingKubectlRunQuery,
         ) +
         prometheus.withLegendFormat(
-          '{{ dest_server }} - {{ command }}'
+          '{{ command }}'
         )
       ) +
       tsStandardOptions.withUnit('short') +
@@ -914,59 +914,68 @@ local hmQueryOptions = heatmapPanel.queryOptions;
         ] +
         grid.makeGrid(
           [syncActivityTimeSeriesPanel, syncFailuresTimeSeriesPanel],
-          panelWidth=12,
+          panelWidth=24,
           panelHeight=6,
           startY=12
         ) +
         [
           controllerStatsRow +
+          row.withCollapsed(true) +
+          row.withPanels(
+            grid.makeGrid(
+              [
+                reconcilationActivtyTimeSeriesPanel,
+                reconcilationPerformanceHeatmapPanel,
+                k8sApiActivityTimeSeriesPanel,
+                pendingKubectlTimeSeriesPanel,
+              ],
+              panelWidth=24,
+              panelHeight=6,
+              startY=25
+            )
+          ) +
           row.gridPos.withX(0) +
-          row.gridPos.withY(18) +
+          row.gridPos.withY(24) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1),
         ] +
-        grid.makeGrid(
-          [
-            reconcilationActivtyTimeSeriesPanel,
-            reconcilationPerformanceHeatmapPanel,
-            k8sApiActivityTimeSeriesPanel,
-            pendingKubectlTimeSeriesPanel,
-          ],
-          panelWidth=12,
-          panelHeight=6,
-          startY=19
-        ) +
         [
           clusterStatsRow +
+          row.withCollapsed(true) +
+          row.withPanels(
+            grid.makeGrid(
+              [resourceObjectsTimeSeriesPanel, apiResourcesTimeSeriesPanel, clusterEventsTimeSeriesPanel],
+              panelWidth=24,
+              panelHeight=6,
+              startY=50
+            )
+          ) +
           row.gridPos.withX(0) +
-          row.gridPos.withY(31) +
+          row.gridPos.withY(49) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1),
         ] +
-        grid.makeGrid(
-          [resourceObjectsTimeSeriesPanel, apiResourcesTimeSeriesPanel, clusterEventsTimeSeriesPanel],
-          panelWidth=8,
-          panelHeight=6,
-          startY=32
-        ) +
         [
           repoServerStatsRow +
+          row.withCollapsed(true) +
+          row.withPanels(
+            grid.makeGrid(
+              [
+                gitRequestsLsRemoteTimeSeriesPanel,
+                gitRequestsCheckoutTimeSeriesPanel,
+                gitFetchPerformanceHeatmapPanel,
+                gitLsRemotePerformanceHeatmapPanel,
+              ],
+              panelWidth=12,
+              panelHeight=6,
+              startY=69
+            )
+          ) +
           row.gridPos.withX(0) +
-          row.gridPos.withY(38) +
+          row.gridPos.withY(68) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1),
-        ] +
-        grid.makeGrid(
-          [
-            gitRequestsLsRemoteTimeSeriesPanel,
-            gitRequestsCheckoutTimeSeriesPanel,
-            gitFetchPerformanceHeatmapPanel,
-            gitLsRemotePerformanceHeatmapPanel,
-          ],
-          panelWidth=12,
-          panelHeight=6,
-          startY=39
-        )
+        ]
       ) +
       if $._config.annotation.enabled then
         dashboard.withAnnotations($._config.customAnnotation)
