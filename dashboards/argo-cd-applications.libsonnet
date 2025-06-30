@@ -754,7 +754,7 @@ local tbOverride = tbStandardOptions.override;
               textPanel.gridPos.withX(18) +
               textPanel.gridPos.withY(1) +
               textPanel.gridPos.withW(6) +
-              textPanel.gridPos.withH(6),
+              textPanel.gridPos.withH(12),
             ] else []
         ) +
         [
