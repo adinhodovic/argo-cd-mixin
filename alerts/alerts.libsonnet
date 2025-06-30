@@ -86,7 +86,7 @@
             labels: {
               severity: 'warning',
             },
-            'for': $._config.ArgoCdAppUnknownFor,
+            'for': $._config.argoCdAppUnknownFor,
             annotations: {
               summary: 'An ArgoCD Application is in a Unknown state.',
               description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is in a `Unknown` state for the past %s.' % $._config.argoCdAppOutOfSyncFor,
