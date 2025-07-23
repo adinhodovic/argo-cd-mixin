@@ -856,7 +856,7 @@ local hmQueryOptions = heatmapPanel.queryOptions;
       dashboard.withDescription('A dashboard that monitors ArgoCD with a focus on the operational. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin).') +
       dashboard.withUid($._config.operationalOverviewDashboardUid) +
       dashboard.withTags($._config.tags) +
-      dashboard.withTimezone('utc') +
+      dashboard.withTimezone('browser') +
       dashboard.withEditable(true) +
       dashboard.time.withFrom('now-6h') +
       dashboard.time.withTo('now') +

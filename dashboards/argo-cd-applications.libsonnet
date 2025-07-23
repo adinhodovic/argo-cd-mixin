@@ -717,7 +717,7 @@ local tbOverride = tbStandardOptions.override;
       dashboard.withDescription('A dashboard that monitors ArgoCD with a focus on Application status. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin). Requires custom configuration to add application badges. Please refer to the mixin.') +
       dashboard.withUid($._config.applicationOverviewDashboardUid) +
       dashboard.withTags($._config.tags) +
-      dashboard.withTimezone('utc') +
+      dashboard.withTimezone('browser') +
       dashboard.withEditable(true) +
       dashboard.time.withFrom('now-6h') +
       dashboard.time.withTo('now') +
