@@ -190,7 +190,7 @@ local tsLegend = tsOptions.legend;
       dashboard.withDescription('A dashboard that monitors ArgoCD notifications. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin).') +
       dashboard.withUid($._config.notificationsOverviewDashboardUid) +
       dashboard.withTags($._config.tags) +
-      dashboard.withTimezone('utc') +
+      dashboard.withTimezone('browser') +
       dashboard.withEditable(true) +
       dashboard.time.withFrom('now-2d') +
       dashboard.time.withTo('now') +
