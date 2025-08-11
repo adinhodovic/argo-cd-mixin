@@ -35,7 +35,7 @@
               sum(
                 argocd_app_info{
                   %(argoCdSelector)s,
-                  health_status!~"Healthy|Progressing",
+                  health_status!~"%(argoCdAppUnhealthyHealthyStates)s",
                   name!~"%(argoCdAppUnhealthyIgnoredApps)s"
                 }
               ) by (%(clusterLabel)s, job, dest_server, project, name, health_status)
