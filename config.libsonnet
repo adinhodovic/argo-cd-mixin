@@ -48,6 +48,8 @@ local annotation = g.dashboard.annotation;
 
     // List of applications to ignore in the unhealthy alert
     argoCdAppUnhealthyIgnoredApps: '',
+    // List of states that are classified healthy.
+    argoCdAppUnhealthyHealthyStates: 'Healthy|Progressing',
     // List of applications to ignore in the auto sync disabled alert
     argoCdAutoSyncDisabledIgnoredApps: '',
     // Backwards compability
