@@ -210,7 +210,7 @@
       "from": "now-2d",
       "to": "now"
    },
-   "timezone": "utc",
+   "timezone": "browser",
    "title": "ArgoCD / Notifications / Overview",
    "uid": "argo-cd-notifications-overview-kask"
 }

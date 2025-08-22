@@ -1157,7 +1157,7 @@
       "from": "now-6h",
       "to": "now"
    },
-   "timezone": "utc",
+   "timezone": "browser",
    "title": "ArgoCD / Operational / Overview",
    "uid": "argo-cd-operational-overview-kask"
 }
