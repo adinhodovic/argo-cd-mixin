@@ -154,7 +154,8 @@ local tbOverride = tbStandardOptions.override;
         resourceObjects: |||
           sum(
             argocd_cluster_api_resource_objects{
-              %(withProject)s
+              %(default)s,
+              %(kubernetesClusterServer)s
             }
           ) by (namespace, job, server)
         ||| % defaultFilters,
@@ -309,7 +310,7 @@ local tbOverride = tbStandardOptions.override;
                   tbPanelOptions.link.withTitle('Go To Application') +
                   tbPanelOptions.link.withType('dashboard') +
                   tbPanelOptions.link.withUrl(
-                    '/d/%s/argocd-notifications-overview?&var-project=${__data.fields.Project}&var-application=${__value.raw}' % $._config.dashboardIds['argocd-notifications-overview']
+                    '/d/%s/argo-cd-application-overview?&var-project=${__data.fields.Project}&var-application=${__value.raw}' % $._config.dashboardIds['argo-cd-application-overview']
                   ) +
                   tbPanelOptions.link.withTargetBlank(true)
                 )
@@ -324,6 +325,7 @@ local tbOverride = tbStandardOptions.override;
             queries.syncActivity,
             '{{ project }}/{{ name }}',
             description='A timeseries panel showing sync activity for applications managed by ArgoCD.',
+            stack='normal'
           ),
 
         syncFailuresTimeSeries:
@@ -333,6 +335,7 @@ local tbOverride = tbStandardOptions.override;
             queries.syncFailures,
             '{{ project }}/{{ name }} - {{ phase }}',
             description='A timeseries panel showing sync failures for applications managed by ArgoCD.',
+            stack='normal'
           ),
 
         reconcilationActivtyTimeSeries:
@@ -342,12 +345,13 @@ local tbOverride = tbStandardOptions.override;
             queries.reconcilationActivity,
             '{{ namespace }}/{{ job }}',
             description='A timeseries panel showing reconciliation activity for applications managed by ArgoCD.',
+            stack='normal'
           ),
 
         reconcilationPerformanceHeatmap:
           mixinUtils.dashboards.heatmapPanel(
             'Reconciliation Performance',
-            'short',
+            's',
             [
               {
                 expr: queries.reconcilationPerformance,
@@ -364,6 +368,7 @@ local tbOverride = tbStandardOptions.override;
             queries.k8sApiActivity,
             '{{ verb }} {{ resource_kind }}',
             description='A timeseries panel showing Kubernetes API activity for applications managed by ArgoCD.',
+            stack='normal'
           ),
 
         pendingKubectlTimeSeries:
@@ -373,6 +378,7 @@ local tbOverride = tbStandardOptions.override;
             queries.pendingKubectlRun,
             '{{ command }}',
             description='A timeseries panel showing pending kubectl runs for ArgoCD.',
+            stack='normal'
           ),
 
         resourceObjectsTimeSeries:
@@ -382,6 +388,7 @@ local tbOverride = tbStandardOptions.override;
             queries.resourceObjects,
             '{{ server }}',
             description='A timeseries panel showing the number of resource objects in each cluster managed by ArgoCD.',
+            stack='normal'
           ),
 
         apiResourcesTimeSeries:
@@ -391,6 +398,7 @@ local tbOverride = tbStandardOptions.override;
             queries.apiResources,
             '{{ server }}',
             description='A timeseries panel showing the number of API resources in each cluster managed by ArgoCD.',
+            stack='normal'
           ),
 
         clusterEventsTimeSeries:
@@ -426,7 +434,7 @@ local tbOverride = tbStandardOptions.override;
         gitLsRemotePerformanceHeatmap:
           mixinUtils.dashboards.heatmapPanel(
             'Git Ls-remote Performance',
-            'short',
+            's',
             [
               {
                 expr: queries.gitLsRemotePerformance,
@@ -439,7 +447,7 @@ local tbOverride = tbStandardOptions.override;
         gitFetchPerformanceHeatmap:
           mixinUtils.dashboards.heatmapPanel(
             'Git Fetch Performance',
-            'short',
+            's',
             [
               {
                 expr: queries.gitFetchPerformance,
@@ -463,14 +471,27 @@ local tbOverride = tbStandardOptions.override;
             panels.clusterCountStat,
             panels.repositoryCountStat,
             panels.applicationCountStat,
-            panels.healthStatusPieChart,
-            panels.syncStatusPieChart,
-            panels.appsTablePanel,
           ],
-          panelWidth=24,
-          panelHeight=10,
+          panelWidth=4,
+          panelHeight=4,
           startY=1
         ) +
+        grid.wrapPanels(
+          [
+            panels.healthStatusPieChart,
+            panels.syncStatusPieChart,
+          ],
+          panelWidth=6,
+          panelHeight=6,
+          startY=5
+        ) +
+        [
+          panels.appsTablePanel +
+          row.gridPos.withX(12) +
+          row.gridPos.withY(1) +
+          row.gridPos.withW(12) +
+          row.gridPos.withH(10),
+        ] +
         [
           row.new('Sync Stats') +
           row.gridPos.withX(0) +
@@ -489,6 +510,10 @@ local tbOverride = tbStandardOptions.override;
         ) +
         [
           row.new('Controller Stats') +
+          row.gridPos.withX(0) +
+          row.gridPos.withY(24) +
+          row.gridPos.withW(24) +
+          row.gridPos.withH(1) +
           row.withCollapsed(true) +
           row.withPanels(
             grid.makeGrid(
@@ -502,14 +527,14 @@ local tbOverride = tbStandardOptions.override;
               panelHeight=6,
               startY=25
             )
-          ) +
-          row.gridPos.withX(0) +
-          row.gridPos.withY(24) +
-          row.gridPos.withW(24) +
-          row.gridPos.withH(1),
+          ),
         ] +
         [
           row.new('Cluster Stats') +
+          row.gridPos.withX(0) +
+          row.gridPos.withY(49) +
+          row.gridPos.withW(24) +
+          row.gridPos.withH(1) +
           row.withCollapsed(true) +
           row.withPanels(
             grid.makeGrid(
@@ -522,14 +547,14 @@ local tbOverride = tbStandardOptions.override;
               panelHeight=6,
               startY=50
             )
-          ) +
-          row.gridPos.withX(0) +
-          row.gridPos.withY(49) +
-          row.gridPos.withW(24) +
-          row.gridPos.withH(1),
+          ),
         ] +
         [
           row.new('Repo Server Stats') +
+          row.gridPos.withX(0) +
+          row.gridPos.withY(68) +
+          row.gridPos.withW(24) +
+          row.gridPos.withH(1) +
           row.withCollapsed(true) +
           row.withPanels(
             grid.makeGrid(
@@ -543,11 +568,7 @@ local tbOverride = tbStandardOptions.override;
               panelHeight=6,
               startY=69
             )
-          ) +
-          row.gridPos.withX(0) +
-          row.gridPos.withY(68) +
-          row.gridPos.withW(24) +
-          row.gridPos.withH(1),
+          ),
         ];
 
 
@@ -564,7 +585,7 @@ local tbOverride = tbStandardOptions.override;
       dashboard.time.withTo('now') +
       dashboard.withVariables(variables) +
       dashboard.withLinks(
-        mixinUtils.dashboards.dashboardLinks('ArgoCD', $._config)
+        mixinUtils.dashboards.dashboardLinks('ArgoCD', $._config, dropdown=true)
       ) +
       dashboard.withPanels(
         rows

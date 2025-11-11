@@ -13,6 +13,8 @@ local query = variable.query;
     namespace: 'namespace=~"$namespace"',
     job: 'job=~"$job"',
     kubernetesCluster: 'dest_server=~"$kubernetes_cluster"',
+    // This is an ArgoCD Inconsistency
+    kubernetesClusterServer: 'server=~"$kubernetes_cluster"',
     project: 'project=~"$project"',
 
     base: |||
@@ -22,7 +24,7 @@ local query = variable.query;
     ||| % this,
 
     default: |||
-      %(base)s,
+      %(base)s
     ||| % this,
 
     withProject: |||
@@ -110,7 +112,7 @@ local query = variable.query;
     project:
       query.new(
         'project',
-        'label_values(argocd_app_info{%(cluster)s, %(namespace)s, %(job)s, %(dest_server)s}, project)' % defaultFilters
+        'label_values(argocd_app_info{%(cluster)s, %(namespace)s, %(job)s, %(kubernetesCluster)s}, project)' % defaultFilters
       ) +
       query.withDatasourceFromVariable(this.datasource) +
       query.withSort() +

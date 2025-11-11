@@ -31,7 +31,7 @@ local annotation = g.dashboard.annotation;
     notificationsOverviewDashboardUrl: '%s/d/%s/argocd-notifications-overview' % [self.grafanaUrl, self.notificationsOverviewDashboardUid],
 
     dashboardIds: {
-      'argo-cd-operational-overview': 'argo-cd-operational-overview-kask',
+      'argo-cd-operational-overview': 'argo-cd-operational-overview-kask2',
       'argo-cd-application-overview': 'argo-cd-application-overview-kask',
       'argo-cd-notifications-overview': 'argo-cd-notifications-overview-kask',
     },

@@ -333,12 +333,14 @@
                      "job": true
                   },
                   "indexByName": {
-                     "health_status": 2,
-                     "name": 0,
-                     "project": 1
+                     "exported_namespace": 0,
+                     "health_status": 3,
+                     "name": 1,
+                     "project": 2
                   },
                   "renameByName": {
                      "dest_server": "Cluster",
+                     "exported_namespace": "Application Namespace",
                      "health_status": "Health Status",
                      "job": "Job",
                      "name": "Application",
@@ -439,16 +441,18 @@
                      "job": true
                   },
                   "indexByName": {
-                     "name": 0,
-                     "project": 1,
-                     "sync_status": 2
+                     "exported_namespace": 0,
+                     "health_status": 3,
+                     "name": 1,
+                     "project": 2
                   },
                   "renameByName": {
                      "dest_server": "Cluster",
+                     "exported_namespace": "Application Namespace",
+                     "health_status": "Health Status",
                      "job": "Job",
                      "name": "Application",
-                     "project": "Project",
-                     "sync_status": "Sync Status"
+                     "project": "Project"
                   }
                }
             }
@@ -923,11 +927,25 @@
                "type": "prometheus",
                "uid": "${datasource}"
             },
+            "includeAll": true,
+            "label": "Application Namespace",
+            "multi": true,
+            "name": "exported_namespace",
+            "query": "label_values(argocd_app_info{cluster=\"$cluster\", namespace=~\"$namespace\", job=~\"$job\", dest_server=~\"$kubernetes_cluster\", project=~\"$project\"}, exported_namespace)",
+            "refresh": 2,
+            "sort": 1,
+            "type": "query"
+         },
+         {
+            "datasource": {
+               "type": "prometheus",
+               "uid": "${datasource}"
+            },
             "includeAll": false,
             "label": "Application",
             "multi": true,
             "name": "application",
-            "query": "label_values(argocd_app_info{cluster=\"$cluster\", namespace=~\"$namespace\", job=~\"$job\", dest_server=~\"$kubernetes_cluster\", project=~\"$project\"}, name)",
+            "query": "label_values(argocd_app_info{cluster=\"$cluster\", namespace=~\"$namespace\", job=~\"$job\", dest_server=~\"$kubernetes_cluster\", project=~\"$project\", exporterd_namespace=~\"$exported_namespace\"}, name)",
             "refresh": 2,
             "sort": 1,
             "type": "query"
