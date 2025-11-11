@@ -3,6 +3,8 @@ local annotation = g.dashboard.annotation;
 
 {
   _config+:: {
+    local this = self,
+
     // Bypasses grafana.com/dashboards validator
     bypassDashboardValidation: {
       __inputs: [],
@@ -27,6 +29,17 @@ local annotation = g.dashboard.annotation;
 
     applicationOverviewDashboardUrl: '%s/d/%s/argocd-application-overview' % [self.grafanaUrl, self.applicationOverviewDashboardUid],
     notificationsOverviewDashboardUrl: '%s/d/%s/argocd-notifications-overview' % [self.grafanaUrl, self.notificationsOverviewDashboardUid],
+
+    dashboardIds: {
+      'argo-cd-operational-overview': 'argo-cd-operational-overview-kask',
+      'argo-cd-application-overview': 'argo-cd-application-overview-kask',
+      'argo-cd-notifications-overview': 'argo-cd-notifications-overview-kask',
+    },
+    dashboardUrls: {
+      'argo-cd-operational-overview': '%s/d/%s/argocd-operational-overview' % [this.grafanaUrl, this.dashboardIds['argo-cd-operational-overview']],
+      'argo-cd-application-overview': '%s/d/%s/argocd-application-overview' % [this.grafanaUrl, this.dashboardIds['argo-cd-application-overview']],
+      'argo-cd-notifications-overview': '%s/d/%s/argocd-notifications-overview' % [this.grafanaUrl, this.dashboardIds['argo-cd-notifications-overview']],
+    },
 
     tags: ['ci/cd', 'argo-cd'],
 

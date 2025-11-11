@@ -114,10 +114,23 @@ local tbOverride = tbStandardOptions.override;
       query.refresh.onLoad() +
       query.refresh.onTime(),
 
+    local applicationNamespaceVariable =
+      query.new(
+        'exported_namespace',
+        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job", dest_server=~"$kubernetes_cluster", project=~"$project"}, exported_namespace)' % $._config
+      ) +
+      query.withDatasourceFromVariable(datasourceVariable) +
+      query.withSort(1) +
+      query.generalOptions.withLabel('Application Namespace') +
+      query.selectionOptions.withMulti(true) +
+      query.selectionOptions.withIncludeAll(true) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
+
     local applicationVariable =
       query.new(
         'application',
-        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job", dest_server=~"$kubernetes_cluster", project=~"$project"}, name)' % $._config
+        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job", dest_server=~"$kubernetes_cluster", project=~"$project", exporterd_namespace=~"$exported_namespace"}, name)' % $._config
       ) +
       query.withDatasourceFromVariable(datasourceVariable) +
       query.withSort(1) +
@@ -134,6 +147,7 @@ local tbOverride = tbStandardOptions.override;
       jobVariable,
       kubernetesClusterVariable,
       projectVariable,
+      applicationNamespaceVariable,
       applicationVariable,
     ],
 
@@ -335,12 +349,14 @@ local tbOverride = tbStandardOptions.override;
               dest_server: 'Cluster',
               project: 'Project',
               name: 'Application',
+              exported_namespace: 'Application Namespace',
               health_status: 'Health Status',
             },
             indexByName: {
-              name: 0,
-              project: 1,
-              health_status: 2,
+              exported_namespace: 0,
+              name: 1,
+              project: 2,
+              health_status: 3,
             },
             excludeByName: {
               Time: true,
@@ -407,12 +423,14 @@ local tbOverride = tbStandardOptions.override;
               dest_server: 'Cluster',
               project: 'Project',
               name: 'Application',
-              sync_status: 'Sync Status',
+              exported_namespace: 'Application Namespace',
+              health_status: 'Health Status',
             },
             indexByName: {
-              name: 0,
-              project: 1,
-              sync_status: 2,
+              exported_namespace: 0,
+              name: 1,
+              project: 2,
+              health_status: 3,
             },
             excludeByName: {
               Time: true,
