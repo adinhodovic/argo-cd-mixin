@@ -1,15 +1,6 @@
-local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
-local annotation = g.dashboard.annotation;
-
 {
   _config+:: {
     local this = self,
-
-    // Bypasses grafana.com/dashboards validator
-    bypassDashboardValidation: {
-      __inputs: [],
-      __requires: [],
-    },
 
     argoCdSelector: 'job=~".*"',
 
@@ -23,15 +14,8 @@ local annotation = g.dashboard.annotation;
     grafanaUrl: 'https://grafana.com',
     argoCdUrl: 'https://argocd.com',
 
-    operationalOverviewDashboardUid: 'argo-cd-operational-overview-kask',
-    applicationOverviewDashboardUid: 'argo-cd-application-overview-kask',
-    notificationsOverviewDashboardUid: 'argo-cd-notifications-overview-kask',
-
-    applicationOverviewDashboardUrl: '%s/d/%s/argocd-application-overview' % [self.grafanaUrl, self.applicationOverviewDashboardUid],
-    notificationsOverviewDashboardUrl: '%s/d/%s/argocd-notifications-overview' % [self.grafanaUrl, self.notificationsOverviewDashboardUid],
-
     dashboardIds: {
-      'argo-cd-operational-overview': 'argo-cd-operational-overview-kask2',
+      'argo-cd-operational-overview': 'argo-cd-operational-overview-kask',
       'argo-cd-application-overview': 'argo-cd-application-overview-kask',
       'argo-cd-notifications-overview': 'argo-cd-notifications-overview-kask',
     },
@@ -70,15 +54,6 @@ local annotation = g.dashboard.annotation;
     // List of applications to ignore in the unknown alert
     argoCdAppUnknownIgnoredApps: '',
 
-    // Custom annotations to display in graphs
-    annotation: {
-      enabled: false,
-      name: 'Custom Annotation',
-      datasource: '-- Grafana --',
-      iconColor: 'green',
-      tags: [],
-    },
-
     // Render ArgoCD badges in the dashboards
     // []struct{}
     // [
@@ -91,14 +66,14 @@ local annotation = g.dashboard.annotation;
     // ]
     applications: [],
 
-    customAnnotation:: if $._config.annotation.enabled then
-      annotation.withName($._config.annotation.name) +
-      annotation.withIconColor($._config.annotation.iconColor) +
-      annotation.withHide(false) +
-      annotation.datasource.withUid($._config.annotation.datasource) +
-      annotation.target.withMatchAny(true) +
-      annotation.target.withTags($._config.annotation.tags) +
-      annotation.target.withType('tags')
-    else {},
+    // Custom annotations to display in graphs
+    annotation: {
+      enabled: false,
+      name: 'Custom Annotation',
+      tags: [],
+      datasource: '-- Grafana --',
+      iconColor: 'blue',
+      type: 'tags',
+    },
   },
 }

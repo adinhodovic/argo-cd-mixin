@@ -7,6 +7,11 @@ local row = g.panel.row;
 local grid = g.util.grid;
 
 local tablePanel = g.panel.table;
+local pieChartPanel = g.panel.pieChart;
+
+// Pie Chart
+local pcStandardOptions = pieChartPanel.standardOptions;
+local pcOverride = pcStandardOptions.override;
 
 // Table
 local tbStandardOptions = tablePanel.standardOptions;
@@ -15,7 +20,6 @@ local tbPanelOptions = tablePanel.panelOptions;
 local tbOverride = tbStandardOptions.override;
 
 {
-
   local dashboardName = 'argo-cd-operational-overview',
   grafanaDashboards+:: {
     ['%s.json' % dashboardName]:
@@ -94,6 +98,7 @@ local tbOverride = tbStandardOptions.override;
               )
             )
           ) by (job, dest_server, project, name)
+          > 0
         ||| % defaultFilters,
 
         syncFailures: |||
@@ -107,6 +112,7 @@ local tbOverride = tbStandardOptions.override;
               )
             )
           ) by (job, dest_server, project, name, phase)
+          > 0
         ||| % defaultFilters,
 
         reconcilationActivity: |||
@@ -256,6 +262,23 @@ local tbOverride = tbStandardOptions.override;
             queries.healthStatus,
             '{{ health_status }}',
             description='The distribution of application health statuses managed by ArgoCD.',
+            overrides=[
+              pcOverride.byName.new('Synced') +
+              pcOverride.byName.withPropertiesFromOptions(
+                pcStandardOptions.color.withMode('fixed') +
+                pcStandardOptions.color.withFixedColor('green')
+              ),
+              pcOverride.byName.new('OutOfSync') +
+              pcOverride.byName.withPropertiesFromOptions(
+                pcStandardOptions.color.withMode('fixed') +
+                pcStandardOptions.color.withFixedColor('red')
+              ),
+              pcOverride.byName.new('Unknown') +
+              pcOverride.byName.withPropertiesFromOptions(
+                pcStandardOptions.color.withMode('fixed') +
+                pcStandardOptions.color.withFixedColor('yellow')
+              ),
+            ]
           ),
 
         syncStatusPieChart:
@@ -265,6 +288,23 @@ local tbOverride = tbStandardOptions.override;
             queries.syncStatusQuery,
             '{{ sync_status }}',
             description='The distribution of application sync statuses managed by ArgoCD.',
+            overrides=[
+              pcOverride.byName.new('Synced') +
+              pcOverride.byName.withPropertiesFromOptions(
+                pcStandardOptions.color.withMode('fixed') +
+                pcStandardOptions.color.withFixedColor('green')
+              ),
+              pcOverride.byName.new('OutOfSync') +
+              pcOverride.byName.withPropertiesFromOptions(
+                pcStandardOptions.color.withMode('fixed') +
+                pcStandardOptions.color.withFixedColor('red')
+              ),
+              pcOverride.byName.new('Unknown') +
+              pcOverride.byName.withPropertiesFromOptions(
+                pcStandardOptions.color.withMode('fixed') +
+                pcStandardOptions.color.withFixedColor('yellow')
+              ),
+            ]
           ),
 
         appsTablePanel:
@@ -325,7 +365,7 @@ local tbOverride = tbStandardOptions.override;
             queries.syncActivity,
             '{{ project }}/{{ name }}',
             description='A timeseries panel showing sync activity for applications managed by ArgoCD.',
-            stack='normal'
+            stack='normal',
           ),
 
         syncFailuresTimeSeries:

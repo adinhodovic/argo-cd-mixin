@@ -16,6 +16,11 @@ local query = variable.query;
     // This is an ArgoCD Inconsistency
     kubernetesClusterServer: 'server=~"$kubernetes_cluster"',
     project: 'project=~"$project"',
+    // Applications
+    applicationNamespace: 'exported_namespace=~"$application_namespace"',
+    application: 'name=~"$application"',
+    // Notifications
+    exportedService: 'exported_service=~"$exported_service"',
 
     base: |||
       %(cluster)s,
@@ -31,6 +36,18 @@ local query = variable.query;
       %(default)s,
       %(kubernetesCluster)s,
       %(project)s
+    ||| % this,
+
+    withApplication: |||
+      %(withProject)s,
+      %(applicationNamespace)s,
+      %(application)s
+    ||| % this,
+
+    // Notifications
+    withNotifications: |||
+      %(default)s,
+      %(exportedService)s
     ||| % this,
   },
 
@@ -86,8 +103,9 @@ local query = variable.query;
     job:
       query.new(
         'job',
-        'label_values(argocd_app_info{%(cluster)s, %(namespace)s}, job)' % defaultFilters
+        'label_values(job)' % defaultFilters
       ) +
+      query.withRegex('argo.*') +
       query.withDatasourceFromVariable(this.datasource) +
       query.withSort() +
       query.generalOptions.withLabel('Job') +
@@ -121,5 +139,59 @@ local query = variable.query;
       query.selectionOptions.withIncludeAll(true) +
       query.refresh.onLoad() +
       query.refresh.onTime(),
+
+    // Application Variables
+    applicationNamespace:
+      query.new(
+        'application_namespace',
+        'label_values(argocd_app_info{%(cluster)s, %(namespace)s, %(job)s, %(kubernetesCluster)s, %(project)s}, exported_namespace)' % defaultFilters
+      ) +
+      query.withDatasourceFromVariable(this.datasource) +
+      query.withSort() +
+      query.generalOptions.withLabel('Application Namespace') +
+      query.selectionOptions.withMulti(true) +
+      query.selectionOptions.withIncludeAll(true) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
+
+    application:
+      query.new(
+        'application',
+        'label_values(argocd_app_info{%(cluster)s, %(namespace)s, %(job)s, %(kubernetesCluster)s, %(project)s, %(applicationNamespace)s}, name)' % defaultFilters
+      ) +
+      query.withDatasourceFromVariable(this.datasource) +
+      query.withSort() +
+      query.generalOptions.withLabel('Application') +
+      query.selectionOptions.withMulti(true) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
+
+    // Notifications Variables
+    jobNotifications:
+      query.new(
+        'job',
+        'label_values(argocd_notifications_deliveries_total{%(cluster)s, %(namespace)s}, job)' % defaultFilters
+      ) +
+      query.withDatasourceFromVariable(this.datasource) +
+      query.withSort() +
+      query.generalOptions.withLabel('Job') +
+      query.selectionOptions.withMulti(true) +
+      query.selectionOptions.withIncludeAll(true) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
+
+    notificationsExportedService:
+      query.new(
+        'exported_service',
+        'label_values(argocd_notifications_deliveries_total{%(cluster)s, %(namespace)s, %(job)s}, exported_service)' % defaultFilters
+      ) +
+      query.withDatasourceFromVariable(this.datasource) +
+      query.withSort() +
+      query.generalOptions.withLabel('Notifications Service') +
+      query.selectionOptions.withMulti(true) +
+      query.selectionOptions.withIncludeAll(true) +
+      query.refresh.onLoad() +
+      query.refresh.onTime(),
+
   },
 }

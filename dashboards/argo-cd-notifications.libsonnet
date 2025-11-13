@@ -1,226 +1,110 @@
+local mixinUtils = import 'github.com/adinhodovic/mixin-utils/utils.libsonnet';
 local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
+local util = import 'util.libsonnet';
+
 local dashboard = g.dashboard;
 local row = g.panel.row;
 local grid = g.util.grid;
 
-local timeSeriesPanel = g.panel.timeSeries;
-
-local variable = dashboard.variable;
-local datasource = variable.datasource;
-local query = variable.query;
-local prometheus = g.query.prometheus;
-
-// Timeseries
-local tsOptions = timeSeriesPanel.options;
-local tsStandardOptions = timeSeriesPanel.standardOptions;
-local tsQueryOptions = timeSeriesPanel.queryOptions;
-local tsFieldConfig = timeSeriesPanel.fieldConfig;
-local tsCustom = tsFieldConfig.defaults.custom;
-local tsLegend = tsOptions.legend;
-
 {
+  local dashboardName = 'argo-cd-notifications-overview',
   grafanaDashboards+:: {
+    ['%s.json' % dashboardName]:
 
-    local datasourceVariable =
-      datasource.new(
-        'datasource',
-        'prometheus',
-      ) +
-      datasource.generalOptions.withLabel('Data source') +
-      {
-        current: {
-          selected: true,
-          text: $._config.datasourceName,
-          value: $._config.datasourceName,
-        },
-      },
+      local defaultVariables = util.variables($._config);
 
-    local clusterVariable =
-      query.new(
-        $._config.clusterLabel,
-        'label_values(argocd_notifications_deliveries_total{}, cluster)' % $._config,
-      ) +
-      query.withDatasourceFromVariable(datasourceVariable) +
-      query.withSort() +
-      query.generalOptions.withLabel('Cluster') +
-      query.refresh.onLoad() +
-      query.refresh.onTime() +
-      (
-        if $._config.showMultiCluster
-        then query.generalOptions.showOnDashboard.withLabelAndValue()
-        else query.generalOptions.showOnDashboard.withNothing()
-      ),
+      local variables = [
+        defaultVariables.datasource,
+        defaultVariables.cluster,
+        defaultVariables.namespace,
+        defaultVariables.jobNotifications,
+        defaultVariables.notificationsExportedService,
+      ];
 
-    local namespaceVariable =
-      query.new(
-        'namespace',
-        'label_values(argocd_notifications_deliveries_total{%(clusterLabel)s="$cluster"}, namespace)' % $._config,
-      ) +
-      query.withDatasourceFromVariable(datasourceVariable) +
-      query.withSort(1) +
-      query.generalOptions.withLabel('Namespace') +
-      query.selectionOptions.withMulti(true) +
-      query.selectionOptions.withIncludeAll(true) +
-      query.refresh.onLoad() +
-      query.refresh.onTime(),
+      local defaultFilters = util.filters($._config);
+      local queries = {
+        deliveriesCount: |||
+          sum(
+            increase(
+              argocd_notifications_deliveries_total{
+                %(withNotifications)s
+              }[$__rate_interval]
+            )
+          ) by (exported_service, succeeded)
+        ||| % defaultFilters,
 
-    local jobVariable =
-      query.new(
-        'job',
-        'label_values(argocd_notifications_deliveries_total{%(clusterLabel)s="$cluster", namespace=~"$namespace"}, job)' % $._config,
-      ) +
-      query.withDatasourceFromVariable(datasourceVariable) +
-      query.withSort(1) +
-      query.generalOptions.withLabel('Job') +
-      query.selectionOptions.withMulti(true) +
-      query.selectionOptions.withIncludeAll(true, '.*') +
-      query.refresh.onLoad() +
-      query.refresh.onTime(),
+        triggerEvalCount: |||
+          sum(
+            increase(
+              argocd_notifications_trigger_eval_total{
+                %(default)s
+              }[$__rate_interval]
+            )
+          ) by (name, triggered)
+        ||| % defaultFilters,
+      };
 
-    local exportedServiceVariable =
-      query.new(
-        'exported_service',
-        'label_values(argocd_notifications_deliveries_total{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job"}, exported_service)' % $._config,
-      ) +
-      query.withDatasourceFromVariable(datasourceVariable) +
-      query.withSort(1) +
-      query.generalOptions.withLabel('Notifications Service') +
-      query.selectionOptions.withMulti(true) +
-      query.selectionOptions.withIncludeAll(true) +
-      query.refresh.onLoad() +
-      query.refresh.onTime(),
 
-    local variables = [
-      datasourceVariable,
-      clusterVariable,
-      namespaceVariable,
-      jobVariable,
-      exportedServiceVariable,
-    ],
+      local panels = {
+        deliveriesTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Notification Deliveries',
+            'short',
+            queries.deliveriesCount,
+            '{{ exported_service }} - Succeeded: {{ succeeded }}',
+            description='A timeseries panel showing the count of notification deliveries by exported service and success status.',
+            stack='normal'
+          ),
 
-    local commonLabels = |||
-      %(clusterLabel)s="$cluster",
-      namespace=~'$namespace',
-      job=~'$job',
-    ||| % $._config,
+        triggerEvalTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Trigger Evaluations',
+            'short',
+            queries.triggerEvalCount,
+            '{{ name }} - Triggered: {{ triggered }}',
+            description='A timeseries panel showing the count of trigger evaluations by name and triggered status.',
+            stack='normal'
+          ),
+      };
 
-    local deliveriesQuery = |||
-      sum(
-        round(
-          increase(
-            argocd_notifications_deliveries_total{
-              %s
-              exported_service=~"$exported_service",
-            }[$__rate_interval]
-          )
-        )
-      ) by (job, exported_service, succeeded)
-    ||| % commonLabels,
-
-    local deliveriesTimeSeriesPanel =
-      timeSeriesPanel.new(
-        'Notification Deliveries',
-      ) +
-      tsQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          deliveriesQuery,
-        ) +
-        prometheus.withLegendFormat(
-          '{{ exported_service }} - Succeeded: {{ succeeded }}'
-        )
-      ) +
-      tsStandardOptions.withUnit('short') +
-      tsOptions.tooltip.withMode('multi') +
-      tsOptions.tooltip.withSort('desc') +
-      tsLegend.withShowLegend(true) +
-      tsLegend.withDisplayMode('table') +
-      tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last', 'max']) +
-      tsLegend.withSortBy('Last') +
-      tsLegend.withSortDesc(true) +
-      tsCustom.withFillOpacity(10),
-
-    local triggerEvalQuery = |||
-      sum(
-        round(
-          increase(
-            argocd_notifications_trigger_eval_total{
-              %s
-            }[$__rate_interval]
-          )
-        )
-      ) by (job, name, triggered)
-    ||| % commonLabels,
-
-    local triggerEvalTimeSeriesPanel =
-      timeSeriesPanel.new(
-        'Trigger Evaluations',
-      ) +
-      tsQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          triggerEvalQuery,
-        ) +
-        prometheus.withLegendFormat(
-          '{{ name }} - Triggered: {{ triggered }}',
-        )
-      ) +
-      tsStandardOptions.withUnit('short') +
-      tsOptions.tooltip.withMode('multi') +
-      tsOptions.tooltip.withSort('desc') +
-      tsLegend.withShowLegend(true) +
-      tsLegend.withDisplayMode('table') +
-      tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last', 'max']) +
-      tsLegend.withSortBy('Last') +
-      tsLegend.withSortDesc(true) +
-      tsCustom.withFillOpacity(10),
-
-    local summaryRow =
-      row.new(
-        title='Summary'
-      ),
-
-    'argo-cd-notifications-overview.json':
-      $._config.bypassDashboardValidation +
-      dashboard.new(
-        'ArgoCD / Notifications / Overview',
-      ) +
-      dashboard.withDescription('A dashboard that monitors ArgoCD notifications. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin).') +
-      dashboard.withUid($._config.notificationsOverviewDashboardUid) +
-      dashboard.withTags($._config.tags) +
-      dashboard.withTimezone('utc') +
-      dashboard.withEditable(true) +
-      dashboard.time.withFrom('now-2d') +
-      dashboard.time.withTo('now') +
-      dashboard.withVariables(variables) +
-      dashboard.withLinks(
+      local rows =
         [
-          dashboard.link.dashboards.new('ArgoCD Dashboards', $._config.tags) +
-          dashboard.link.link.options.withTargetBlank(true),
-        ]
-      ) +
-      dashboard.withPanels(
-        [
-          summaryRow +
+          row.new('Summary') +
           row.gridPos.withX(0) +
           row.gridPos.withY(0) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1),
         ] +
-        grid.makeGrid(
+        grid.wrapPanels(
           [
-            deliveriesTimeSeriesPanel,
-            triggerEvalTimeSeriesPanel,
+            panels.deliveriesTimeSeries,
+            panels.triggerEvalTimeSeries,
           ],
-          panelWidth=12,
+          panelWidth=24,
           panelHeight=8,
           startY=1
-        )
+        );
+
+      mixinUtils.dashboards.bypassDashboardValidation +
+      dashboard.new(
+        'ArgoCD / Notifications / Overview',
       ) +
-      if $._config.annotation.enabled then
-        dashboard.withAnnotations($._config.customAnnotation)
-      else {},
+      dashboard.withDescription('A dashboard that monitors ArgoCD with a focus on the notifications. %s' % mixinUtils.dashboards.dashboardDescriptionLink('argo-cd-mixin', 'https://github.com/adinhodovic/argo-cd-mixin')) +
+      dashboard.withUid($._config.dashboardIds[dashboardName]) +
+      dashboard.withTags($._config.tags) +
+      dashboard.withTimezone('utc') +
+      dashboard.withEditable(false) +
+      dashboard.time.withFrom('now-6h') +
+      dashboard.time.withTo('now') +
+      dashboard.withVariables(variables) +
+      dashboard.withLinks(
+        mixinUtils.dashboards.dashboardLinks('ArgoCD', $._config, dropdown=true)
+      ) +
+      dashboard.withPanels(
+        rows
+      ) +
+      dashboard.withAnnotations(
+        mixinUtils.dashboards.annotations($._config, defaultFilters)
+      ),
   },
 }
