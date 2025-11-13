@@ -26,7 +26,7 @@
             annotations: {
               summary: 'An ArgoCD Application has Failed to Sync.',
               description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has failed to sync with the status {{ $labels.phase }} the past %s.' % $._config.argoCdAppSyncInterval,
-              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
+              dashboard_url: $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
             },
           },
           if $._config.argoCdAppUnhealthyEnabled then {
@@ -48,7 +48,7 @@
             annotations: {
               summary: 'An ArgoCD Application is Unhealthy.',
               description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status {{ $labels.health_status }} for the past %s.' % $._config.argoCdAppUnhealthyFor,
-              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
+              dashboard_url: $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
             },
           },
           if $._config.argoCdAppOutOfSyncEnabled then {
@@ -69,7 +69,7 @@
             annotations: {
               summary: 'An ArgoCD Application is Out Of Sync.',
               description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status {{ $labels.sync_status }} for the past %s.' % $._config.argoCdAppOutOfSyncFor,
-              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
+              dashboard_url: $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
             },
           },
           if $._config.argoCdAppUnknownEnabled then {
@@ -91,7 +91,7 @@
             annotations: {
               summary: 'An ArgoCD Application is in a Unknown state.',
               description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is in a `Unknown` state for the past %s.' % $._config.argoCdAppOutOfSyncFor,
-              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
+              dashboard_url: $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
             },
           },
           if $._config.argoCdAppAutoSyncDisabledEnabled then {
@@ -113,7 +113,7 @@
             annotations: {
               summary: 'An ArgoCD Application has AutoSync Disabled.',
               description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has autosync disabled for the past %s.' % $._config.argoCdAppAutoSyncDisabledFor,
-              dashboard_url: $._config.applicationOverviewDashboardUrl + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
+              dashboard_url: $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
             },
           },
           if $._config.argoCdNotificationDeliveryEnabled then {
@@ -137,7 +137,7 @@
             annotations: {
               summary: 'ArgoCD Notification Delivery Failed.',
               description: 'The notification job {{ $labels.job }} has failed to deliver to {{ $labels.exported_service }} for the past %s.' % $._config.argoCdNotificationDeliveryInterval,
-              dashboard_url: $._config.notificationsOverviewDashboardUrl + '?var-job={{ $labels.job }}&var-exported_service={{ $labels.exported_service }}' + clusterVariableQueryString,
+              dashboard_url: $._config.dashboardUrls['argo-cd-notifications-overview'] + '?var-job={{ $labels.job }}&var-exported_service={{ $labels.exported_service }}' + clusterVariableQueryString,
             },
           },
         ]),

@@ -1,756 +1,537 @@
+local mixinUtils = import 'github.com/adinhodovic/mixin-utils/utils.libsonnet';
 local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
+local util = import 'util.libsonnet';
+
 local dashboard = g.dashboard;
 local row = g.panel.row;
 local grid = g.util.grid;
 
 local tablePanel = g.panel.table;
-local timeSeriesPanel = g.panel.timeSeries;
 local textPanel = g.panel.text;
 
-local variable = dashboard.variable;
-local datasource = variable.datasource;
-local query = variable.query;
-local prometheus = g.query.prometheus;
-
-// Timeseries
-local tsOptions = timeSeriesPanel.options;
-local tsStandardOptions = timeSeriesPanel.standardOptions;
-local tsQueryOptions = timeSeriesPanel.queryOptions;
-local tsFieldConfig = timeSeriesPanel.fieldConfig;
-local tsCustom = tsFieldConfig.defaults.custom;
-local tsLegend = tsOptions.legend;
-
 // Table
-local tbOptions = tablePanel.options;
 local tbStandardOptions = tablePanel.standardOptions;
-local tbPanelOptions = tablePanel.panelOptions;
 local tbQueryOptions = tablePanel.queryOptions;
-local tbFieldConfig = tablePanel.fieldConfig;
-local tbCustom = tbFieldConfig.defaults.custom;
+local tbPanelOptions = tablePanel.panelOptions;
 local tbOverride = tbStandardOptions.override;
+local tbCustom = tablePanel.fieldConfig.defaults.custom;
 
 {
+  local dashboardName = 'argo-cd-application-overview',
   grafanaDashboards+:: {
+    ['%s.json' % dashboardName]:
 
-    local datasourceVariable =
-      datasource.new(
-        'datasource',
-        'prometheus',
-      ) +
-      datasource.generalOptions.withLabel('Data source') +
-      {
-        current: {
-          selected: true,
-          text: $._config.datasourceName,
-          value: $._config.datasourceName,
-        },
-      },
+      local defaultVariables = util.variables($._config);
 
-    local clusterVariable =
-      query.new(
-        $._config.clusterLabel,
-        'label_values(argocd_app_info{}, cluster)' % $._config,
-      ) +
-      query.withDatasourceFromVariable(datasourceVariable) +
-      query.withSort() +
-      query.generalOptions.withLabel('Cluster') +
-      query.refresh.onLoad() +
-      query.refresh.onTime() +
-      (
-        if $._config.showMultiCluster
-        then query.generalOptions.showOnDashboard.withLabelAndValue()
-        else query.generalOptions.showOnDashboard.withNothing()
-      ),
+      local variables = [
+        defaultVariables.datasource,
+        defaultVariables.cluster,
+        defaultVariables.namespace,
+        defaultVariables.job,
+        defaultVariables.kubernetesCluster,
+        defaultVariables.project,
+        defaultVariables.applicationNamespace,
+        defaultVariables.application,
+      ];
 
-    local namespaceVariable =
-      query.new(
-        'namespace',
-        'label_values(argocd_app_info{%(clusterLabel)s="$cluster"}, namespace)' % $._config,
-      ) +
-      query.withDatasourceFromVariable(datasourceVariable) +
-      query.withSort(1) +
-      query.generalOptions.withLabel('Namespace') +
-      query.selectionOptions.withMulti(true) +
-      query.selectionOptions.withIncludeAll(true) +
-      query.refresh.onLoad() +
-      query.refresh.onTime(),
+      local defaultFilters = util.filters($._config);
+      local queries = {
+        appHealthStatusCount: |||
+          sum(
+            argocd_app_info{
+              %(withProject)s
+            }
+          ) by (job, project, health_status)
+        ||| % defaultFilters,
 
-    local jobVariable =
-      query.new(
-        'job',
-        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace"}, job)' % $._config,
-      ) +
-      query.withDatasourceFromVariable(datasourceVariable) +
-      query.withSort(1) +
-      query.generalOptions.withLabel('Job') +
-      query.selectionOptions.withMulti(true) +
-      query.selectionOptions.withIncludeAll(true) +
-      query.refresh.onLoad() +
-      query.refresh.onTime(),
+        appSyncStatusCount: |||
+          sum(
+            argocd_app_info{
+              %(withProject)s
+            }
+          ) by (job, project, sync_status)
+        ||| % defaultFilters,
 
-    local kubernetesClusterVariable =
-      query.new(
-        'kubernetes_cluster',
-        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job"}, dest_server)' % $._config,
-      ) +
-      query.withDatasourceFromVariable(datasourceVariable) +
-      query.withSort(1) +
-      query.generalOptions.withLabel('Kubernetes Cluster') +
-      query.selectionOptions.withMulti(true) +
-      query.selectionOptions.withIncludeAll(true) +
-      query.refresh.onLoad() +
-      query.refresh.onTime(),
+        appSyncCount: |||
+          sum(
+            round(
+              increase(
+                argocd_app_sync_total{
+                  %(withProject)s
+                }[$__rate_interval]
+              )
+            )
+          ) by (job, project, phase)
+        ||| % defaultFilters,
 
-    local projectVariable =
-      query.new(
-        'project',
-        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job", dest_server=~"$kubernetes_cluster"}, project)' % $._config
-      ) +
-      query.withDatasourceFromVariable(datasourceVariable) +
-      query.withSort(1) +
-      query.generalOptions.withLabel('Project') +
-      query.selectionOptions.withMulti(true) +
-      query.selectionOptions.withIncludeAll(true) +
-      query.refresh.onLoad() +
-      query.refresh.onTime(),
+        appAutoSyncStatusCount: |||
+          sum(
+            argocd_app_info{
+              %(withProject)s
+            }
+          ) by (job, project, autosync_enabled)
+        ||| % defaultFilters,
 
-    local applicationVariable =
-      query.new(
-        'application',
-        'label_values(argocd_app_info{%(clusterLabel)s="$cluster", namespace=~"$namespace", job=~"$job", dest_server=~"$kubernetes_cluster", project=~"$project"}, name)' % $._config
-      ) +
-      query.withDatasourceFromVariable(datasourceVariable) +
-      query.withSort(1) +
-      query.generalOptions.withLabel('Application') +
-      query.selectionOptions.withMulti(true) +
-      query.selectionOptions.withIncludeAll(false) +
-      query.refresh.onLoad() +
-      query.refresh.onTime(),
+        appUnHealthyCount: |||
+          sum(
+            argocd_app_info{
+              %(withProject)s,
+              health_status!~"Healthy|Progressing"
+            }
+          ) by (job, dest_server, project, name, health_status) > 0
+        ||| % defaultFilters,
 
-    local variables = [
-      datasourceVariable,
-      clusterVariable,
-      namespaceVariable,
-      jobVariable,
-      kubernetesClusterVariable,
-      projectVariable,
-      applicationVariable,
-    ],
+        appOutOfSyncCount: |||
+          sum(
+            argocd_app_info{
+              %(withProject)s,
+              sync_status!="Synced"
+            }
+          ) by (job, dest_server, project, name, sync_status) > 0
+        ||| % defaultFilters,
 
-    local commonLabels = |||
-      %(clusterLabel)s="$cluster",
-      namespace=~'$namespace',
-      job=~'$job',
-      dest_server=~'$kubernetes_cluster',
-      project=~'$project',
-    ||| % $._config,
+        appSyncFailed7dCount: |||
+          sum(
+            round(
+              increase(
+                argocd_app_sync_total{
+                  %(withProject)s,
+                  phase!="Succeeded"
+                }[7d]
+              )
+            )
+          ) by (job, dest_server, project, name, phase) > 0
+        ||| % defaultFilters,
 
-    local appHealthStatusQuery = |||
-      sum(
-        argocd_app_info{
-          %s
-        }
-      ) by (job, project, health_status)
-    ||| % commonLabels,
+        appAutoSyncDisabledCount: |||
+          sum(
+            argocd_app_info{
+              %(withProject)s,
+              autosync_enabled!="true"
+            }
+          ) by (job, dest_server, project, name, autosync_enabled) > 0
+        ||| % defaultFilters,
 
-    local appHealthStatusTimeSeriesPanel =
-      timeSeriesPanel.new(
-        'Application Health Status',
-      ) +
-      tsQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          appHealthStatusQuery,
-        ) +
-        prometheus.withLegendFormat(
-          '{{ project }} - {{ health_status }}'
-        )
-      ) +
-      tsStandardOptions.withUnit('short') +
-      tsOptions.tooltip.withMode('multi') +
-      tsOptions.tooltip.withSort('desc') +
-      tsLegend.withShowLegend(true) +
-      tsLegend.withDisplayMode('table') +
-      tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last', 'max']) +
-      tsLegend.withSortBy('Last') +
-      tsLegend.withSortDesc(true) +
-      tsCustom.withFillOpacity(10),
+        appHealthStatusByAppCount: |||
+          sum(
+            argocd_app_info{
+              %(withApplication)s
+            }
+          ) by (namespace, job, dest_server, project, name, health_status)
+        ||| % defaultFilters,
 
-    local appSyncStatusQuery = |||
-      sum(
-        argocd_app_info{
-          %s
-        }
-      ) by (job, project, sync_status)
-    ||| % commonLabels,
+        appSyncStatusByAppCount: |||
+          sum(
+            argocd_app_info{
+              %(withApplication)s
+            }
+          ) by (namespace, job, dest_server, project, name, sync_status)
+        ||| % defaultFilters,
 
-    local appSyncStatusTimeSeriesPanel =
-      timeSeriesPanel.new(
-        'Application Sync Status',
-      ) +
-      tsQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          appSyncStatusQuery,
-        ) +
-        prometheus.withLegendFormat(
-          '{{ project }} - {{ sync_status }}',
-        )
-      ) +
-      tsStandardOptions.withUnit('short') +
-      tsOptions.tooltip.withMode('multi') +
-      tsOptions.tooltip.withSort('desc') +
-      tsLegend.withShowLegend(true) +
-      tsLegend.withDisplayMode('table') +
-      tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last', 'max']) +
-      tsLegend.withSortBy('Last') +
-      tsLegend.withSortDesc(true) +
-      tsCustom.withFillOpacity(10),
+        appSyncByAppCount: |||
+          sum(
+            round(
+              increase(
+                argocd_app_sync_total{
+                  %(withApplication)s
+                }[$__rate_interval]
+              )
+            )
+          ) by (namespace, job, dest_server, project, name, phase)
+        ||| % defaultFilters,
+      };
 
-    local appSyncQuery = |||
-      sum(
-        round(
-          increase(
-            argocd_app_sync_total{
+      local panels = {
+
+        appHealthStatusTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Application Health Status',
+            'short',
+            queries.appHealthStatusCount,
+            '{{ project }} - {{ health_status }}',
+            description='A timeseries panel showing the health status of applications managed by ArgoCD.',
+            stack='normal',
+            decimals=0
+          ),
+
+        appSyncStatusTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Application Sync Status',
+            'short',
+            queries.appSyncStatusCount,
+            '{{ project }} - {{ sync_status }}',
+            description='A timeseries panel showing the sync status of applications managed by ArgoCD.',
+            stack='normal',
+            decimals=0
+          ),
+
+        appSyncTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Application Syncs',
+            'short',
+            queries.appSyncCount,
+            '{{ project }} - {{ phase }}',
+            description='A timeseries panel showing the sync results of applications managed by ArgoCD.',
+            stack='normal',
+            decimals=0
+          ),
+
+        appAutoSyncStatusTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Application Auto Sync Enabled',
+            'short',
+            queries.appAutoSyncStatusCount,
+            '{{ project }} - {{ autosync_enabled }}',
+            description='A timeseries panel showing whether auto sync is enabled for applications managed by ArgoCD.',
+            stack='normal',
+            decimals=0
+          ),
+
+        appsDefined: std.length($._config.applications) != 0,
+        local appBadgeContent = [
+          '| %(name)s | %(environment)s | [![App Status](%(baseUrl)s/api/badge?name=%(applicationName)s&revision=true)](%(baseUrl)s/applications/%(applicationName)s) |' % application {
+            baseUrl: if std.objectHas(application, 'baseUrl') then application.baseUrl else $._config.argoCdUrl,
+            applicationName: if std.objectHas(application, 'applicationName') then application.applicationName else application.name,
+          }
+          for application in $._config.applications
+        ],
+        appBadgeTextPanel:
+          mixinUtils.dashboards.textPanel(
+            'Application Badges',
+            |||
+              | Application | Environment | Status |
+              | --- | --- | --- |
               %s
-            }[$__rate_interval]
-          )
-        )
-      ) by (job, project, phase)
-    ||| % commonLabels,
+            ||| % std.join('\n', appBadgeContent),
+            description='A panel displaying badges for quick access to ArgoCD applications.'
+          ),
 
-    local appSyncTimeSeriesPanel =
-      timeSeriesPanel.new(
-        'Application Syncs',
-      ) +
-      tsQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          appSyncQuery,
-        ) +
-        prometheus.withLegendFormat(
-          '{{ project }} - {{ phase }}',
-        )
-      ) +
-      tsStandardOptions.withUnit('short') +
-      tsOptions.tooltip.withMode('multi') +
-      tsOptions.tooltip.withSort('desc') +
-      tsLegend.withShowLegend(true) +
-      tsLegend.withDisplayMode('table') +
-      tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last', 'max']) +
-      tsLegend.withSortBy('Last') +
-      tsLegend.withSortDesc(true) +
-      tsCustom.withFillOpacity(10),
+        appsTablePanel:
+          mixinUtils.dashboards.tablePanel(
+            'Applications',
+            'short',
+            queries.appHealthStatusCount,
+            description='A table listing all applications managed by ArgoCD, along with their health and sync statuses.',
+            sortBy={ name: 'Application', desc: false },
+            transformations=[
+              tbQueryOptions.transformation.withId(
+                'organize'
+              ) +
+              tbQueryOptions.transformation.withOptions(
+                {
+                  renameByName: {
+                    job: 'Job',
+                    dest_server: 'Kubernetes Cluster',
+                    project: 'Project',
+                    name: 'Application',
+                    health_status: 'Health Status',
+                    sync_status: 'Sync Status',
+                  },
+                  indexByName: {
+                    name: 0,
+                    project: 1,
+                    health_status: 2,
+                    sync_status: 3,
+                  },
+                  excludeByName: {
+                    Time: true,
+                    job: true,
+                    dest_server: true,
+                    Value: true,
+                  },
+                }
+              ),
+            ],
+            overrides=[
+              tbOverride.byName.new('name') +
+              tbOverride.byName.withPropertiesFromOptions(
+                tbStandardOptions.withLinks(
+                  tbPanelOptions.link.withTitle('Go To Application') +
+                  tbPanelOptions.link.withType('dashboard') +
+                  tbPanelOptions.link.withUrl(
+                    '/d/%s/argo-cd-application-overview?&var-project=${__data.fields.Project}&var-application=${__value.raw}' % $._config.dashboardIds['argo-cd-application-overview']
+                  ) +
+                  tbPanelOptions.link.withTargetBlank(true)
+                )
+              ),
+            ],
+          ),
 
-    local appAutoSyncStatusQuery = |||
-      sum(
-        argocd_app_info{
-          %s
-        }
-      ) by (job, project, autosync_enabled)
-    ||| % commonLabels,
+        appUnealthyTable:
+          mixinUtils.dashboards.tablePanel(
+            'Unhealthy Applications',
+            'short',
+            queries.appUnHealthyCount,
+            description='A table listing all unhealthy applications managed by ArgoCD.',
+            sortBy={ name: 'Application', desc: false },
+            transformations=[
+              tbQueryOptions.transformation.withId(
+                'organize'
+              ) +
+              tbQueryOptions.transformation.withOptions(
+                {
+                  renameByName: {
+                    job: 'Job',
+                    dest_server: 'Cluster',
+                    project: 'Project',
+                    name: 'Application',
+                    exported_namespace: 'Application Namespace',
+                    health_status: 'Health Status',
+                  },
+                  indexByName: {
+                    exported_namespace: 0,
+                    name: 1,
+                    project: 2,
+                    health_status: 3,
+                  },
+                  excludeByName: {
+                    Time: true,
+                    job: true,
+                    dest_server: true,
+                    Value: true,
+                  },
+                }
+              ),
+            ],
+            overrides=[
+              tbOverride.byName.new('name') +
+              tbOverride.byName.withPropertiesFromOptions(
+                tbStandardOptions.withLinks(
+                  tbPanelOptions.link.withTitle('Go To Application') +
+                  tbPanelOptions.link.withUrl(
+                    $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
+                  ) +
+                  tbPanelOptions.link.withTargetBlank(true)
+                )
+              ),
+              tbOverride.byName.new('health_status') +
+              tbOverride.byName.withPropertiesFromOptions(
+                tbStandardOptions.color.withMode('fixed') +
+                tbStandardOptions.color.withFixedColor('yellow') +
+                tbCustom.withDisplayMode('color-background')
+              ),
+            ]
+          ),
 
-    local appAutoSyncStatusTimeSeriesPanel =
-      timeSeriesPanel.new(
-        'Application Auto Sync Enabled',
-      ) +
-      tsQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          appAutoSyncStatusQuery,
-        ) +
-        prometheus.withLegendFormat(
-          '{{ project }} - {{ autosync_enabled }}',
-        )
-      ) +
-      tsStandardOptions.withUnit('short') +
-      tsOptions.tooltip.withMode('multi') +
-      tsOptions.tooltip.withSort('desc') +
-      tsLegend.withShowLegend(true) +
-      tsLegend.withDisplayMode('table') +
-      tsLegend.withPlacement('right') +
-      tsLegend.withCalcs(['last', 'max']) +
-      tsLegend.withSortBy('Last') +
-      tsLegend.withSortDesc(true) +
-      tsCustom.withFillOpacity(10),
+        appOutOfSyncTable:
+          mixinUtils.dashboards.tablePanel(
+            'Out Of Sync Applications',
+            'short',
+            queries.appOutOfSyncCount,
+            description='A table listing all unhealthy applications managed by ArgoCD.',
+            sortBy={ name: 'Application', desc: false },
+            transformations=[
+              tbQueryOptions.transformation.withId(
+                'organize'
+              ) +
+              tbQueryOptions.transformation.withOptions(
+                {
+                  renameByName: {
+                    job: 'Job',
+                    dest_server: 'Cluster',
+                    project: 'Project',
+                    name: 'Application',
+                    sync_status: 'Sync Status',
+                  },
+                  indexByName: {
+                    name: 0,
+                    project: 1,
+                    sync_status: 2,
+                  },
+                  excludeByName: {
+                    Time: true,
+                    job: true,
+                    dest_server: true,
+                    Value: true,
+                  },
+                }
+              ),
+            ],
+            overrides=[
+              tbOverride.byName.new('name') +
+              tbOverride.byName.withPropertiesFromOptions(
+                tbStandardOptions.withLinks(
+                  tbPanelOptions.link.withTitle('Go To Application') +
+                  tbPanelOptions.link.withUrl(
+                    $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
+                  ) +
+                  tbPanelOptions.link.withTargetBlank(true)
+                )
+              ),
+              tbOverride.byName.new('sync_status') +
+              tbOverride.byName.withPropertiesFromOptions(
+                tbStandardOptions.color.withMode('fixed') +
+                tbStandardOptions.color.withFixedColor('yellow') +
+                tbCustom.withDisplayMode('color-background')
+              ),
+            ]
+          ),
 
-    local appsDefined = std.length($._config.applications) != 0,
-    local appBadgeContent = [
-      '| %(name)s | %(environment)s | [![App Status](%(baseUrl)s/api/badge?name=%(applicationName)s&revision=true)](%(baseUrl)s/applications/%(applicationName)s) |' % application {
-        baseUrl: if std.objectHas(application, 'baseUrl') then application.baseUrl else $._config.argoCdUrl,
-        applicationName: if std.objectHas(application, 'applicationName') then application.applicationName else application.name,
-      }
-      for application in $._config.applications
-    ],
-    local appBadgeTextPanel =
-      textPanel.new(
-        'Application Badges',
-      ) +
-      textPanel.options.withMode('markdown') +
-      textPanel.options.withContent(
-        |||
-          | Application | Environment | Status |
-          | --- | --- | --- |
-          %s
-        ||| % std.join('\n', appBadgeContent),
-      ),
+        appSync7dTable:
+          mixinUtils.dashboards.tablePanel(
+            'Applications That Failed to Sync (7d)',
+            'short',
+            queries.appSyncFailed7dCount,
+            description='A table listing all applications that failed to sync in the last 7 days managed by ArgoCD.',
+            sortBy={ name: 'Application', desc: false },
+            transformations=[
+              tbQueryOptions.transformation.withId(
+                'organize'
+              ) +
+              tbQueryOptions.transformation.withOptions(
+                {
+                  renameByName: {
+                    job: 'Job',
+                    dest_server: 'Cluster',
+                    project: 'Project',
+                    name: 'Application',
+                    phase: 'Phase',
+                    Value: 'Count',
+                  },
+                  indexByName: {
+                    name: 0,
+                    project: 1,
+                    phase: 2,
+                  },
+                  excludeByName: {
+                    Time: true,
+                    job: true,
+                    dest_server: true,
+                  },
+                }
+              ),
+            ],
+            overrides=[
+              tbOverride.byName.new('name') +
+              tbOverride.byName.withPropertiesFromOptions(
+                tbStandardOptions.withLinks(
+                  tbPanelOptions.link.withTitle('Go To Application') +
+                  tbPanelOptions.link.withUrl(
+                    $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
+                  ) +
+                  tbPanelOptions.link.withTargetBlank(true)
+                )
+              ),
+              tbOverride.byName.new('Value') +
+              tbOverride.byName.withPropertiesFromOptions(
+                tbStandardOptions.color.withMode('fixed') +
+                tbStandardOptions.color.withFixedColor('yellow') +
+                tbCustom.withDisplayMode('color-background')
+              ),
+            ],
+          ),
 
-    local appUnhealthyQuery = |||
-      sum(
-        argocd_app_info{
-          %s
-          health_status!~"Healthy|Progressing"
-        }
-      ) by (job, dest_server, project, name, health_status)
-    ||| % commonLabels,
+        appAutoSyncDisabledTable:
+          mixinUtils.dashboards.tablePanel(
+            'Applications With Auto Sync Disabled',
+            'short',
+            queries.appAutoSyncDisabledCount,
+            description='A table listing all applications with auto sync disabled managed by ArgoCD.',
+            sortBy={ name: 'Application', desc: false },
+            transformations=[
+              tbQueryOptions.transformation.withId(
+                'organize'
+              ) +
+              tbQueryOptions.transformation.withOptions(
+                {
+                  renameByName: {
+                    job: 'Job',
+                    dest_server: 'Kubernetes Cluster',
+                    project: 'Project',
+                    name: 'Application',
+                    autosync_enabled: 'Auto Sync Enabled',
+                  },
+                  indexByName: {
+                    name: 0,
+                    project: 1,
+                    autosync_enabled: 2,
+                  },
+                  excludeByName: {
+                    Time: true,
+                    job: true,
+                    dest_server: true,
+                    Value: true,
+                  },
+                }
+              ),
+            ],
+            overrides=[
+              tbOverride.byName.new('name') +
+              tbOverride.byName.withPropertiesFromOptions(
+                tbStandardOptions.withLinks(
+                  tbPanelOptions.link.withTitle('Go To Application') +
+                  tbPanelOptions.link.withUrl(
+                    $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
+                  ) +
+                  tbPanelOptions.link.withTargetBlank(true)
+                )
+              ),
+              tbOverride.byName.new('autosync_enabled') +
+              tbOverride.byName.withPropertiesFromOptions(
+                tbStandardOptions.color.withMode('fixed') +
+                tbStandardOptions.color.withFixedColor('yellow') +
+                tbCustom.withDisplayMode('color-background')
+              ),
+            ]
+          ),
 
-    local appUnhealthyTablePanel =
-      tablePanel.new(
-        'Applications Unhealthy',
-      ) +
-      tbStandardOptions.withUnit('short') +
-      tbOptions.withSortBy(
-        tbOptions.sortBy.withDisplayName('Application')
-      ) +
-      tbOptions.footer.withEnablePagination(true) +
-      tbQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          appUnhealthyQuery,
-        ) +
-        prometheus.withFormat('table') +
-        prometheus.withInstant(true)
-      ) +
-      tbQueryOptions.withTransformations([
-        tbQueryOptions.transformation.withId(
-          'organize'
-        ) +
-        tbQueryOptions.transformation.withOptions(
-          {
-            renameByName: {
-              job: 'Job',
-              dest_server: 'Cluster',
-              project: 'Project',
-              name: 'Application',
-              health_status: 'Health Status',
-            },
-            indexByName: {
-              name: 0,
-              project: 1,
-              health_status: 2,
-            },
-            excludeByName: {
-              Time: true,
-              job: true,
-              dest_server: true,
-              Value: true,
-            },
-          }
-        ),
-      ]) +
-      tbStandardOptions.withOverrides([
-        tbOverride.byName.new('name') +
-        tbOverride.byName.withPropertiesFromOptions(
-          tbStandardOptions.withLinks(
-            tbPanelOptions.link.withTitle('Go To Application') +
-            tbPanelOptions.link.withUrl(
-              $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
-            ) +
-            tbPanelOptions.link.withTargetBlank(true)
-          )
-        ),
-        tbOverride.byName.new('health_status') +
-        tbOverride.byName.withPropertiesFromOptions(
-          tbStandardOptions.color.withMode('fixed') +
-          tbStandardOptions.color.withFixedColor('yellow') +
-          tbCustom.withDisplayMode('color-background')
-        ),
-      ]),
+        appHealthStatusByAppTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Application Health Status by Application',
+            'short',
+            queries.appHealthStatusByAppCount,
+            '{{ project }}/{{ name }} - {{ health_status }}',
+            description='A timeseries panel showing the health status of each application managed by ArgoCD.',
+            stack='normal',
+            decimals=0
+          ),
 
-    local appOutOfSyncQuery = |||
-      sum(
-        argocd_app_info{
-          %s
-          sync_status!="Synced"
-        }
-      ) by (job, dest_server, project, name, sync_status) > 0
-    ||| % commonLabels,
+        appSyncStatusByAppTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Application Sync Status by Application',
+            'short',
+            queries.appSyncStatusByAppCount,
+            '{{ project }}/{{ name }} - {{ sync_status }}',
+            description='A timeseries panel showing the sync status of each application managed by ArgoCD.',
+            stack='normal',
+            decimals=0
+          ),
 
-    local appOutOfSyncTablePanel =
-      tablePanel.new(
-        'Applications Out Of Sync',
-      ) +
-      tbStandardOptions.withUnit('short') +
-      tbOptions.withSortBy(
-        tbOptions.sortBy.withDisplayName('Application')
-      ) +
-      tbOptions.footer.withEnablePagination(true) +
-      tbQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          appOutOfSyncQuery,
-        ) +
-        prometheus.withFormat('table') +
-        prometheus.withInstant(true)
-      ) +
-      tbQueryOptions.withTransformations([
-        tbQueryOptions.transformation.withId(
-          'organize'
-        ) +
-        tbQueryOptions.transformation.withOptions(
-          {
-            renameByName: {
-              job: 'Job',
-              dest_server: 'Cluster',
-              project: 'Project',
-              name: 'Application',
-              sync_status: 'Sync Status',
-            },
-            indexByName: {
-              name: 0,
-              project: 1,
-              sync_status: 2,
-            },
-            excludeByName: {
-              Time: true,
-              job: true,
-              dest_server: true,
-              Value: true,
-            },
-          }
-        ),
-      ]) +
-      tbStandardOptions.withOverrides([
-        tbOverride.byName.new('name') +
-        tbOverride.byName.withPropertiesFromOptions(
-          tbStandardOptions.withLinks(
-            tbPanelOptions.link.withTitle('Go To Application') +
-            tbPanelOptions.link.withUrl(
-              $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
-            ) +
-            tbPanelOptions.link.withTargetBlank(true)
-          )
-        ),
-        tbOverride.byName.new('sync_status') +
-        tbOverride.byName.withPropertiesFromOptions(
-          tbStandardOptions.color.withMode('fixed') +
-          tbStandardOptions.color.withFixedColor('yellow') +
-          tbCustom.withDisplayMode('color-background')
-        ),
-      ]),
+        appSyncByAppTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Application Sync Result by Application',
+            'short',
+            queries.appSyncByAppCount,
+            '{{ project }}/{{ name }} - {{ phase }}',
+            description='A timeseries panel showing the sync result of each application managed by ArgoCD.',
+            stack='normal',
+            decimals=0
+          ),
+      };
 
-    local appSync7dQuery = |||
-      sum(
-        round(
-          increase(
-            argocd_app_sync_total{
-              %s
-              phase!="Succeeded"
-            }[7d]
-          )
-        )
-      ) by (job, dest_server, project, name, phase) > 0
-    ||| % commonLabels,
-
-    local appSync7dTablePanel =
-      tablePanel.new(
-        'Applications That Failed to Sync[7d]',
-      ) +
-      tbStandardOptions.withUnit('short') +
-      tbOptions.withSortBy(
-        tbOptions.sortBy.withDisplayName('Application')
-      ) +
-      tbOptions.footer.withEnablePagination(true) +
-      tbQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          appSync7dQuery,
-        ) +
-        prometheus.withFormat('table') +
-        prometheus.withInstant(true)
-      ) +
-      tbQueryOptions.withTransformations([
-        tbQueryOptions.transformation.withId(
-          'organize'
-        ) +
-        tbQueryOptions.transformation.withOptions(
-          {
-            renameByName: {
-              job: 'Job',
-              dest_server: 'Cluster',
-              project: 'Project',
-              name: 'Application',
-              phase: 'Phase',
-              Value: 'Count',
-            },
-            indexByName: {
-              name: 0,
-              project: 1,
-              phase: 2,
-            },
-            excludeByName: {
-              Time: true,
-              job: true,
-              dest_server: true,
-            },
-          }
-        ),
-      ]) +
-      tbStandardOptions.withOverrides([
-        tbOverride.byName.new('name') +
-        tbOverride.byName.withPropertiesFromOptions(
-          tbStandardOptions.withLinks(
-            tbPanelOptions.link.withTitle('Go To Application') +
-            tbPanelOptions.link.withUrl(
-              $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
-            ) +
-            tbPanelOptions.link.withTargetBlank(true)
-          )
-        ),
-        tbOverride.byName.new('Value') +
-        tbOverride.byName.withPropertiesFromOptions(
-          tbStandardOptions.color.withMode('fixed') +
-          tbStandardOptions.color.withFixedColor('yellow') +
-          tbCustom.withDisplayMode('color-background')
-        ),
-      ]),
-
-    local appAutoSyncDisabledQuery = |||
-      sum(
-        argocd_app_info{
-          %s
-          autosync_enabled!="true"
-        }
-      ) by (job, dest_server, project, name, autosync_enabled) > 0
-    ||| % commonLabels,
-
-    local appAutoSyncDisabledTablePanel =
-      tablePanel.new(
-        'Applications With Auto Sync Disabled',
-      ) +
-      tbStandardOptions.withUnit('short') +
-      tbOptions.withSortBy(
-        tbOptions.sortBy.withDisplayName('Application')
-      ) +
-      tbOptions.footer.withEnablePagination(true) +
-      tbQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          appAutoSyncDisabledQuery,
-        ) +
-        prometheus.withFormat('table') +
-        prometheus.withInstant(true)
-      ) +
-      tbQueryOptions.withTransformations([
-        tbQueryOptions.transformation.withId(
-          'organize'
-        ) +
-        tbQueryOptions.transformation.withOptions(
-          {
-            renameByName: {
-              job: 'Job',
-              dest_server: 'Kubernetes Cluster',
-              project: 'Project',
-              name: 'Application',
-              autosync_enabled: 'Auto Sync Enabled',
-            },
-            indexByName: {
-              name: 0,
-              project: 1,
-              autosync_enabled: 2,
-            },
-            excludeByName: {
-              Time: true,
-              job: true,
-              dest_server: true,
-              Value: true,
-            },
-          }
-        ),
-      ]) +
-      tbStandardOptions.withOverrides([
-        tbOverride.byName.new('name') +
-        tbOverride.byName.withPropertiesFromOptions(
-          tbStandardOptions.withLinks(
-            tbPanelOptions.link.withTitle('Go To Application') +
-            tbPanelOptions.link.withUrl(
-              $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
-            ) +
-            tbPanelOptions.link.withTargetBlank(true)
-          )
-        ),
-        tbOverride.byName.new('autosync_enabled') +
-        tbOverride.byName.withPropertiesFromOptions(
-          tbStandardOptions.color.withMode('fixed') +
-          tbStandardOptions.color.withFixedColor('yellow') +
-          tbCustom.withDisplayMode('color-background')
-        ),
-      ]),
-
-    local appHealthStatusByAppQuery = |||
-      sum(
-        argocd_app_info{
-          %s
-          name=~"$application",
-        }
-      ) by (namespace, job, dest_server, project, name, health_status)
-    ||| % commonLabels,
-
-    local appHealthStatusByAppTimeSeriesPanel =
-      timeSeriesPanel.new(
-        'Application Health Status',
-      ) +
-      tsQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          appHealthStatusByAppQuery,
-        ) +
-        prometheus.withLegendFormat(
-          '{{ project }}/{{ name }} - {{ health_status }}'
-        )
-      ) +
-      tsQueryOptions.withInterval('5m') +
-      tsStandardOptions.withUnit('short') +
-      tsOptions.tooltip.withMode('multi') +
-      tsOptions.tooltip.withSort('desc') +
-      tsLegend.withShowLegend(true) +
-      tsLegend.withDisplayMode('table') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
-      tsLegend.withSortDesc(true) +
-      tsCustom.withFillOpacity(10),
-
-    local appSyncStatusByAppQuery = |||
-      sum(
-        argocd_app_info{
-          %s
-          name=~"$application",
-        }
-      ) by (namespace, job, dest_server, project, name, sync_status)
-    ||| % commonLabels,
-
-    local appSyncStatusByAppTimeSeriesPanel =
-      timeSeriesPanel.new(
-        'Application Sync Status',
-      ) +
-      tsQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          appSyncStatusByAppQuery,
-        ) +
-        prometheus.withLegendFormat(
-          '{{ project }}/{{ name }} - {{ sync_status }}'
-        )
-      ) +
-      tsQueryOptions.withInterval('5m') +
-      tsStandardOptions.withUnit('short') +
-      tsOptions.tooltip.withMode('multi') +
-      tsOptions.tooltip.withSort('desc') +
-      tsLegend.withShowLegend(true) +
-      tsLegend.withDisplayMode('table') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
-      tsLegend.withSortDesc(true) +
-      tsCustom.withFillOpacity(10),
-
-    local appSyncByAppQuery = |||
-      sum(
-        round(
-          increase(
-            argocd_app_sync_total{
-              %s
-              name=~"$application",
-            }[$__rate_interval]
-          )
-        )
-      ) by (namespace, job, dest_server, project, name, phase)
-    ||| % commonLabels,
-
-    local appSyncByAppTimeSeriesPanel =
-      timeSeriesPanel.new(
-        'Application Sync Result',
-      ) +
-      tsQueryOptions.withTargets(
-        prometheus.new(
-          '$datasource',
-          appSyncByAppQuery,
-        ) +
-        prometheus.withLegendFormat(
-          '{{ project }}/{{ name }} - {{ phase }}'
-        )
-      ) +
-      tsQueryOptions.withInterval('5m') +
-      tsStandardOptions.withUnit('short') +
-      tsOptions.tooltip.withMode('multi') +
-      tsOptions.tooltip.withSort('desc') +
-      tsLegend.withShowLegend(true) +
-      tsLegend.withDisplayMode('table') +
-      tsLegend.withCalcs(['last']) +
-      tsLegend.withSortBy('Last') +
-      tsLegend.withSortDesc(true) +
-      tsCustom.withFillOpacity(10),
-
-    local summaryRow =
-      row.new(
-        'Summary by Project'
-      ),
-
-    local appSummaryRow =
-      row.new(
-        'Applications (Unhealthy/OutOfSync/AutoSyncDisabled) Summary',
-      ),
-
-    local appRow =
-      row.new(
-        'Application ($application)',
-      ) +
-      row.withRepeat('application'),
-
-    'argo-cd-application-overview.json':
-      $._config.bypassDashboardValidation +
-      dashboard.new(
-        'ArgoCD / Application / Overview',
-      ) +
-      dashboard.withDescription('A dashboard that monitors ArgoCD with a focus on Application status. It is created using the [argo-cd-mixin](https://github.com/adinhodovic/argo-cd-mixin). Requires custom configuration to add application badges. Please refer to the mixin.') +
-      dashboard.withUid($._config.applicationOverviewDashboardUid) +
-      dashboard.withTags($._config.tags) +
-      dashboard.withTimezone('utc') +
-      dashboard.withEditable(true) +
-      dashboard.time.withFrom('now-6h') +
-      dashboard.time.withTo('now') +
-      dashboard.withVariables(variables) +
-      dashboard.withLinks(
+      local rows =
         [
-          dashboard.link.dashboards.new('ArgoCD Dashboards', $._config.tags) +
-          dashboard.link.link.options.withTargetBlank(true),
-        ]
-      ) +
-      dashboard.withPanels(
-        [
-          summaryRow +
+          row.new('Summary By Project') +
           row.gridPos.withX(0) +
           row.gridPos.withY(0) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1),
         ] +
-        grid.makeGrid(
+        grid.wrapPanels(
           [
-            appHealthStatusTimeSeriesPanel,
-            appSyncStatusTimeSeriesPanel,
-            appSyncTimeSeriesPanel,
-            appAutoSyncStatusTimeSeriesPanel,
+            panels.appHealthStatusTimeSeries,
+            panels.appSyncStatusTimeSeries,
+            panels.appSyncTimeSeries,
+            panels.appAutoSyncStatusTimeSeries,
           ],
-          panelWidth=if appsDefined then 9 else 12,
+          panelWidth=if panels.appsDefined then 9 else 12,
           panelHeight=6,
           startY=1
         ) +
         (
-          if appsDefined then
+          if panels.appsDefined then
             [
-              appBadgeTextPanel +
+              panels.appBadgeTextPanel +
               textPanel.gridPos.withX(18) +
               textPanel.gridPos.withY(1) +
               textPanel.gridPos.withW(6) +
@@ -758,44 +539,62 @@ local tbOverride = tbStandardOptions.override;
             ] else []
         ) +
         [
-          appSummaryRow +
-          timeSeriesPanel.gridPos.withX(0) +
-          timeSeriesPanel.gridPos.withY(11) +
-          timeSeriesPanel.gridPos.withW(18) +
-          timeSeriesPanel.gridPos.withH(1),
+          row.new('Applications (Unhealthy/OutOfSync/AutoSyncDisabled) Summary') +
+          row.gridPos.withX(0) +
+          row.gridPos.withY(11) +
+          row.gridPos.withW(18) +
+          row.gridPos.withH(1),
         ] +
-        grid.makeGrid(
+        grid.wrapPanels(
           [
-            appUnhealthyTablePanel,
-            appOutOfSyncTablePanel,
-            appSync7dTablePanel,
-            appAutoSyncDisabledTablePanel,
+            panels.appUnealthyTable,
+            panels.appOutOfSyncTable,
+            panels.appSync7dTable,
+            panels.appAutoSyncDisabledTable,
           ],
           panelWidth=12,
           panelHeight=8,
           startY=12
         ) +
         [
-          appRow +
+          row.new('Application ($application)') +
+          row.withRepeat('application') +
           row.gridPos.withX(0) +
           row.gridPos.withY(25) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1),
-        ]
-        +
-        grid.makeGrid(
+        ] +
+        grid.wrapPanels(
           [
-            appHealthStatusByAppTimeSeriesPanel,
-            appSyncStatusByAppTimeSeriesPanel,
-            appSyncByAppTimeSeriesPanel,
+            panels.appHealthStatusByAppTimeSeries,
+            panels.appSyncStatusByAppTimeSeries,
+            panels.appSyncByAppTimeSeries,
           ],
-          panelWidth=8,
-          panelHeight=8,
+          panelWidth=24,
+          panelHeight=6,
           startY=27
-        )
+        );
+
+      mixinUtils.dashboards.bypassDashboardValidation +
+      dashboard.new(
+        'ArgoCD / Application / Overview',
       ) +
-      if $._config.annotation.enabled then
-        dashboard.withAnnotations($._config.customAnnotation)
-      else {},
+      dashboard.withDescription('A dashboard that monitors ArgoCD with a focus on the applications of ArgoCD. %s' % mixinUtils.dashboards.dashboardDescriptionLink('argo-cd-mixin', 'https://github.com/adinhodovic/argo-cd-mixin')) +
+      dashboard.withUid($._config.dashboardIds[dashboardName]) +
+      dashboard.withTags($._config.tags) +
+      dashboard.withTimezone('utc') +
+      dashboard.withEditable(false) +
+      dashboard.time.withFrom('now-6h') +
+      dashboard.time.withTo('now') +
+      dashboard.withVariables(variables) +
+      dashboard.withLinks(
+        mixinUtils.dashboards.dashboardLinks('ArgoCD', $._config, dropdown=true)
+      ) +
+      dashboard.withPanels(
+        rows
+      ) +
+      dashboard.withAnnotations(
+        mixinUtils.dashboards.annotations($._config, defaultFilters)
+      ),
   },
 }
