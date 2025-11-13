@@ -4,8 +4,7 @@ A set of Grafana dashboards and Prometheus alerts for ArgoCD.
 
 ## How to use
 
-This mixin is designed to be vendored into the repo with your infrastructure config.
-To do this, use [jsonnet-bundler](https://github.com/jsonnet-bundler/jsonnet-bundler):
+This mixin is designed to be vendored into the repo with your infrastructure config. To do this, use [jsonnet-bundler](https://github.com/jsonnet-bundler/jsonnet-bundler):
 
 You then have three options for deploying your dashboards
 
@@ -17,8 +16,7 @@ Or import the dashboard using json in `./dashboards_out`, alternatively import t
 
 ## Generate config files
 
-You can manually generate the alerts, dashboards and rules files, but first you
-must install some tools:
+You can manually generate the alerts, dashboards and rules files, but first you must install some tools:
 
 ```sh
 go get github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb
@@ -40,10 +38,7 @@ make prometheus_alerts.yaml
 make dashboards_out
 ```
 
-The `prometheus_alerts.yaml` file then need to passed
-to your Prometheus server, and the files in `dashboards_out` need to be imported
-into you Grafana server. The exact details will depending on how you deploy your
-monitoring stack.
+The `prometheus_alerts.yaml` file then need to passed to your Prometheus server, and the files in `dashboards_out` need to be imported into you Grafana server. The exact details will depending on how you deploy your monitoring stack.
 
 ## Alerts
 
