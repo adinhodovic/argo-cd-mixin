@@ -36,6 +36,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
 
       local defaultFilters = util.filters($._config);
       local queries = {
+        // By Project
         appHealthStatusCount: |||
           sum(
             argocd_app_info{
@@ -72,13 +73,14 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
           ) by (job, project, autosync_enabled)
         ||| % defaultFilters,
 
-        appUnHealthyCount: |||
+        // By Application (grouped)
+        appUnhealthyCount: |||
           sum(
             argocd_app_info{
               %(withProject)s,
               health_status!~"Healthy|Progressing"
             }
-          ) by (job, dest_server, project, name, health_status) > 0
+          ) by (job, dest_server, project, name, exported_namespace, health_status) > 0
         ||| % defaultFilters,
 
         appOutOfSyncCount: |||
@@ -87,7 +89,16 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
               %(withProject)s,
               sync_status!="Synced"
             }
-          ) by (job, dest_server, project, name, sync_status) > 0
+          ) by (job, dest_server, project, name, exported_namespace, sync_status) > 0
+        ||| % defaultFilters,
+
+        appAutoSyncDisabledCount: |||
+          sum(
+            argocd_app_info{
+              %(withProject)s,
+              autosync_enabled!="true"
+            }
+          ) by (job, dest_server, project, name, exported_namespace, autosync_enabled) > 0
         ||| % defaultFilters,
 
         appSyncFailed7dCount: |||
@@ -100,24 +111,16 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                 }[7d]
               )
             )
-          ) by (job, dest_server, project, name, phase) > 0
+          ) by (job, dest_server, project, name, exported_namespace, phase) > 0
         ||| % defaultFilters,
 
-        appAutoSyncDisabledCount: |||
-          sum(
-            argocd_app_info{
-              %(withProject)s,
-              autosync_enabled!="true"
-            }
-          ) by (job, dest_server, project, name, autosync_enabled) > 0
-        ||| % defaultFilters,
-
+        // By Application (detailed)
         appHealthStatusByAppCount: |||
           sum(
             argocd_app_info{
               %(withApplication)s
             }
-          ) by (namespace, job, dest_server, project, name, health_status)
+          ) by (namespace, job, dest_server, project, name, exported_namespace, health_status)
         ||| % defaultFilters,
 
         appSyncStatusByAppCount: |||
@@ -125,7 +128,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             argocd_app_info{
               %(withApplication)s
             }
-          ) by (namespace, job, dest_server, project, name, sync_status)
+          ) by (namespace, job, dest_server, project, name, exported_namespace, sync_status)
         ||| % defaultFilters,
 
         appSyncByAppCount: |||
@@ -137,12 +140,13 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                 }[$__rate_interval]
               )
             )
-          ) by (namespace, job, dest_server, project, name, phase)
+          ) by (namespace, job, dest_server, project, name, exported_namespace, phase)
         ||| % defaultFilters,
       };
 
       local panels = {
 
+        // By Project
         appHealthStatusTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
             'Application Health Status',
@@ -189,7 +193,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
 
         appsDefined: std.length($._config.applications) != 0,
         local appBadgeContent = [
-          '| %(name)s | %(environment)s | [![App Status](%(baseUrl)s/api/badge?name=%(applicationName)s&revision=true)](%(baseUrl)s/applications/%(applicationName)s) |' % application {
+          '| %(name)s | %(environment)s | [![App Status](%(baseUrl)s/api/badge?namespace=%(namespace)s&name=%(applicationName)s&revision=true)](%(baseUrl)s/applications/%(namespace)s/%(applicationName)s) |' % application {
             baseUrl: if std.objectHas(application, 'baseUrl') then application.baseUrl else $._config.argoCdUrl,
             applicationName: if std.objectHas(application, 'applicationName') then application.applicationName else application.name,
           }
@@ -206,62 +210,12 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             description='A panel displaying badges for quick access to ArgoCD applications.'
           ),
 
-        appsTablePanel:
-          mixinUtils.dashboards.tablePanel(
-            'Applications',
-            'short',
-            queries.appHealthStatusCount,
-            description='A table listing all applications managed by ArgoCD, along with their health and sync statuses.',
-            sortBy={ name: 'Application', desc: false },
-            transformations=[
-              tbQueryOptions.transformation.withId(
-                'organize'
-              ) +
-              tbQueryOptions.transformation.withOptions(
-                {
-                  renameByName: {
-                    job: 'Job',
-                    dest_server: 'Kubernetes Cluster',
-                    project: 'Project',
-                    name: 'Application',
-                    health_status: 'Health Status',
-                    sync_status: 'Sync Status',
-                  },
-                  indexByName: {
-                    name: 0,
-                    project: 1,
-                    health_status: 2,
-                    sync_status: 3,
-                  },
-                  excludeByName: {
-                    Time: true,
-                    job: true,
-                    dest_server: true,
-                    Value: true,
-                  },
-                }
-              ),
-            ],
-            overrides=[
-              tbOverride.byName.new('name') +
-              tbOverride.byName.withPropertiesFromOptions(
-                tbStandardOptions.withLinks(
-                  tbPanelOptions.link.withTitle('Go To Application') +
-                  tbPanelOptions.link.withType('dashboard') +
-                  tbPanelOptions.link.withUrl(
-                    '/d/%s/argo-cd-application-overview?&var-project=${__data.fields.Project}&var-application=${__value.raw}' % $._config.dashboardIds['argo-cd-application-overview']
-                  ) +
-                  tbPanelOptions.link.withTargetBlank(true)
-                )
-              ),
-            ],
-          ),
-
-        appUnealthyTable:
+        // By Application (grouped)
+        appUnhealthyTable:
           mixinUtils.dashboards.tablePanel(
             'Unhealthy Applications',
             'short',
-            queries.appUnHealthyCount,
+            queries.appUnhealthyCount,
             description='A table listing all unhealthy applications managed by ArgoCD.',
             sortBy={ name: 'Application', desc: false },
             transformations=[
@@ -279,8 +233,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                     health_status: 'Health Status',
                   },
                   indexByName: {
-                    exported_namespace: 0,
-                    name: 1,
+                    name: 0,
+                    exported_namespace: 1,
                     project: 2,
                     health_status: 3,
                   },
@@ -299,7 +253,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                 tbStandardOptions.withLinks(
                   tbPanelOptions.link.withTitle('Go To Application') +
                   tbPanelOptions.link.withUrl(
-                    $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
+                    $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__value.raw}'
                   ) +
                   tbPanelOptions.link.withTargetBlank(true)
                 )
@@ -308,7 +262,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
               tbOverride.byName.withPropertiesFromOptions(
                 tbStandardOptions.color.withMode('fixed') +
                 tbStandardOptions.color.withFixedColor('yellow') +
-                tbCustom.withDisplayMode('color-background')
+                tbCustom.cellOptions.TableColoredBackgroundCellOptions.withType()
               ),
             ]
           ),
@@ -331,12 +285,14 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                     dest_server: 'Cluster',
                     project: 'Project',
                     name: 'Application',
+                    exported_namespace: 'Application Namespace',
                     sync_status: 'Sync Status',
                   },
                   indexByName: {
                     name: 0,
-                    project: 1,
-                    sync_status: 2,
+                    exported_namespace: 1,
+                    project: 2,
+                    sync_status: 3,
                   },
                   excludeByName: {
                     Time: true,
@@ -353,7 +309,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                 tbStandardOptions.withLinks(
                   tbPanelOptions.link.withTitle('Go To Application') +
                   tbPanelOptions.link.withUrl(
-                    $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
+                    $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__value.raw}'
                   ) +
                   tbPanelOptions.link.withTargetBlank(true)
                 )
@@ -362,7 +318,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
               tbOverride.byName.withPropertiesFromOptions(
                 tbStandardOptions.color.withMode('fixed') +
                 tbStandardOptions.color.withFixedColor('yellow') +
-                tbCustom.withDisplayMode('color-background')
+                tbCustom.cellOptions.TableColoredBackgroundCellOptions.withType()
               ),
             ]
           ),
@@ -385,11 +341,13 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                     dest_server: 'Cluster',
                     project: 'Project',
                     name: 'Application',
+                    exported_namespace: 'Application Namespace',
                     phase: 'Phase',
                     Value: 'Count',
                   },
                   indexByName: {
                     name: 0,
+                    exported_namespace: 1,
                     project: 1,
                     phase: 2,
                   },
@@ -407,7 +365,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                 tbStandardOptions.withLinks(
                   tbPanelOptions.link.withTitle('Go To Application') +
                   tbPanelOptions.link.withUrl(
-                    $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
+                    $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__value.raw}'
                   ) +
                   tbPanelOptions.link.withTargetBlank(true)
                 )
@@ -416,7 +374,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
               tbOverride.byName.withPropertiesFromOptions(
                 tbStandardOptions.color.withMode('fixed') +
                 tbStandardOptions.color.withFixedColor('yellow') +
-                tbCustom.withDisplayMode('color-background')
+                tbCustom.cellOptions.TableColoredBackgroundCellOptions.withType()
               ),
             ],
           ),
@@ -439,12 +397,14 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                     dest_server: 'Kubernetes Cluster',
                     project: 'Project',
                     name: 'Application',
+                    exported_namespace: 'Application Namespace',
                     autosync_enabled: 'Auto Sync Enabled',
                   },
                   indexByName: {
                     name: 0,
-                    project: 1,
-                    autosync_enabled: 2,
+                    exported_namespace: 1,
+                    project: 2,
+                    autosync_enabled: 3,
                   },
                   excludeByName: {
                     Time: true,
@@ -461,7 +421,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                 tbStandardOptions.withLinks(
                   tbPanelOptions.link.withTitle('Go To Application') +
                   tbPanelOptions.link.withUrl(
-                    $._config.argoCdUrl + '/applications/${__data.fields.Project}/${__value.raw}'
+                    $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__value.raw}'
                   ) +
                   tbPanelOptions.link.withTargetBlank(true)
                 )
@@ -470,17 +430,18 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
               tbOverride.byName.withPropertiesFromOptions(
                 tbStandardOptions.color.withMode('fixed') +
                 tbStandardOptions.color.withFixedColor('yellow') +
-                tbCustom.withDisplayMode('color-background')
+                tbCustom.cellOptions.TableColoredBackgroundCellOptions.withType()
               ),
             ]
           ),
 
+        // By Application (detailed)
         appHealthStatusByAppTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
             'Application Health Status by Application',
             'short',
             queries.appHealthStatusByAppCount,
-            '{{ project }}/{{ name }} - {{ health_status }}',
+            '{{ exported_namespace }}/{{ name }} - {{ health_status }}',
             description='A timeseries panel showing the health status of each application managed by ArgoCD.',
             stack='normal',
             decimals=0
@@ -491,7 +452,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             'Application Sync Status by Application',
             'short',
             queries.appSyncStatusByAppCount,
-            '{{ project }}/{{ name }} - {{ sync_status }}',
+            '{{ exported_namespace }}/{{ name }} - {{ sync_status }}',
             description='A timeseries panel showing the sync status of each application managed by ArgoCD.',
             stack='normal',
             decimals=0
@@ -502,7 +463,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             'Application Sync Result by Application',
             'short',
             queries.appSyncByAppCount,
-            '{{ project }}/{{ name }} - {{ phase }}',
+            '{{ exported_namespace }}/{{ name }} - {{ phase }}',
             description='A timeseries panel showing the sync result of each application managed by ArgoCD.',
             stack='normal',
             decimals=0
@@ -547,7 +508,7 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
         ] +
         grid.wrapPanels(
           [
-            panels.appUnealthyTable,
+            panels.appUnhealthyTable,
             panels.appOutOfSyncTable,
             panels.appSync7dTable,
             panels.appAutoSyncDisabledTable,
