@@ -59,6 +59,7 @@
     // [
     //   {
     //     name: 'ArgoCD',
+    //     namespace: 'argocd',
     //     applicationName: 'ArgoCD', // or self.name
     //     environment: 'Production',
     //     argoCdUrl: "https://argo-cd.example.com" // or $._config.argoCdUrl
