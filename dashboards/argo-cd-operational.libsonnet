@@ -17,7 +17,6 @@ local pcOverride = pcStandardOptions.override;
 local tbStandardOptions = tablePanel.standardOptions;
 local tbQueryOptions = tablePanel.queryOptions;
 local tbPanelOptions = tablePanel.panelOptions;
-local tbOverride = tbStandardOptions.override;
 
 {
   local dashboardName = 'argo-cd-operational-overview',
@@ -342,21 +341,16 @@ local tbOverride = tbStandardOptions.override;
                   },
                 }
               ),
-            ],
-            overrides=[
-              tbOverride.byName.new('name') +
-              tbOverride.byName.withPropertiesFromOptions(
-                tbStandardOptions.withLinks(
-                  tbPanelOptions.link.withTitle('Go To Application') +
-                  tbPanelOptions.link.withType('dashboard') +
-                  tbPanelOptions.link.withUrl(
-                    '/d/%s/argo-cd-application-overview?&var-project=${__data.fields.Project}&var-application=${__value.raw}' % $._config.dashboardIds['argo-cd-application-overview']
-                  ) +
-                  tbPanelOptions.link.withTargetBlank(true)
-                )
-              ),
-            ],
-          ),
+            ]
+          ) +
+          tbStandardOptions.withLinks([
+            tbPanelOptions.link.withTitle('Go To Application') +
+            tbPanelOptions.link.withType('dashboard') +
+            tbPanelOptions.link.withUrl(
+              '/d/%s/argo-cd-application-overview?&var-project=${__data.fields.Project}&var-application=${__data.fields.Application}' % $._config.dashboardIds['argo-cd-application-overview']
+            ) +
+            tbPanelOptions.link.withTargetBlank(true),
+          ]),
 
         syncActivityTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
