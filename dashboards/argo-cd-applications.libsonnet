@@ -218,7 +218,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             queries.appUnhealthyCount,
             description='A table listing all unhealthy applications managed by ArgoCD.',
             sortBy={ name: 'Application', desc: false },
-            transformations=[
+            transformations=
+            [
               tbQueryOptions.transformation.withId(
                 'organize'
               ) +
@@ -248,16 +249,6 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
               ),
             ],
             overrides=[
-              tbOverride.byName.new('name') +
-              tbOverride.byName.withPropertiesFromOptions(
-                tbStandardOptions.withLinks(
-                  tbPanelOptions.link.withTitle('Go To Application') +
-                  tbPanelOptions.link.withUrl(
-                    $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__value.raw}'
-                  ) +
-                  tbPanelOptions.link.withTargetBlank(true)
-                )
-              ),
               tbOverride.byName.new('health_status') +
               tbOverride.byName.withPropertiesFromOptions(
                 tbStandardOptions.color.withMode('fixed') +
@@ -265,7 +256,14 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                 tbCustom.cellOptions.TableColoredBackgroundCellOptions.withType()
               ),
             ]
-          ),
+          ) +
+          tbStandardOptions.withLinks([
+            tbPanelOptions.link.withTitle('Go To Application') +
+            tbPanelOptions.link.withUrl(
+              $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__data.fields.Application}'
+            ) +
+            tbPanelOptions.link.withTargetBlank(true),
+          ]),
 
         appOutOfSyncTable:
           mixinUtils.dashboards.tablePanel(
@@ -304,16 +302,6 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
               ),
             ],
             overrides=[
-              tbOverride.byName.new('name') +
-              tbOverride.byName.withPropertiesFromOptions(
-                tbStandardOptions.withLinks(
-                  tbPanelOptions.link.withTitle('Go To Application') +
-                  tbPanelOptions.link.withUrl(
-                    $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__value.raw}'
-                  ) +
-                  tbPanelOptions.link.withTargetBlank(true)
-                )
-              ),
               tbOverride.byName.new('sync_status') +
               tbOverride.byName.withPropertiesFromOptions(
                 tbStandardOptions.color.withMode('fixed') +
@@ -321,7 +309,14 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                 tbCustom.cellOptions.TableColoredBackgroundCellOptions.withType()
               ),
             ]
-          ),
+          ) +
+          tbStandardOptions.withLinks([
+            tbPanelOptions.link.withTitle('Go To Application') +
+            tbPanelOptions.link.withUrl(
+              $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__data.fields.Application}'
+            ) +
+            tbPanelOptions.link.withTargetBlank(true),
+          ]),
 
         appSync7dTable:
           mixinUtils.dashboards.tablePanel(
@@ -360,24 +355,21 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
               ),
             ],
             overrides=[
-              tbOverride.byName.new('name') +
-              tbOverride.byName.withPropertiesFromOptions(
-                tbStandardOptions.withLinks(
-                  tbPanelOptions.link.withTitle('Go To Application') +
-                  tbPanelOptions.link.withUrl(
-                    $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__value.raw}'
-                  ) +
-                  tbPanelOptions.link.withTargetBlank(true)
-                )
-              ),
               tbOverride.byName.new('Value') +
               tbOverride.byName.withPropertiesFromOptions(
                 tbStandardOptions.color.withMode('fixed') +
                 tbStandardOptions.color.withFixedColor('yellow') +
                 tbCustom.cellOptions.TableColoredBackgroundCellOptions.withType()
               ),
-            ],
-          ),
+            ]
+          ) +
+          tbStandardOptions.withLinks([
+            tbPanelOptions.link.withTitle('Go To Application') +
+            tbPanelOptions.link.withUrl(
+              $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__data.fields.Application}'
+            ) +
+            tbPanelOptions.link.withTargetBlank(true),
+          ]),
 
         appAutoSyncDisabledTable:
           mixinUtils.dashboards.tablePanel(
@@ -416,16 +408,6 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
               ),
             ],
             overrides=[
-              tbOverride.byName.new('name') +
-              tbOverride.byName.withPropertiesFromOptions(
-                tbStandardOptions.withLinks(
-                  tbPanelOptions.link.withTitle('Go To Application') +
-                  tbPanelOptions.link.withUrl(
-                    $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__value.raw}'
-                  ) +
-                  tbPanelOptions.link.withTargetBlank(true)
-                )
-              ),
               tbOverride.byName.new('autosync_enabled') +
               tbOverride.byName.withPropertiesFromOptions(
                 tbStandardOptions.color.withMode('fixed') +
@@ -433,7 +415,14 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
                 tbCustom.cellOptions.TableColoredBackgroundCellOptions.withType()
               ),
             ]
-          ),
+          ) +
+          tbStandardOptions.withLinks([
+            tbPanelOptions.link.withTitle('Go To Application') +
+            tbPanelOptions.link.withUrl(
+              $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__data.fields.Application}'
+            ) +
+            tbPanelOptions.link.withTargetBlank(true),
+          ]),
 
         // By Application (detailed)
         appHealthStatusByAppTimeSeries:

@@ -289,30 +289,19 @@
          "description": "A table listing all unhealthy applications managed by ArgoCD.",
          "fieldConfig": {
             "defaults": {
+               "links": [
+                  {
+                     "targetBlank": true,
+                     "title": "Go To Application",
+                     "url": "https://argocd.com/applications/${__data.fields.Application Namespace}/${__data.fields.Application}"
+                  }
+               ],
                "thresholds": {
                   "steps": [ ]
                },
                "unit": "short"
             },
             "overrides": [
-               {
-                  "matcher": {
-                     "id": "byName",
-                     "options": "name"
-                  },
-                  "properties": [
-                     {
-                        "id": "links",
-                        "value": [
-                           {
-                              "targetBlank": true,
-                              "title": "Go To Application",
-                              "url": "https://argocd.com/applications/${__data.fields.Application Namespace}/${__value.raw}"
-                           }
-                        ]
-                     }
-                  ]
-               },
                {
                   "matcher": {
                      "id": "byName",
@@ -404,30 +393,19 @@
          "description": "A table listing all unhealthy applications managed by ArgoCD.",
          "fieldConfig": {
             "defaults": {
+               "links": [
+                  {
+                     "targetBlank": true,
+                     "title": "Go To Application",
+                     "url": "https://argocd.com/applications/${__data.fields.Application Namespace}/${__data.fields.Application}"
+                  }
+               ],
                "thresholds": {
                   "steps": [ ]
                },
                "unit": "short"
             },
             "overrides": [
-               {
-                  "matcher": {
-                     "id": "byName",
-                     "options": "name"
-                  },
-                  "properties": [
-                     {
-                        "id": "links",
-                        "value": [
-                           {
-                              "targetBlank": true,
-                              "title": "Go To Application",
-                              "url": "https://argocd.com/applications/${__data.fields.Application Namespace}/${__value.raw}"
-                           }
-                        ]
-                     }
-                  ]
-               },
                {
                   "matcher": {
                      "id": "byName",
@@ -519,30 +497,19 @@
          "description": "A table listing all applications that failed to sync in the last 7 days managed by ArgoCD.",
          "fieldConfig": {
             "defaults": {
+               "links": [
+                  {
+                     "targetBlank": true,
+                     "title": "Go To Application",
+                     "url": "https://argocd.com/applications/${__data.fields.Application Namespace}/${__data.fields.Application}"
+                  }
+               ],
                "thresholds": {
                   "steps": [ ]
                },
                "unit": "short"
             },
             "overrides": [
-               {
-                  "matcher": {
-                     "id": "byName",
-                     "options": "name"
-                  },
-                  "properties": [
-                     {
-                        "id": "links",
-                        "value": [
-                           {
-                              "targetBlank": true,
-                              "title": "Go To Application",
-                              "url": "https://argocd.com/applications/${__data.fields.Application Namespace}/${__value.raw}"
-                           }
-                        ]
-                     }
-                  ]
-               },
                {
                   "matcher": {
                      "id": "byName",
@@ -634,30 +601,19 @@
          "description": "A table listing all applications with auto sync disabled managed by ArgoCD.",
          "fieldConfig": {
             "defaults": {
+               "links": [
+                  {
+                     "targetBlank": true,
+                     "title": "Go To Application",
+                     "url": "https://argocd.com/applications/${__data.fields.Application Namespace}/${__data.fields.Application}"
+                  }
+               ],
                "thresholds": {
                   "steps": [ ]
                },
                "unit": "short"
             },
             "overrides": [
-               {
-                  "matcher": {
-                     "id": "byName",
-                     "options": "name"
-                  },
-                  "properties": [
-                     {
-                        "id": "links",
-                        "value": [
-                           {
-                              "targetBlank": true,
-                              "title": "Go To Application",
-                              "url": "https://argocd.com/applications/${__data.fields.Application Namespace}/${__value.raw}"
-                           }
-                        ]
-                     }
-                  ]
-               },
                {
                   "matcher": {
                      "id": "byName",
