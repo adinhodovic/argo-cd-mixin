@@ -226,6 +226,33 @@ local tbPanelOptions = tablePanel.panelOptions;
             )
           ) by (namespace, job, repo)
         ||| % defaultFilters,
+
+        pendingRepoRequests: |||
+          sum(
+            argocd_repo_pending_request_total{
+              %(default)s
+            }
+          ) by (namespace, job)
+        ||| % defaultFilters,
+
+        clusterConnectionStatus: |||
+          sum(
+            argocd_cluster_connection_status{
+              %(default)s,
+              %(kubernetesClusterServer)s
+            }
+          ) by (namespace, job, server, k8s_version)
+        ||| % defaultFilters,
+
+        gitFetchFailures: |||
+          sum(
+            increase(
+              argocd_git_fetch_fail_total{
+                %(default)s
+              }[$__rate_interval]
+            )
+          ) by (namespace, job, repo)
+        ||| % defaultFilters,
       };
 
       local panels = {
@@ -490,6 +517,38 @@ local tbPanelOptions = tablePanel.panelOptions;
             ],
             description='A heatmap panel showing git fetch performance for ArgoCD.',
           ),
+
+        pendingRepoRequestsTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Pending Repo Requests',
+            'short',
+            queries.pendingRepoRequests,
+            '{{ namespace }}/{{ job }}',
+            description='A timeseries panel showing pending requests in the ArgoCD repo server queue. High values may indicate the repo server needs scaling.',
+            stack='normal'
+          ),
+
+        clusterConnectionStatusTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Cluster Connection Status',
+            'short',
+            queries.clusterConnectionStatus,
+            '{{ server }} - {{ k8s_version }}',
+            description='A timeseries panel showing the connection status of each cluster managed by ArgoCD. Failed connections indicate cluster connectivity or authentication issues.',
+            min=0,
+            max=1,
+            fillOpacity=0
+          ),
+
+        gitFetchFailuresTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Git Fetch Failures',
+            'short',
+            queries.gitFetchFailures,
+            '{{ namespace }} - {{ repo }}',
+            description='A timeseries panel showing git fetch failures for repositories monitored by ArgoCD. High values may indicate git repository connectivity or authentication issues.',
+            stack='normal'
+          ),
       };
 
       local rows =
@@ -573,6 +632,7 @@ local tbPanelOptions = tablePanel.panelOptions;
           row.withPanels(
             grid.makeGrid(
               [
+                panels.clusterConnectionStatusTimeSeries,
                 panels.resourceObjectsTimeSeries,
                 panels.apiResourcesTimeSeries,
                 panels.clusterEventsTimeSeries,
@@ -593,6 +653,8 @@ local tbPanelOptions = tablePanel.panelOptions;
           row.withPanels(
             grid.makeGrid(
               [
+                panels.pendingRepoRequestsTimeSeries,
+                panels.gitFetchFailuresTimeSeries,
                 panels.gitRequestsLsRemoteTimeSeries,
                 panels.gitRequestsCheckoutTimeSeries,
                 panels.gitFetchPerformanceHeatmap,

@@ -240,6 +240,154 @@
               dashboard_url: $._config.dashboardUrls['argo-cd-notifications-overview'] + '?var-job={{ $labels.job }}&var-exported_service={{ $labels.exported_service }}' + clusterVariableQueryString,
             },
           },
+
+          // ArgoCD Operational Health Alerts
+          // Monitor ArgoCD's own performance and health
+
+          if $._config.alerts.highReconciliationDuration.enabled then
+            local alertConfig = $._config.alerts.highReconciliationDuration;
+            {
+              alert: 'ArgoCdAppControllerHighReconciliationDuration',
+              expr: |||
+                histogram_quantile(%(quantile)s,
+                  sum(
+                    rate(
+                      argocd_app_reconcile_bucket{
+                        %(argoCdSelector)s
+                      }[%(interval)s]
+                    )
+                  ) by (%(clusterLabel)s, namespace, le)
+                ) > %(threshold)s
+              ||| % (
+                $._config
+                {
+                  interval: alertConfig.interval,
+                  threshold: alertConfig.threshold,
+                  quantile: alertConfig.quantile,
+                }
+              ),
+              'for': '5m',
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: 'ArgoCD App Controller has high reconciliation duration.',
+                description: 'ArgoCD app controller in {{ $labels.namespace }} is taking more than %(threshold)ss (%(quantile)s percentile) to reconcile applications for the past %(interval)s. This may indicate performance issues or the need to scale up.' % alertConfig,
+                dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
+              },
+            },
+
+          if $._config.alerts.pendingRepoRequests.enabled then
+            local alertConfig = $._config.alerts.pendingRepoRequests;
+            {
+              alert: 'ArgoCdRepoServerPendingRequests',
+              expr: |||
+                sum(
+                  argocd_repo_pending_request_total{
+                    %(argoCdSelector)s
+                  }
+                ) by (%(clusterLabel)s, namespace)
+                > %(threshold)s
+              ||| % (
+                $._config
+                {
+                  threshold: alertConfig.threshold,
+                }
+              ),
+              'for': alertConfig.interval,
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: 'ArgoCD Repo Server has pending requests.',
+                description: 'ArgoCD repo server in {{ $labels.namespace }} has %(threshold)s or more pending requests for the past %(interval)s. The repo server may be overloaded and need scaling.' % alertConfig,
+                dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
+              },
+            },
+
+          if $._config.alerts.highGitRequestDuration.enabled then
+            local alertConfig = $._config.alerts.highGitRequestDuration;
+            {
+              alert: 'ArgoCdRepoServerHighGitRequestDuration',
+              expr: |||
+                histogram_quantile(%(quantile)s,
+                  sum(
+                    rate(
+                      argocd_git_request_duration_seconds_bucket{
+                        %(argoCdSelector)s
+                      }[%(interval)s]
+                    )
+                  ) by (%(clusterLabel)s, namespace, le)
+                ) > %(threshold)s
+              ||| % (
+                $._config
+                {
+                  interval: alertConfig.interval,
+                  threshold: alertConfig.threshold,
+                  quantile: alertConfig.quantile,
+                }
+              ),
+              'for': '10m',
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: 'ArgoCD Repo Server has high git request duration.',
+                description: 'ArgoCD repo server in {{ $labels.namespace }} is experiencing git operations (fetch/clone) taking more than %(threshold)ss (%(quantile)s percentile) for the past %(interval)s. This may indicate slow git repository access or network issues.' % alertConfig,
+                dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
+              },
+            },
+
+          if $._config.alerts.clusterConnectionErrors.enabled then
+            local alertConfig = $._config.alerts.clusterConnectionErrors;
+            {
+              alert: 'ArgoCdClusterConnectionError',
+              expr: |||
+                argocd_cluster_connection_status{
+                  %(argoCdSelector)s
+                } < 1
+              ||| % $._config,
+              'for': alertConfig.interval,
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: 'ArgoCD cannot connect to managed cluster.',
+                description: 'ArgoCD in {{ $labels.namespace }} cannot connect to cluster {{ $labels.server }} for the past %(interval)s. Check cluster credentials and network connectivity.' % alertConfig,
+                dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
+              },
+            },
+
+          if $._config.alerts.gitRequestErrors.enabled then
+            local alertConfig = $._config.alerts.gitRequestErrors;
+            {
+              alert: 'ArgoCdGitRequestErrors',
+              expr: |||
+                sum(
+                  round(
+                    increase(
+                      argocd_git_fetch_fail_total{
+                        %(argoCdSelector)s
+                      }[%(interval)s]
+                    )
+                  )
+                ) by (%(clusterLabel)s, namespace, repo) > 0
+              ||| % (
+                $._config
+                {
+                  interval: alertConfig.interval,
+                }
+              ),
+              'for': '1m',
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: 'ArgoCD Git requests are failing.',
+                description: 'ArgoCD in {{ $labels.namespace }} is experiencing git fetch failures for repository {{ $labels.repo }} for the past %(interval)s. This may indicate repository access issues or network problems.' % alertConfig,
+                dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
+              },
+            },
         ]) else [],
       },
     ],
