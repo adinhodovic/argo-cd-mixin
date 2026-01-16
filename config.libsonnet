@@ -59,10 +59,17 @@
     alerts: {
       enabled: true,
 
+      // Group alerts by individual application (true) or by project/cluster (false)
+      // Setting to false reduces alert volume in multi-cluster environments
+      // Each alert can override this with its own groupByApplication field
+      groupByApplication: true,
+
       appSyncFailed: {
         enabled: true,
         severity: 'warning',
         interval: $._config.argoCdAppSyncInterval,
+        // Optional: override top-level groupByApplication for this alert
+        // groupByApplication: false,
       },
 
       appUnhealthy: {
@@ -71,12 +78,16 @@
         interval: $._config.argoCdAppUnhealthyFor,
         healthyStates: $._config.argoCdAppUnhealthyHealthyStates,
         ignoredApps: $._config.argoCdAppUnhealthyIgnoredApps,
+        // Optional: override top-level groupByApplication for this alert
+        // groupByApplication: false,
       },
 
       appOutOfSync: {
         enabled: $._config.argoCdAppOutOfSyncEnabled,
         severity: 'warning',
         interval: $._config.argoCdAppOutOfSyncFor,
+        // Optional: override top-level groupByApplication for this alert
+        // groupByApplication: false,
       },
 
       appUnknown: {
@@ -84,6 +95,8 @@
         severity: 'warning',
         interval: $._config.argoCdAppUnknownFor,
         ignoredApps: $._config.argoCdAppUnknownIgnoredApps,
+        // Optional: override top-level groupByApplication for this alert
+        // groupByApplication: false,
       },
 
       appAutoSyncDisabled: {
@@ -91,12 +104,16 @@
         severity: 'warning',
         interval: $._config.argoCdAppAutoSyncDisabledFor,
         ignoredApps: $._config.argoCdAutoSyncDisabledIgnoredApps,
+        // Optional: override top-level groupByApplication for this alert
+        // groupByApplication: false,
       },
 
       notificationDeliveryFailed: {
         enabled: $._config.argoCdNotificationDeliveryEnabled,
         severity: 'warning',
         interval: $._config.argoCdNotificationDeliveryInterval,
+        // Optional: override top-level groupByApplication for this alert
+        // groupByApplication: false,
       },
     },
 
