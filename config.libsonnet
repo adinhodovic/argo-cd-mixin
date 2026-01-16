@@ -27,10 +27,11 @@
 
     tags: ['ci/cd', 'argo-cd'],
 
+    // Backwards compatibility - old field names (can still be overridden)
     argoCdAppOutOfSyncEnabled: true,
     argoCdAppOutOfSyncFor: '15m',
     // The above OutOfSync alert also includes applications in an Unknown state.
-    // However, that alert may not be appropriate in all scenarios.
+    // However, that may not be appropriate in all scenarios.
     // This alert specifically targets applications that are Unknown to ArgoCD,
     // without triggering on other OutOfSync conditions.
     argoCdAppUnknownEnabled: false,
@@ -53,6 +54,51 @@
     argoAutoSyncDisabledIgnoredApps: self.argoCdAutoSyncDisabledIgnoredApps,
     // List of applications to ignore in the unknown alert
     argoCdAppUnknownIgnoredApps: '',
+
+    // ArgoCD alert configuration (new nested structure)
+    alerts: {
+      enabled: true,
+
+      appSyncFailed: {
+        enabled: true,
+        severity: 'warning',
+        interval: $._config.argoCdAppSyncInterval,
+      },
+
+      appUnhealthy: {
+        enabled: $._config.argoCdAppUnhealthyEnabled,
+        severity: 'warning',
+        interval: $._config.argoCdAppUnhealthyFor,
+        healthyStates: $._config.argoCdAppUnhealthyHealthyStates,
+        ignoredApps: $._config.argoCdAppUnhealthyIgnoredApps,
+      },
+
+      appOutOfSync: {
+        enabled: $._config.argoCdAppOutOfSyncEnabled,
+        severity: 'warning',
+        interval: $._config.argoCdAppOutOfSyncFor,
+      },
+
+      appUnknown: {
+        enabled: $._config.argoCdAppUnknownEnabled,
+        severity: 'warning',
+        interval: $._config.argoCdAppUnknownFor,
+        ignoredApps: $._config.argoCdAppUnknownIgnoredApps,
+      },
+
+      appAutoSyncDisabled: {
+        enabled: $._config.argoCdAppAutoSyncDisabledEnabled,
+        severity: 'warning',
+        interval: $._config.argoCdAppAutoSyncDisabledFor,
+        ignoredApps: $._config.argoCdAutoSyncDisabledIgnoredApps,
+      },
+
+      notificationDeliveryFailed: {
+        enabled: $._config.argoCdNotificationDeliveryEnabled,
+        severity: 'warning',
+        interval: $._config.argoCdNotificationDeliveryInterval,
+      },
+    },
 
     // Render ArgoCD badges in the dashboards
     // []struct{}
