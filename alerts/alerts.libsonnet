@@ -1,142 +1,216 @@
 {
   local clusterVariableQueryString = if $._config.showMultiCluster then '&var-%(clusterLabel)s={{ $labels.%(clusterLabel)s}}' % $._config else '',
+
+  // Helper function: get groupByApplication for an alert (with fallback to top-level)
+  local getGroupByApp(alertConfig) =
+    if std.objectHas(alertConfig, 'groupByApplication') then
+      alertConfig.groupByApplication
+    else
+      $._config.alerts.groupByApplication,
+
+  // Helper function: build label string based on groupByApplication flag
+  local buildLabels(groupByApp) =
+    if groupByApp then
+      '%(clusterLabel)s, job, dest_server, project, name' % $._config
+    else
+      'job, dest_server, project',
+
   prometheusAlerts+:: {
     groups+: [
       {
         name: 'argo-cd',
         rules: if $._config.alerts.enabled then std.prune([
-          if $._config.alerts.appSyncFailed.enabled then {
-            alert: 'ArgoCdAppSyncFailed',
-            expr: |||
-              sum(
-                round(
-                  increase(
-                    argocd_app_sync_total{
-                      %(argoCdSelector)s,
-                      phase!="Succeeded"
-                    }[%(interval)s]
+          if $._config.alerts.appSyncFailed.enabled then
+            local alertConfig = $._config.alerts.appSyncFailed;
+            local groupByApp = getGroupByApp(alertConfig);
+            local groupLabels = buildLabels(groupByApp);
+            {
+              alert: 'ArgoCdAppSyncFailed',
+              expr: |||
+                sum(
+                  round(
+                    increase(
+                      argocd_app_sync_total{
+                        %(argoCdSelector)s,
+                        phase!="Succeeded"
+                      }[%(interval)s]
+                    )
                   )
-                )
-              ) by (%(clusterLabel)s, job, dest_server, project, name, phase) > 0
-            ||| % (
-              $._config
-              {
-                interval: $._config.alerts.appSyncFailed.interval,
-              }
-            ),
-            'for': '1m',
-            labels: {
-              severity: $._config.alerts.appSyncFailed.severity,
-            },
-            annotations: {
-              summary: 'An ArgoCD Application has Failed to Sync.',
-              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has failed to sync with the status {{ $labels.phase }} the past %s.' % $._config.alerts.appSyncFailed.interval,
-              dashboard_url: $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
-            },
-          },
-          if $._config.alerts.appUnhealthy.enabled then {
-            alert: 'ArgoCdAppUnhealthy',
-            expr: |||
-              sum(
-                argocd_app_info{
-                  %(argoCdSelector)s,
-                  health_status!~"%(healthyStates)s",
-                  name!~"%(ignoredApps)s"
+                ) by (%(groupBy)s, phase) > 0
+              ||| % (
+                $._config
+                {
+                  interval: alertConfig.interval,
+                  groupBy: groupLabels,
                 }
-              ) by (%(clusterLabel)s, job, dest_server, project, name, health_status)
-              > 0
-            ||| % (
-              $._config
-              {
-                healthyStates: $._config.alerts.appUnhealthy.healthyStates,
-                ignoredApps: $._config.alerts.appUnhealthy.ignoredApps,
-              }
-            ),
-            'for': $._config.alerts.appUnhealthy.interval,
-            labels: {
-              severity: $._config.alerts.appUnhealthy.severity,
+              ),
+              'for': '1m',
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: if groupByApp then 'An ArgoCD Application has Failed to Sync.' else 'ArgoCD Applications have Failed to Sync.',
+                description: if groupByApp then
+                  'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has failed to sync with the status {{ $labels.phase }} the past %s.' % alertConfig.interval
+                else
+                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} have failed to sync with the status {{ $labels.phase }} the past %s.' % alertConfig.interval,
+                dashboard_url: if groupByApp then
+                  $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString
+                else
+                  $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}' + clusterVariableQueryString,
+              },
             },
-            annotations: {
-              summary: 'An ArgoCD Application is Unhealthy.',
-              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status {{ $labels.health_status }} for the past %s.' % $._config.alerts.appUnhealthy.interval,
-              dashboard_url: $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
-            },
-          },
-          if $._config.alerts.appOutOfSync.enabled then {
-            alert: 'ArgoCdAppOutOfSync',
-            expr: |||
-              sum(
-                argocd_app_info{
-                  %(argoCdSelector)s,
-                  sync_status!="Synced"
+          if $._config.alerts.appUnhealthy.enabled then
+            local alertConfig = $._config.alerts.appUnhealthy;
+            local groupByApp = getGroupByApp(alertConfig);
+            local groupLabels = buildLabels(groupByApp);
+            {
+              alert: 'ArgoCdAppUnhealthy',
+              expr: |||
+                sum(
+                  argocd_app_info{
+                    %(argoCdSelector)s,
+                    health_status!~"%(healthyStates)s",
+                    name!~"%(ignoredApps)s"
+                  }
+                ) by (%(groupBy)s, health_status)
+                > 0
+              ||| % (
+                $._config
+                {
+                  healthyStates: alertConfig.healthyStates,
+                  ignoredApps: alertConfig.ignoredApps,
+                  groupBy: groupLabels,
                 }
-              ) by (%(clusterLabel)s, job, dest_server, project, name, sync_status)
-              > 0
-            ||| % $._config,
-            'for': $._config.alerts.appOutOfSync.interval,
-            labels: {
-              severity: $._config.alerts.appOutOfSync.severity,
+              ),
+              'for': alertConfig.interval,
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: if groupByApp then 'An ArgoCD Application is Unhealthy.' else 'ArgoCD Applications are Unhealthy.',
+                description: if groupByApp then
+                  'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status {{ $labels.health_status }} for the past %s.' % alertConfig.interval
+                else
+                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} are unhealthy with the health status {{ $labels.health_status }} for the past %s.' % alertConfig.interval,
+                dashboard_url: if groupByApp then
+                  $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString
+                else
+                  $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}' + clusterVariableQueryString,
+              },
             },
-            annotations: {
-              summary: 'An ArgoCD Application is Out Of Sync.',
-              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status {{ $labels.sync_status }} for the past %s.' % $._config.alerts.appOutOfSync.interval,
-              dashboard_url: $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
-            },
-          },
-          if $._config.alerts.appUnknown.enabled then {
-            alert: 'ArgoCdAppUnknown',
-            expr: |||
-              sum(
-                argocd_app_info{
-                  %(argoCdSelector)s,
-                  sync_status="Unknown",
-                  name!~"%(ignoredApps)s"
+          if $._config.alerts.appOutOfSync.enabled then
+            local alertConfig = $._config.alerts.appOutOfSync;
+            local groupByApp = getGroupByApp(alertConfig);
+            local groupLabels = buildLabels(groupByApp);
+            {
+              alert: 'ArgoCdAppOutOfSync',
+              expr: |||
+                sum(
+                  argocd_app_info{
+                    %(argoCdSelector)s,
+                    sync_status!="Synced"
+                  }
+                ) by (%(groupBy)s, sync_status)
+                > 0
+              ||| % (
+                $._config
+                {
+                  groupBy: groupLabels,
                 }
-              ) by (%(clusterLabel)s, job, dest_server, project, name, sync_status)
-              > 0
-            ||| % (
-              $._config
-              {
-                ignoredApps: $._config.alerts.appUnknown.ignoredApps,
-              }
-            ),
-            'for': $._config.alerts.appUnknown.interval,
-            labels: {
-              severity: $._config.alerts.appUnknown.severity,
+              ),
+              'for': alertConfig.interval,
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: if groupByApp then 'An ArgoCD Application is Out Of Sync.' else 'ArgoCD Applications are Out Of Sync.',
+                description: if groupByApp then
+                  'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status {{ $labels.sync_status }} for the past %s.' % alertConfig.interval
+                else
+                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} are out of sync with the sync status {{ $labels.sync_status }} for the past %s.' % alertConfig.interval,
+                dashboard_url: if groupByApp then
+                  $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString
+                else
+                  $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}' + clusterVariableQueryString,
+              },
             },
-            annotations: {
-              summary: 'An ArgoCD Application is in a Unknown state.',
-              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is in a `Unknown` state for the past %s.' % $._config.alerts.appUnknown.interval,
-              dashboard_url: $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
-            },
-          },
-          if $._config.alerts.appAutoSyncDisabled.enabled then {
-            alert: 'ArgoCdAppAutoSyncDisabled',
-            expr: |||
-              sum(
-                argocd_app_info{
-                  %(argoCdSelector)s,
-                  autosync_enabled!="true",
-                  name!~"%(ignoredApps)s"
+          if $._config.alerts.appUnknown.enabled then
+            local alertConfig = $._config.alerts.appUnknown;
+            local groupByApp = getGroupByApp(alertConfig);
+            local groupLabels = buildLabels(groupByApp);
+            {
+              alert: 'ArgoCdAppUnknown',
+              expr: |||
+                sum(
+                  argocd_app_info{
+                    %(argoCdSelector)s,
+                    sync_status="Unknown",
+                    name!~"%(ignoredApps)s"
+                  }
+                ) by (%(groupBy)s, sync_status)
+                > 0
+              ||| % (
+                $._config
+                {
+                  ignoredApps: alertConfig.ignoredApps,
+                  groupBy: groupLabels,
                 }
-              ) by (%(clusterLabel)s, job, dest_server, project, name, autosync_enabled)
-              > 0
-            ||| % (
-              $._config
-              {
-                ignoredApps: $._config.alerts.appAutoSyncDisabled.ignoredApps,
-              }
-            ),
-            'for': $._config.alerts.appAutoSyncDisabled.interval,
-            labels: {
-              severity: $._config.alerts.appAutoSyncDisabled.severity,
+              ),
+              'for': alertConfig.interval,
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: if groupByApp then 'An ArgoCD Application is in a Unknown state.' else 'ArgoCD Applications are in a Unknown state.',
+                description: if groupByApp then
+                  'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is in a `Unknown` state for the past %s.' % alertConfig.interval
+                else
+                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} are in a `Unknown` state for the past %s.' % alertConfig.interval,
+                dashboard_url: if groupByApp then
+                  $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString
+                else
+                  $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}' + clusterVariableQueryString,
+              },
             },
-            annotations: {
-              summary: 'An ArgoCD Application has AutoSync Disabled.',
-              description: 'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has autosync disabled for the past %s.' % $._config.alerts.appAutoSyncDisabled.interval,
-              dashboard_url: $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString,
+          if $._config.alerts.appAutoSyncDisabled.enabled then
+            local alertConfig = $._config.alerts.appAutoSyncDisabled;
+            local groupByApp = getGroupByApp(alertConfig);
+            local groupLabels = buildLabels(groupByApp);
+            {
+              alert: 'ArgoCdAppAutoSyncDisabled',
+              expr: |||
+                sum(
+                  argocd_app_info{
+                    %(argoCdSelector)s,
+                    autosync_enabled!="true",
+                    name!~"%(ignoredApps)s"
+                  }
+                ) by (%(groupBy)s, autosync_enabled)
+                > 0
+              ||| % (
+                $._config
+                {
+                  ignoredApps: alertConfig.ignoredApps,
+                  groupBy: groupLabels,
+                }
+              ),
+              'for': alertConfig.interval,
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: if groupByApp then 'An ArgoCD Application has AutoSync Disabled.' else 'ArgoCD Applications have AutoSync Disabled.',
+                description: if groupByApp then
+                  'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has autosync disabled for the past %s.' % alertConfig.interval
+                else
+                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} have autosync disabled for the past %s.' % alertConfig.interval,
+                dashboard_url: if groupByApp then
+                  $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString
+                else
+                  $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}' + clusterVariableQueryString,
+              },
             },
-          },
           if $._config.alerts.notificationDeliveryFailed.enabled then {
             alert: 'ArgoCdNotificationDeliveryFailed',
             expr: |||
