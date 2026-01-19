@@ -107,3 +107,110 @@ tests:
               summary: "ArgoCD Notification Delivery Failed."
               description: "The notification job argo-cd-argocd-notifications-controller-metrics has failed to deliver to grafana for the past 10m."
               dashboard_url: "https://grafana.com/d/argo-cd-notifications-overview-kask/argocd-notifications-overview?var-job=argo-cd-argocd-notifications-controller-metrics&var-exported_service=grafana"
+  # Operational health alert tests
+  - interval: 1m
+    input_series:
+      - series: 'argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="5"}'
+        values: "0+0x15"
+      - series: 'argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="10"}'
+        values: "0+0x15"
+      - series: 'argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="30"}'
+        values: "0+0x15"
+      - series: 'argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="60"}'
+        values: "0+1x15"
+      - series: 'argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="120"}'
+        values: "0+4x15"
+      - series: 'argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="300"}'
+        values: "0+19x15"
+      - series: 'argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="+Inf"}'
+        values: "0+20x15"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: ArgoCdAppControllerHighReconciliationDuration
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              namespace: argocd
+            exp_annotations:
+              summary: "ArgoCD App Controller has high reconciliation duration."
+              description: "ArgoCD app controller in argocd is taking more than 60s (0.95 percentile) to reconcile applications for the past 10m. This may indicate performance issues or the need to scale up."
+              dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
+  - interval: 1m
+    input_series:
+      - series: 'argocd_repo_pending_request_total{job="argo-cd-argocd-repo-server-metrics", namespace="argocd"}'
+        values: "55+0x10"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: ArgoCdRepoServerPendingRequests
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              namespace: argocd
+            exp_annotations:
+              summary: "ArgoCD Repo Server has pending requests."
+              description: "ArgoCD repo server in argocd has 50 or more pending requests for the past 5m. The repo server may be overloaded and need scaling."
+              dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
+  - interval: 1m
+    input_series:
+      - series: 'argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="5"}'
+        values: "0+0x15"
+      - series: 'argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="10"}'
+        values: "0+0x15"
+      - series: 'argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="30"}'
+        values: "0+1x15"
+      - series: 'argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="60"}'
+        values: "0+4x15"
+      - series: 'argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="120"}'
+        values: "0+19x15"
+      - series: 'argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="300"}'
+        values: "0+19x15"
+      - series: 'argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="+Inf"}'
+        values: "0+20x15"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: ArgoCdRepoServerHighGitRequestDuration
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              namespace: argocd
+            exp_annotations:
+              summary: "ArgoCD Repo Server has high git request duration."
+              description: "ArgoCD repo server in argocd is experiencing git operations (fetch/clone) taking more than 30s (0.95 percentile) for the past 10m. This may indicate slow git repository access or network issues."
+              dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
+  - interval: 1m
+    input_series:
+      - series: 'argocd_cluster_connection_status{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", server="https://prod-cluster.example.com"}'
+        values: "0+0x10"
+      - series: 'argocd_cluster_connection_status{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", server="https://staging-cluster.example.com"}'
+        values: "1+0x10"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: ArgoCdClusterConnectionError
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: argo-cd-argocd-application-controller-metrics
+              namespace: argocd
+              server: https://prod-cluster.example.com
+            exp_annotations:
+              summary: "ArgoCD cannot connect to managed cluster."
+              description: "ArgoCD in argocd cannot connect to cluster https://prod-cluster.example.com for the past 5m. Check cluster credentials and network connectivity."
+              dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
+  - interval: 1m
+    input_series:
+      - series: 'argocd_git_fetch_fail_total{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", repo="https://github.com/example/repo.git"}'
+        values: "0+1x10"
+      - series: 'argocd_git_fetch_fail_total{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", repo="https://github.com/example/repo2.git"}'
+        values: "0+0x10"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: ArgoCdGitRequestErrors
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              namespace: argocd
+              repo: https://github.com/example/repo.git
+            exp_annotations:
+              summary: "ArgoCD Git requests are failing."
+              description: "ArgoCD in argocd is experiencing git fetch failures for repository https://github.com/example/repo.git for the past 5m. This may indicate repository access issues or network problems."
+              dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"

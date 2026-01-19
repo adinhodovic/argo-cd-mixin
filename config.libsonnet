@@ -115,6 +115,44 @@
         // Optional: override top-level groupByApplication for this alert
         // groupByApplication: false,
       },
+
+      // ArgoCD Operational Health Alerts
+      // Monitor ArgoCD's own performance and health (app controller, repo server, clusters)
+
+      highReconciliationDuration: {
+        enabled: true,
+        severity: 'warning',
+        interval: '10m',
+        threshold: '60',  // seconds - apps taking longer than 1min to reconcile
+        quantile: '0.95',  // 95th percentile
+      },
+
+      pendingRepoRequests: {
+        enabled: true,
+        severity: 'warning',
+        interval: '5m',
+        threshold: '50',  // pending requests in repo server queue
+      },
+
+      highGitRequestDuration: {
+        enabled: true,
+        severity: 'warning',
+        interval: '10m',
+        threshold: '30',  // seconds - git operations (fetch/clone) taking too long
+        quantile: '0.95',  // 95th percentile
+      },
+
+      clusterConnectionErrors: {
+        enabled: true,
+        severity: 'warning',
+        interval: '5m',
+      },
+
+      gitRequestErrors: {
+        enabled: true,
+        severity: 'warning',
+        interval: '5m',
+      },
     },
 
     // Render ArgoCD badges in the dashboards
