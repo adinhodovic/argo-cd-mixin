@@ -982,7 +982,7 @@
                         "uid": "$datasource"
                      },
                      "exemplar": false,
-                     "expr": "sum(\n  argocd_cluster_api_resources{\n    cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n\n  }\n) by (namespace, job, server)\n",
+                     "expr": "sum(\n  argocd_cluster_api_resources{\n    cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n,\n    server=~\"$kubernetes_cluster\"\n  }\n) by (namespace, job, server)\n",
                      "legendFormat": "{{ server }}"
                   }
                ],
@@ -1041,7 +1041,7 @@
                         "uid": "$datasource"
                      },
                      "exemplar": false,
-                     "expr": "sum(\n  increase(\n    argocd_cluster_events_total{\n      cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n\n    }[$__rate_interval]\n  )\n) by (namespace, job, server)\n",
+                     "expr": "sum(\n  increase(\n    argocd_cluster_events_total{\n      cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n,\n      server=~\"$kubernetes_cluster\"\n    }[$__rate_interval]\n  )\n) by (namespace, job, server)\n",
                      "legendFormat": "{{ server }}"
                   }
                ],

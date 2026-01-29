@@ -168,7 +168,8 @@ local tbPanelOptions = tablePanel.panelOptions;
         apiResources: |||
           sum(
             argocd_cluster_api_resources{
-              %(default)s
+              %(default)s,
+              %(kubernetesClusterServer)s
             }
           ) by (namespace, job, server)
         ||| % defaultFilters,
@@ -210,7 +211,8 @@ local tbPanelOptions = tablePanel.panelOptions;
           sum(
             increase(
               argocd_cluster_events_total{
-                %(default)s
+                %(default)s,
+                %(kubernetesClusterServer)s
               }[$__rate_interval]
             )
           ) by (namespace, job, server)
