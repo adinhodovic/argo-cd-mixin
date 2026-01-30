@@ -128,7 +128,7 @@ local tbPanelOptions = tablePanel.panelOptions;
 
         reconcilationPerformance: |||
           sum(
-            increase(
+            rate(
               argocd_app_reconcile_bucket{
                 %(default)s
               }[$__rate_interval]
@@ -187,7 +187,7 @@ local tbPanelOptions = tablePanel.panelOptions;
 
         gitLsRemotePerformance: |||
           sum(
-            increase(
+            rate(
               argocd_git_request_duration_seconds_bucket{
                 %(default)s,
                 request_type="ls-remote"
@@ -198,7 +198,7 @@ local tbPanelOptions = tablePanel.panelOptions;
 
         gitFetchPerformance: |||
           sum(
-            increase(
+            rate(
               argocd_git_request_duration_seconds_bucket{
                 %(default)s,
                 request_type="fetch"
@@ -254,6 +254,67 @@ local tbPanelOptions = tablePanel.panelOptions;
               }[$__rate_interval]
             )
           ) by (namespace, job, repo)
+        ||| % defaultFilters,
+
+        // Redis Performance Metrics
+        redisRequestTotal: |||
+          sum(
+            rate(
+              argocd_redis_request_total{
+                %(default)s
+              }[$__rate_interval]
+            )
+          ) by (namespace, job, initiator)
+        ||| % defaultFilters,
+
+        redisRequestDuration: |||
+          sum(
+            rate(
+              argocd_redis_request_duration_seconds_bucket{
+                %(default)s
+              }[$__rate_interval]
+            )
+          ) by (le)
+        ||| % defaultFilters,
+
+        // Kubectl Exec Metrics
+        kubectlExecTotal: |||
+          sum(
+            round(
+              increase(
+                argocd_kubectl_exec_total{
+                  %(default)s
+                }[$__rate_interval]
+              )
+            )
+          ) by (namespace, job, command)
+        ||| % defaultFilters,
+
+        // Cluster Cache Metrics
+        clusterCacheAge: |||
+          argocd_cluster_cache_age_seconds{
+            %(default)s,
+            %(kubernetesClusterServer)s
+          }
+        ||| % defaultFilters,
+
+        // Resource Event Processing Metrics
+        resourceEventProcessingDuration: |||
+          sum(
+            rate(
+              argocd_resource_events_processing_bucket{
+                %(default)s
+              }[$__rate_interval]
+            )
+          ) by (le)
+        ||| % defaultFilters,
+
+        resourceEventsBatchSize: |||
+          sum(
+            argocd_resource_events_processed_in_batch{
+              %(default)s
+            }
+          ) by (namespace, job)
         ||| % defaultFilters,
       };
 
@@ -551,6 +612,77 @@ local tbPanelOptions = tablePanel.panelOptions;
             description='A timeseries panel showing git fetch failures for repositories monitored by ArgoCD. High values may indicate git repository connectivity or authentication issues.',
             stack='normal'
           ),
+
+        // Redis Performance Panels
+        redisRequestRateTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Redis Request Rate',
+            'reqps',
+            queries.redisRequestTotal,
+            '{{ initiator }}',
+            description='Rate of Redis requests by ArgoCD component. High rates may indicate Redis becoming a bottleneck at scale.',
+            stack='normal'
+          ),
+
+        redisRequestDurationHeatmap:
+          mixinUtils.dashboards.heatmapPanel(
+            'Redis Request Duration',
+            's',
+            [
+              {
+                expr: queries.redisRequestDuration,
+                legend: '{{ le }}',
+              },
+            ],
+            description='Redis request latency distribution. High latencies indicate Redis performance issues that can affect controller scalability.',
+          ),
+
+        // Kubectl Exec Panels
+        kubectlExecTotalTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Kubectl Exec Total',
+            'short',
+            queries.kubectlExecTotal,
+            '{{ command }}',
+            description='Total kubectl executions for manifest generation (Helm, Kustomize, plugins). High counts are expected during sync operations.',
+            stack='normal'
+          ),
+
+        // Cluster Cache Panels
+        clusterCacheAgeTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Cluster Cache Age',
+            's',
+            queries.clusterCacheAge,
+            '{{ server }}',
+            description='Age of the cluster cache in seconds. Stale caches (high values) can cause reconciliation delays and performance issues.',
+            stack='none',
+            fillOpacity=0
+          ),
+
+        // Resource Event Processing Panels
+        resourceEventProcessingHeatmap:
+          mixinUtils.dashboards.heatmapPanel(
+            'Resource Event Processing Duration',
+            's',
+            [
+              {
+                expr: queries.resourceEventProcessingDuration,
+                legend: '{{ le }}',
+              },
+            ],
+            description='Time to process resource events in batches. Controlled by ARGOCD_CLUSTER_CACHE_BATCH_EVENTS_PROCESSING and related settings.',
+          ),
+
+        resourceEventsBatchSizeTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Resource Events Batch Size',
+            'short',
+            queries.resourceEventsBatchSize,
+            '{{ namespace }}/{{ job }}',
+            description='Number of resource events processed per batch. Batch processing improves performance when managing large numbers of resources.',
+            stack='normal'
+          ),
       };
 
       local rows =
@@ -617,6 +749,9 @@ local tbPanelOptions = tablePanel.panelOptions;
                 panels.reconcilationPerformanceHeatmap,
                 panels.k8sApiActivityTimeSeries,
                 panels.pendingKubectlTimeSeries,
+                panels.kubectlExecTotalTimeSeries,
+                panels.resourceEventProcessingHeatmap,
+                panels.resourceEventsBatchSizeTimeSeries,
               ],
               panelWidth=24,
               panelHeight=6,
@@ -627,7 +762,7 @@ local tbPanelOptions = tablePanel.panelOptions;
         [
           row.new('Cluster Stats') +
           row.gridPos.withX(0) +
-          row.gridPos.withY(49) +
+          row.gridPos.withY(25) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1) +
           row.withCollapsed(true) +
@@ -635,20 +770,21 @@ local tbPanelOptions = tablePanel.panelOptions;
             grid.makeGrid(
               [
                 panels.clusterConnectionStatusTimeSeries,
+                panels.clusterCacheAgeTimeSeries,
                 panels.resourceObjectsTimeSeries,
                 panels.apiResourcesTimeSeries,
                 panels.clusterEventsTimeSeries,
               ],
               panelWidth=24,
               panelHeight=6,
-              startY=50
+              startY=26
             )
           ),
         ] +
         [
           row.new('Repo Server Stats') +
           row.gridPos.withX(0) +
-          row.gridPos.withY(68) +
+          row.gridPos.withY(26) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1) +
           row.withCollapsed(true) +
@@ -664,7 +800,26 @@ local tbPanelOptions = tablePanel.panelOptions;
               ],
               panelWidth=12,
               panelHeight=6,
-              startY=69
+              startY=27
+            )
+          ),
+        ] +
+        [
+          row.new('Redis Performance') +
+          row.gridPos.withX(0) +
+          row.gridPos.withY(27) +
+          row.gridPos.withW(24) +
+          row.gridPos.withH(1) +
+          row.withCollapsed(true) +
+          row.withPanels(
+            grid.makeGrid(
+              [
+                panels.redisRequestRateTimeSeries,
+                panels.redisRequestDurationHeatmap,
+              ],
+              panelWidth=24,
+              panelHeight=6,
+              startY=28
             )
           ),
         ];
