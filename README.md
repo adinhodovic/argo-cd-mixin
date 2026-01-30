@@ -40,6 +40,38 @@ make dashboards_out
 
 The `prometheus_alerts.yaml` file then need to passed to your Prometheus server, and the files in `dashboards_out` need to be imported into you Grafana server. The exact details will depending on how you deploy your monitoring stack.
 
+## Configuration
+
+### ArgoCD Badges
+
+You can add ArgoCD application badges to the dashboards by configuring the `applications` field in `config.libsonnet`. This allows you to display links to your ArgoCD applications directly in the Grafana dashboards.
+
+Example configuration:
+
+```jsonnet
+local argoCdMixin = import 'argo-cd-mixin/mixin.libsonnet';
+
+argoCdMixin {
+  _config+:: {
+    applications: [
+      {
+        name: 'my-app',
+        namespace: 'argocd',
+        applicationName: 'my-app',  // or self.name
+        environment: 'Production',
+        argoCdUrl: 'https://argo-cd.example.com',  // or use $._config.argoCdUrl
+      },
+      {
+        name: 'another-app',
+        namespace: 'argocd',
+        environment: 'Staging',
+        argoCdUrl: 'https://argo-cd.example.com',
+      },
+    ],
+  },
+}
+```
+
 ## Alerts
 
 The mixin follows the [monitoring-mixins guidelines](https://github.com/monitoring-mixins/docs#guidelines-for-alert-names-labels-and-annotations) for alerts.
