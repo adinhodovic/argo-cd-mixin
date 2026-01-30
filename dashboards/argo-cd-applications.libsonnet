@@ -260,7 +260,9 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
           tbStandardOptions.withLinks([
             tbPanelOptions.link.withTitle('Go To Application') +
             tbPanelOptions.link.withUrl(
-              $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__data.fields.Application}'
+              if std.startsWith($._config.argoCdUrl, 'https://github.com/adinhodovic/argo-cd-mixin')
+              then $._config.argoCdUrl
+              else $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__data.fields.Application}'
             ) +
             tbPanelOptions.link.withTargetBlank(true),
           ]),
@@ -313,7 +315,9 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
           tbStandardOptions.withLinks([
             tbPanelOptions.link.withTitle('Go To Application') +
             tbPanelOptions.link.withUrl(
-              $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__data.fields.Application}'
+              if std.startsWith($._config.argoCdUrl, 'https://github.com/adinhodovic/argo-cd-mixin')
+              then $._config.argoCdUrl
+              else $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__data.fields.Application}'
             ) +
             tbPanelOptions.link.withTargetBlank(true),
           ]),
@@ -366,7 +370,9 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
           tbStandardOptions.withLinks([
             tbPanelOptions.link.withTitle('Go To Application') +
             tbPanelOptions.link.withUrl(
-              $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__data.fields.Application}'
+              if std.startsWith($._config.argoCdUrl, 'https://github.com/adinhodovic/argo-cd-mixin')
+              then $._config.argoCdUrl
+              else $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__data.fields.Application}'
             ) +
             tbPanelOptions.link.withTargetBlank(true),
           ]),
@@ -419,7 +425,9 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
           tbStandardOptions.withLinks([
             tbPanelOptions.link.withTitle('Go To Application') +
             tbPanelOptions.link.withUrl(
-              $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__data.fields.Application}'
+              if std.startsWith($._config.argoCdUrl, 'https://github.com/adinhodovic/argo-cd-mixin')
+              then $._config.argoCdUrl
+              else $._config.argoCdUrl + '/applications/${__data.fields.Application Namespace}/${__data.fields.Application}'
             ) +
             tbPanelOptions.link.withTargetBlank(true),
           ]),

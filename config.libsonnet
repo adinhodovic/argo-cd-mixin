@@ -12,7 +12,7 @@
     clusterLabel: 'cluster',
 
     grafanaUrl: 'https://grafana.com',
-    argoCdUrl: 'https://argocd.com',
+    argoCdUrl: 'https://github.com/adinhodovic/argo-cd-mixin?tab=readme-ov-file#argocd-badges',
 
     dashboardIds: {
       'argo-cd-operational-overview': 'argo-cd-operational-overview-kask',
