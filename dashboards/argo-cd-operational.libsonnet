@@ -290,6 +290,192 @@ local tbPanelOptions = tablePanel.panelOptions;
           ) by (namespace, job, command)
         ||| % defaultFilters,
 
+        kubectlRequestsTotal: |||
+          sum(
+            rate(
+              argocd_kubectl_requests_total{
+                %(default)s
+              }[$__rate_interval]
+            )
+          ) by (container, method, code)
+        ||| % defaultFilters,
+
+        kubectlRequestsTotalByHostPie: |||
+          topk(20,
+            sum(
+              increase(
+                argocd_kubectl_requests_total{
+                  %(default)s
+                }[6h]
+              )
+            ) by (host)
+          )
+        ||| % defaultFilters,
+
+        kubectlRequestDurationByVerb: |||
+          histogram_quantile(
+            0.95,
+            sum(
+              rate(
+                argocd_kubectl_request_duration_seconds_bucket{
+                  %(default)s
+                }[$__rate_interval]
+              )
+            ) by (le, container, verb)
+          )
+        ||| % defaultFilters,
+
+
+        // Kubectl Plugin Metrics
+        kubectlExecPluginCallTotal: |||
+          sum(
+            round(
+              increase(
+                argocd_kubectl_exec_plugin_call_total{
+                  %(default)s
+                }[$__rate_interval]
+              )
+            )
+          ) by (call_status, code)
+        ||| % defaultFilters,
+
+        kubectlTransportCreateCallsTotal: |||
+          sum(
+            round(
+              increase(
+                argocd_kubectl_transport_create_calls_total{
+                  %(default)s
+                }[$__rate_interval]
+              )
+            )
+          ) by (namespace, job)
+        ||| % defaultFilters,
+
+        kubectlRequestRetriesTotal: |||
+          sum(
+            rate(
+              argocd_kubectl_request_retries_total{
+                %(default)s
+              }[$__rate_interval]
+            )
+          ) by (container, method, code)
+        ||| % defaultFilters,
+
+        kubectlRequestRetriesTotalPie: |||
+          topk(20,
+            sum(
+              increase(
+                argocd_kubectl_request_retries_total{
+                  %(default)s
+                }[6h]
+              )
+            ) by (host)
+          )
+        ||| % defaultFilters,
+
+        kubectlRequestDurationByHostPie: |||
+          topk(20,
+            histogram_quantile(
+              0.95,
+              sum(
+                increase(
+                  argocd_kubectl_request_duration_seconds_bucket{
+                    %(default)s
+                  }[6h]
+                )
+              ) by (le, host)
+            )
+          )
+        ||| % defaultFilters,
+
+
+
+        kubectlRateLimiterDurationP95ByHostPie: |||
+          topk(20,
+            histogram_quantile(
+              0.95,
+              sum(
+                increase(
+                  argocd_kubectl_rate_limiter_duration_seconds_bucket{
+                    %(default)s
+                  }[6h]
+                )
+              ) by (le, host)
+            )
+          )
+        ||| % defaultFilters,
+
+        kubectlRateLimiterDurationP95: |||
+          histogram_quantile(
+            0.95,
+            sum(
+              rate(
+                argocd_kubectl_rate_limiter_duration_seconds_bucket{
+                  %(default)s
+                }[$__rate_interval]
+              )
+            ) by (le)
+          )
+        ||| % defaultFilters,
+
+        kubectlRequestSizeBytes: |||
+          sum(
+            rate(
+              argocd_kubectl_request_size_bytes_bucket{
+                %(default)s
+              }[$__rate_interval]
+            )
+          ) by (le)
+        ||| % defaultFilters,
+
+        kubectlResponseSizeBytes: |||
+          sum(
+            rate(
+              argocd_kubectl_response_size_bytes_bucket{
+                %(default)s
+              }[$__rate_interval]
+            )
+          ) by (le)
+        ||| % defaultFilters,
+
+        // gRPC / API Server Metrics
+        grpcServerHandledTotal: |||
+          sum(
+            rate(
+              grpc_server_handled_total{
+                %(default)s
+              }[$__rate_interval]
+            )
+          ) by (namespace, job, grpc_service, grpc_method, grpc_code)
+          > 0
+        ||| % defaultFilters,
+
+        grpcServerMsgSentTotal: |||
+          sum(
+            rate(
+              grpc_server_msg_sent_total{
+                %(default)s
+              }[$__rate_interval]
+            )
+          ) by (namespace, job, grpc_service, grpc_method)
+        ||| % defaultFilters,
+
+        grpcServerHandlingSecondsP50: |||
+          histogram_quantile(
+            0.5,
+            sum(
+              rate(
+                grpc_server_handling_seconds_bucket{
+                  %(default)s
+                }[$__rate_interval]
+              )
+            ) by (le, grpc_service, grpc_method)
+          )
+        ||| % defaultFilters,
+
+        grpcServerHandlingSecondsP95: std.strReplace(self.grpcServerHandlingSecondsP50, '0.5', '0.95'),
+
+
         // Cluster Cache Metrics
         clusterCacheAge: |||
           argocd_cluster_cache_age_seconds{
@@ -648,6 +834,176 @@ local tbPanelOptions = tablePanel.panelOptions;
             stack='normal'
           ),
 
+        kubectlRequestsTotalTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Kubectl Requests Total',
+            'reqps',
+            queries.kubectlRequestsTotal,
+            '{{ container }} {{ method }} {{ code }}',
+            description='Rate of kubectl requests by container, method, and code.',
+            stack='normal'
+          ),
+
+        kubectlRequestsTotalByHostPieChart:
+          mixinUtils.dashboards.pieChartPanel(
+            'Kubectl Requests Total by Host (6h)',
+            'short',
+            queries.kubectlRequestsTotalByHostPie,
+            '{{ host }}',
+            description='Distribution of kubectl requests by host over the last 6 hours.',
+          ),
+
+        kubectlRequestDurationByVerbTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Kubectl Request Duration by Verb (P95)',
+            's',
+            queries.kubectlRequestDurationByVerb,
+            '{{ container }} {{ verb }}',
+            description='P95 kubectl request duration by container and verb. High values indicate slow kubectl operations against the Kubernetes API.',
+            stack='normal'
+          ),
+
+        kubectlRequestDurationByHostPieChart:
+          mixinUtils.dashboards.pieChartPanel(
+            'Kubectl Request Duration by Host (6h)',
+            's',
+            queries.kubectlRequestDurationByHostPie,
+            '{{ host }}',
+            description='Distribution of kubectl request duration by host over the last 24 hours.',
+          ),
+
+
+        // Kubectl Plugin Panels
+        kubectlExecPluginCallTotalTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Kubectl Exec Plugin Calls',
+            'short',
+            queries.kubectlExecPluginCallTotal,
+            '{{ call_status }} {{ code }}',
+            description='Total kubectl exec plugin calls by call status and exit code. Failed call statuses or non-zero codes indicate credential plugin authentication issues.',
+            stack='normal'
+          ),
+
+        kubectlTransportCreateCallsTotalTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Kubectl Transport Create Calls',
+            'short',
+            queries.kubectlTransportCreateCallsTotal,
+            '{{ namespace }}/{{ job }}',
+            description='Total number of kubectl transport create calls. High values may indicate frequent transport recreation due to credential rotation or connection churn.',
+            stack='normal'
+          ),
+
+        kubectlRequestRetriesTotalTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Kubectl Request Retries',
+            'reqps',
+            queries.kubectlRequestRetriesTotal,
+            '{{ container }} {{ method }} {{ code }}',
+            description='Rate of kubectl request retries by container, method, and code. Elevated retry rates indicate transient Kubernetes API errors or throttling.',
+            stack='normal'
+          ),
+
+        kubectlRequestRetriesTotalPieChart:
+          mixinUtils.dashboards.pieChartPanel(
+            'Kubectl Request Retries by Host (6h)',
+            'short',
+            queries.kubectlRequestRetriesTotalPie,
+            '{{ host }}',
+            description='Distribution of kubectl request retries by host over the last 24 hours.',
+          ),
+
+
+        kubectlRateLimiterDurationP95TimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'Kubectl Rate Limiter Duration (P95)',
+            's',
+            queries.kubectlRateLimiterDurationP95,
+            '{{ host }}',
+            description='P95 time spent waiting in the kubectl client-side rate limiter per host. High values indicate the Kubernetes API server is throttling ArgoCD requests.',
+            stack='none',
+            fillOpacity=0
+          ),
+
+        kubectlRateLimiterDurationP95ByHostPieChart:
+          mixinUtils.dashboards.pieChartPanel(
+            'Kubectl Rate Limiter Duration P95 by Host (6h)',
+            's',
+            queries.kubectlRateLimiterDurationP95ByHostPie,
+            '{{ host }}',
+            description='Distribution of P95 kubectl rate limiter duration by host over the last 6 hours.',
+          ),
+
+        kubectlRequestSizeBytesHeatmap:
+          mixinUtils.dashboards.heatmapPanel(
+            'Kubectl Request Size',
+            'bytes',
+            [
+              {
+                expr: queries.kubectlRequestSizeBytes,
+                legend: '{{ le }}',
+              },
+            ],
+            description='Distribution of kubectl request payload sizes. Large request sizes may impact API server performance.',
+          ),
+
+        kubectlResponseSizeBytesHeatmap:
+          mixinUtils.dashboards.heatmapPanel(
+            'Kubectl Response Size',
+            'bytes',
+            [
+              {
+                expr: queries.kubectlResponseSizeBytes,
+                legend: '{{ le }}',
+              },
+            ],
+            description='Distribution of kubectl response payload sizes. Large response sizes may indicate wide resource fetches and can impact controller memory usage.',
+          ),
+
+        // gRPC / API Server Panels
+        grpcServerHandledTotalTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'gRPC Requests Handled',
+            'reqps',
+            queries.grpcServerHandledTotal,
+            '{{ grpc_service }}/{{ grpc_method }} - {{ grpc_code }}',
+            description='Total number of gRPC RPCs completed on the API server by service, method, and response code.',
+            stack='normal'
+          ),
+
+        grpcServerMsgSentTotalTimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'gRPC Messages Sent',
+            'reqps',
+            queries.grpcServerMsgSentTotal,
+            '{{ grpc_service }}/{{ grpc_method }}',
+            description='Total number of gRPC stream messages sent by the API server.',
+            stack='normal'
+          ),
+
+        grpcServerHandlingSecondsP50TimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'gRPC Server Handling Duration (P50)',
+            's',
+            queries.grpcServerHandlingSecondsP50,
+            '{{ grpc_service }}/{{ grpc_method }}',
+            description='P50 server-side gRPC handling duration by service and method.',
+            stack='none',
+            fillOpacity=0
+          ),
+
+        grpcServerHandlingSecondsP95TimeSeries:
+          mixinUtils.dashboards.timeSeriesPanel(
+            'gRPC Server Handling Duration (P95)',
+            's',
+            queries.grpcServerHandlingSecondsP95,
+            '{{ grpc_service }}/{{ grpc_method }}',
+            description='P95 server-side gRPC handling duration by service and method.',
+            stack='none',
+            fillOpacity=0
+          ),
+
+
         // Cluster Cache Panels
         clusterCacheAgeTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -748,8 +1104,6 @@ local tbPanelOptions = tablePanel.panelOptions;
                 panels.reconcilationActivtyTimeSeries,
                 panels.reconcilationPerformanceHeatmap,
                 panels.k8sApiActivityTimeSeries,
-                panels.pendingKubectlTimeSeries,
-                panels.kubectlExecTotalTimeSeries,
                 panels.resourceEventProcessingHeatmap,
                 panels.resourceEventsBatchSizeTimeSeries,
               ],
@@ -760,9 +1114,63 @@ local tbPanelOptions = tablePanel.panelOptions;
           ),
         ] +
         [
-          row.new('Cluster Stats') +
+          row.new('Kubectl Stats') +
           row.gridPos.withX(0) +
           row.gridPos.withY(25) +
+          row.gridPos.withW(24) +
+          row.gridPos.withH(1) +
+          row.withCollapsed(true) +
+          row.withPanels(
+            grid.makeGrid(
+              [
+                panels.pendingKubectlTimeSeries,
+                panels.kubectlExecTotalTimeSeries,
+                panels.kubectlRequestsTotalTimeSeries,
+                panels.kubectlRequestsTotalByHostPieChart,
+                panels.kubectlRequestDurationByVerbTimeSeries,
+                panels.kubectlRequestDurationByHostPieChart,
+                panels.kubectlRequestRetriesTotalTimeSeries,
+                panels.kubectlRequestRetriesTotalPieChart,
+                panels.kubectlRateLimiterDurationP95TimeSeries,
+                panels.kubectlRateLimiterDurationP95ByHostPieChart,
+                panels.kubectlRequestSizeBytesHeatmap,
+                panels.kubectlResponseSizeBytesHeatmap,
+                panels.kubectlExecPluginCallTotalTimeSeries,
+                panels.kubectlTransportCreateCallsTotalTimeSeries,
+              ],
+              panelWidth=12,
+              panelHeight=6,
+              startY=26
+            )
+          ),
+        ] +
+        [
+          row.new('gRPC Stats') +
+          row.gridPos.withX(0) +
+          row.gridPos.withY(26) +
+          row.gridPos.withW(24) +
+          row.gridPos.withH(1) +
+          row.withCollapsed(true) +
+          row.withPanels(
+            grid.makeGrid(
+              [
+                panels.grpcServerHandledTotalTimeSeries,
+                panels.grpcServerMsgSentTotalTimeSeries,
+                panels.grpcServerHandlingSecondsP50TimeSeries,
+                panels.grpcServerHandlingSecondsP95TimeSeries,
+
+
+              ],
+              panelWidth=12,
+              panelHeight=6,
+              startY=27
+            )
+          ),
+        ] +
+        [
+          row.new('Cluster Stats') +
+          row.gridPos.withX(0) +
+          row.gridPos.withY(27) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1) +
           row.withCollapsed(true) +
@@ -777,14 +1185,14 @@ local tbPanelOptions = tablePanel.panelOptions;
               ],
               panelWidth=24,
               panelHeight=6,
-              startY=26
+              startY=28
             )
           ),
         ] +
         [
           row.new('Repo Server Stats') +
           row.gridPos.withX(0) +
-          row.gridPos.withY(26) +
+          row.gridPos.withY(28) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1) +
           row.withCollapsed(true) +
@@ -800,14 +1208,14 @@ local tbPanelOptions = tablePanel.panelOptions;
               ],
               panelWidth=12,
               panelHeight=6,
-              startY=27
+              startY=29
             )
           ),
         ] +
         [
           row.new('Redis Performance') +
           row.gridPos.withX(0) +
-          row.gridPos.withY(27) +
+          row.gridPos.withY(29) +
           row.gridPos.withW(24) +
           row.gridPos.withH(1) +
           row.withCollapsed(true) +
@@ -819,7 +1227,7 @@ local tbPanelOptions = tablePanel.panelOptions;
               ],
               panelWidth=24,
               panelHeight=6,
-              startY=28
+              startY=30
             )
           ),
         ];
