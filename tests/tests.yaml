@@ -138,9 +138,9 @@ tests:
   - interval: 1m
     input_series:
       - series: 'argocd_repo_pending_request_total{job="argo-cd-argocd-repo-server-metrics", namespace="argocd"}'
-        values: "55+0x10"
+        values: "55+0x15"
     alert_rule_test:
-      - eval_time: 10m
+      - eval_time: 15m
         alertname: ArgoCdRepoServerPendingRequests
         exp_alerts:
           - exp_labels:
@@ -148,7 +148,7 @@ tests:
               namespace: argocd
             exp_annotations:
               summary: "ArgoCD Repo Server has pending requests."
-              description: "ArgoCD repo server in argocd has 50 or more pending requests for the past 5m. The repo server may be overloaded and need scaling."
+              description: "ArgoCD repo server in argocd has 50 or more pending requests for the past 10m. The repo server may be overloaded and need scaling."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
   - interval: 1m
     input_series:
@@ -213,4 +213,103 @@ tests:
             exp_annotations:
               summary: "ArgoCD Git requests are failing."
               description: "ArgoCD in argocd is experiencing git fetch failures for repository https://github.com/example/repo.git for the past 5m. This may indicate repository access issues or network problems."
+              dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
+  # ArgoCdHighKubectlRateLimiterDuration
+  - interval: 1m
+    input_series:
+      - series: 'argocd_kubectl_rate_limiter_duration_seconds_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="0.5"}'
+        values: "0+0x15"
+      - series: 'argocd_kubectl_rate_limiter_duration_seconds_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="1"}'
+        values: "0+0x15"
+      - series: 'argocd_kubectl_rate_limiter_duration_seconds_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="2"}'
+        values: "0+1x15"
+      - series: 'argocd_kubectl_rate_limiter_duration_seconds_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="5"}'
+        values: "0+4x15"
+      - series: 'argocd_kubectl_rate_limiter_duration_seconds_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="+Inf"}'
+        values: "0+20x15"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: ArgoCdHighKubectlRateLimiterDuration
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              namespace: argocd
+            exp_annotations:
+              summary: "ArgoCD kubectl rate limiter duration is high."
+              description: "ArgoCD in argocd has a P0.95 kubectl rate limiter wait time above 1s for the past 10m. The Kubernetes API server may be throttling ArgoCD requests."
+              dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
+  # ArgoCdHighKubectlRequestDuration
+  - interval: 1m
+    input_series:
+      - series: 'argocd_kubectl_request_duration_seconds_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="10"}'
+        values: "0+0x15"
+      - series: 'argocd_kubectl_request_duration_seconds_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="30"}'
+        values: "0+1x15"
+      - series: 'argocd_kubectl_request_duration_seconds_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="60"}'
+        values: "0+4x15"
+      - series: 'argocd_kubectl_request_duration_seconds_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="120"}'
+        values: "0+19x15"
+      - series: 'argocd_kubectl_request_duration_seconds_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="+Inf"}'
+        values: "0+20x15"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: ArgoCdHighKubectlRequestDuration
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              namespace: argocd
+            exp_annotations:
+              summary: "ArgoCD kubectl request duration is high."
+              description: "ArgoCD in argocd has a P0.95 kubectl request duration above 5s for the past 10m. This may indicate Kubernetes API server performance issues."
+              dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
+  # ArgoCdHighKubectlRequestRetryRate
+  - interval: 1m
+    input_series:
+      - series: 'argocd_kubectl_request_retries_total{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", container="argocd-application-controller", method="GET", code="429"}'
+        values: "0+20x20"
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: ArgoCdHighKubectlRequestRetryRate
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              namespace: argocd
+            exp_annotations:
+              summary: "ArgoCD kubectl request retry rate is high."
+              description: "ArgoCD in argocd has had more than 1 kubectl request retries in the past 10m. This indicates transient Kubernetes API errors or throttling."
+              dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
+  # ArgoCdHighGrpcErrorRate
+  - interval: 1m
+    input_series:
+      - series: 'grpc_server_handled_total{job="argo-cd-argocd-server-metrics", namespace="argocd", grpc_service="application.ApplicationService", grpc_method="List", grpc_code="OK"}'
+        values: "0+10x20"
+      - series: 'grpc_server_handled_total{job="argo-cd-argocd-server-metrics", namespace="argocd", grpc_service="application.ApplicationService", grpc_method="List", grpc_code="Internal"}'
+        values: "0+10x20"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: ArgoCdHighGrpcErrorRate
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: argo-cd-argocd-server-metrics
+              namespace: argocd
+            exp_annotations:
+              summary: "ArgoCD gRPC error rate is high."
+              description: "ArgoCD argo-cd-argocd-server-metrics in argocd has a gRPC error rate above 0.05 for the past 10m."
+              dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
+  # ArgoCdHighKubectlPendingExec
+  - interval: 1m
+    input_series:
+      - series: 'argocd_kubectl_exec_pending{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", command="apply"}'
+        values: "15+0x15"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: ArgoCdHighKubectlPendingExec
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              namespace: argocd
+            exp_annotations:
+              summary: "ArgoCD has a high number of pending kubectl executions."
+              description: "ArgoCD in argocd has more than 10 pending kubectl executions for the past 15m. This may indicate resource contention or slow manifest generation."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"

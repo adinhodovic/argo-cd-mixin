@@ -2,7 +2,8 @@
   _config+:: {
     local this = self,
 
-    argoCdSelector: 'job=~".*"',
+    argoCdSelector: 'job=~"(argocd|argo-cd).*"',
+    argoCdServerSelector: 'job=~"(argocd|argo-cd).*"',
 
     // Default datasource name
     datasourceName: 'default',
@@ -122,7 +123,8 @@
       highReconciliationDuration: {
         enabled: true,
         severity: 'warning',
-        interval: '10m',
+        interval: '2m',
+        'for': '10m',
         threshold: '60',  // seconds - apps taking longer than 1min to reconcile
         quantile: '0.95',  // 95th percentile
       },
@@ -130,14 +132,15 @@
       pendingRepoRequests: {
         enabled: true,
         severity: 'warning',
-        interval: '5m',
+        'for': '10m',
         threshold: '50',  // pending requests in repo server queue
       },
 
       highGitRequestDuration: {
         enabled: true,
         severity: 'warning',
-        interval: '10m',
+        interval: '2m',
+        'for': '10m',
         threshold: '30',  // seconds - git operations (fetch/clone) taking too long
         quantile: '0.95',  // 95th percentile
       },
@@ -151,7 +154,49 @@
       gitRequestErrors: {
         enabled: true,
         severity: 'warning',
-        interval: '5m',
+        interval: '2m',
+        'for': '5m',
+      },
+
+      highKubectlRateLimiterDuration: {
+        enabled: true,
+        severity: 'warning',
+        interval: '2m',
+        'for': '10m',
+        threshold: '1',  // seconds P95
+        quantile: '0.95',
+      },
+
+      highKubectlRequestDuration: {
+        enabled: true,
+        severity: 'warning',
+        interval: '2m',
+        'for': '10m',
+        threshold: '5',  // seconds P95
+        quantile: '0.95',
+      },
+
+      highKubectlRequestRetryRate: {
+        enabled: true,
+        severity: 'warning',
+        interval: '2m',
+        'for': '10m',
+        threshold: '1',  // retries over interval
+      },
+
+      highGrpcErrorRate: {
+        enabled: true,
+        severity: 'warning',
+        interval: '2m',
+        'for': '10m',
+        threshold: '0.05',  // 5% error rate
+      },
+
+      highKubectlPendingExec: {
+        enabled: true,
+        severity: 'warning',
+        'for': '15m',
+        threshold: '10',
       },
     },
 
