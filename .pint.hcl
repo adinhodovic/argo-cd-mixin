@@ -67,3 +67,38 @@ rule {
   }
   disable = ["promql/regexp"]
 }
+
+rule {
+  match {
+    name = "ArgoCdHighKubectlRateLimiterDuration"
+  }
+  disable = ["promql/regexp"]
+}
+
+rule {
+  match {
+    name = "ArgoCdHighKubectlRequestDuration"
+  }
+  disable = ["promql/regexp"]
+}
+
+rule {
+  match {
+    name = "ArgoCdHighKubectlRequestRetryRate"
+  }
+  disable = ["promql/regexp"]
+}
+
+rule {
+  match {
+    name = "ArgoCdHighGrpcErrorRate"
+  }
+  disable = ["promql/regexp"]
+}
+
+rule {
+  match {
+    name = "ArgoCdHighKubectlPendingExec"
+  }
+  disable = ["promql/regexp"]
+}

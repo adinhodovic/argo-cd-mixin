@@ -266,13 +266,13 @@
                   quantile: alertConfig.quantile,
                 }
               ),
-              'for': '5m',
+              'for': alertConfig['for'],
               labels: {
                 severity: alertConfig.severity,
               },
               annotations: {
                 summary: 'ArgoCD App Controller has high reconciliation duration.',
-                description: 'ArgoCD app controller in {{ $labels.namespace }} is taking more than %(threshold)ss (%(quantile)s percentile) to reconcile applications for the past %(interval)s. This may indicate performance issues or the need to scale up.' % alertConfig,
+                description: 'ArgoCD app controller in {{ $labels.namespace }} is taking more than %(threshold)ss (%(quantile)s percentile) to reconcile applications for the past %(__for)s. This may indicate performance issues or the need to scale up.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -294,13 +294,13 @@
                   threshold: alertConfig.threshold,
                 }
               ),
-              'for': alertConfig.interval,
+              'for': alertConfig['for'],
               labels: {
                 severity: alertConfig.severity,
               },
               annotations: {
                 summary: 'ArgoCD Repo Server has pending requests.',
-                description: 'ArgoCD repo server in {{ $labels.namespace }} has %(threshold)s or more pending requests for the past %(interval)s. The repo server may be overloaded and need scaling.' % alertConfig,
+                description: 'ArgoCD repo server in {{ $labels.namespace }} has %(threshold)s or more pending requests for the past %(__for)s. The repo server may be overloaded and need scaling.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -327,13 +327,13 @@
                   quantile: alertConfig.quantile,
                 }
               ),
-              'for': '10m',
+              'for': alertConfig['for'],
               labels: {
                 severity: alertConfig.severity,
               },
               annotations: {
                 summary: 'ArgoCD Repo Server has high git request duration.',
-                description: 'ArgoCD repo server in {{ $labels.namespace }} is experiencing git operations (fetch/clone) taking more than %(threshold)ss (%(quantile)s percentile) for the past %(interval)s. This may indicate slow git repository access or network issues.' % alertConfig,
+                description: 'ArgoCD repo server in {{ $labels.namespace }} is experiencing git operations (fetch/clone) taking more than %(threshold)ss (%(quantile)s percentile) for the past %(__for)s. This may indicate slow git repository access or network issues.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -378,13 +378,176 @@
                   interval: alertConfig.interval,
                 }
               ),
-              'for': '1m',
+              'for': alertConfig['for'],
               labels: {
                 severity: alertConfig.severity,
               },
               annotations: {
                 summary: 'ArgoCD Git requests are failing.',
-                description: 'ArgoCD in {{ $labels.namespace }} is experiencing git fetch failures for repository {{ $labels.repo }} for the past %(interval)s. This may indicate repository access issues or network problems.' % alertConfig,
+                description: 'ArgoCD in {{ $labels.namespace }} is experiencing git fetch failures for repository {{ $labels.repo }} for the past %(__for)s. This may indicate repository access issues or network problems.' % (alertConfig { __for: alertConfig['for'] }),
+                dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
+              },
+            },
+
+          if $._config.alerts.highKubectlRateLimiterDuration.enabled then
+            local alertConfig = $._config.alerts.highKubectlRateLimiterDuration;
+            {
+              alert: 'ArgoCdHighKubectlRateLimiterDuration',
+              expr: |||
+                histogram_quantile(%(quantile)s,
+                  sum(
+                    rate(
+                      argocd_kubectl_rate_limiter_duration_seconds_bucket{
+                        %(argoCdSelector)s
+                      }[%(interval)s]
+                    )
+                  ) by (%(clusterLabel)s, namespace, le)
+                ) > %(threshold)s
+              ||| % (
+                $._config
+                {
+                  interval: alertConfig.interval,
+                  threshold: alertConfig.threshold,
+                  quantile: alertConfig.quantile,
+                }
+              ),
+              'for': alertConfig['for'],
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: 'ArgoCD kubectl rate limiter duration is high.',
+                description: 'ArgoCD in {{ $labels.namespace }} has a P%(quantile)s kubectl rate limiter wait time above %(threshold)ss for the past %(__for)s. The Kubernetes API server may be throttling ArgoCD requests.' % (alertConfig { __for: alertConfig['for'] }),
+                dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
+              },
+            },
+
+          if $._config.alerts.highKubectlRequestDuration.enabled then
+            local alertConfig = $._config.alerts.highKubectlRequestDuration;
+            {
+              alert: 'ArgoCdHighKubectlRequestDuration',
+              expr: |||
+                histogram_quantile(%(quantile)s,
+                  sum(
+                    rate(
+                      argocd_kubectl_request_duration_seconds_bucket{
+                        %(argoCdSelector)s
+                      }[%(interval)s]
+                    )
+                  ) by (%(clusterLabel)s, namespace, le)
+                ) > %(threshold)s
+              ||| % (
+                $._config
+                {
+                  interval: alertConfig.interval,
+                  threshold: alertConfig.threshold,
+                  quantile: alertConfig.quantile,
+                }
+              ),
+              'for': alertConfig['for'],
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: 'ArgoCD kubectl request duration is high.',
+                description: 'ArgoCD in {{ $labels.namespace }} has a P%(quantile)s kubectl request duration above %(threshold)ss for the past %(__for)s. This may indicate Kubernetes API server performance issues.' % (alertConfig { __for: alertConfig['for'] }),
+                dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
+              },
+            },
+
+          if $._config.alerts.highKubectlRequestRetryRate.enabled then
+            local alertConfig = $._config.alerts.highKubectlRequestRetryRate;
+            {
+              alert: 'ArgoCdHighKubectlRequestRetryRate',
+              expr: |||
+                sum(
+                  increase(
+                    argocd_kubectl_request_retries_total{
+                      %(argoCdSelector)s
+                    }[%(interval)s]
+                  )
+                ) by (%(clusterLabel)s, namespace) > %(threshold)s
+              ||| % (
+                $._config
+                {
+                  interval: alertConfig.interval,
+                  threshold: alertConfig.threshold,
+                }
+              ),
+              'for': alertConfig['for'],
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: 'ArgoCD kubectl request retry rate is high.',
+                description: 'ArgoCD in {{ $labels.namespace }} has had more than %(threshold)s kubectl request retries in the past %(__for)s. This indicates transient Kubernetes API errors or throttling.' % (alertConfig { __for: alertConfig['for'] }),
+                dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
+              },
+            },
+
+          if $._config.alerts.highGrpcErrorRate.enabled then
+            local alertConfig = $._config.alerts.highGrpcErrorRate;
+            {
+              alert: 'ArgoCdHighGrpcErrorRate',
+              expr: |||
+                sum(
+                  rate(
+                    grpc_server_handled_total{
+                      %(argoCdServerSelector)s,
+                      grpc_code!="OK"
+                    }[%(interval)s]
+                  )
+                ) by (%(clusterLabel)s, namespace, job)
+                /
+                sum(
+                  rate(
+                    grpc_server_handled_total{
+                      %(argoCdServerSelector)s
+                    }[%(interval)s]
+                  )
+                ) by (%(clusterLabel)s, namespace, job)
+                > %(threshold)s
+              ||| % (
+                $._config
+                {
+                  interval: alertConfig.interval,
+                  threshold: alertConfig.threshold,
+                }
+              ),
+              'for': alertConfig['for'],
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: 'ArgoCD gRPC error rate is high.',
+                description: 'ArgoCD {{ $labels.job }} in {{ $labels.namespace }} has a gRPC error rate above %(threshold)s for the past %(__for)s.' % (alertConfig { __for: alertConfig['for'] }),
+                dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
+              },
+            },
+
+          if $._config.alerts.highKubectlPendingExec.enabled then
+            local alertConfig = $._config.alerts.highKubectlPendingExec;
+            {
+              alert: 'ArgoCdHighKubectlPendingExec',
+              expr: |||
+                sum(
+                  argocd_kubectl_exec_pending{
+                    %(argoCdSelector)s
+                  }
+                ) by (%(clusterLabel)s, namespace) > %(threshold)s
+              ||| % (
+                $._config
+                {
+                  threshold: alertConfig.threshold,
+                }
+              ),
+              'for': alertConfig['for'],
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: 'ArgoCD has a high number of pending kubectl executions.',
+                description: 'ArgoCD in {{ $labels.namespace }} has more than %(threshold)s pending kubectl executions for the past %(__for)s. This may indicate resource contention or slow manifest generation.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },

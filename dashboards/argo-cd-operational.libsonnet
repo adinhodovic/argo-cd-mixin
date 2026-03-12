@@ -389,7 +389,6 @@ local tbPanelOptions = tablePanel.panelOptions;
         ||| % defaultFilters,
 
 
-
         kubectlRateLimiterDurationP95ByHostPie: |||
           topk(20,
             histogram_quantile(
@@ -414,7 +413,7 @@ local tbPanelOptions = tablePanel.panelOptions;
                   %(default)s
                 }[$__rate_interval]
               )
-            ) by (le)
+            ) by (le, verb)
           )
         ||| % defaultFilters,
 
@@ -458,6 +457,7 @@ local tbPanelOptions = tablePanel.panelOptions;
               }[$__rate_interval]
             )
           ) by (namespace, job, grpc_service, grpc_method)
+          > 0
         ||| % defaultFilters,
 
         grpcServerHandlingSecondsP50: |||
@@ -471,10 +471,16 @@ local tbPanelOptions = tablePanel.panelOptions;
               )
             ) by (le, grpc_service, grpc_method)
           )
+          and
+          sum(
+            rate(
+              grpc_server_handling_seconds_count{
+                %(default)s
+              }[$__rate_interval]
+            )
+          ) by (grpc_service, grpc_method) > 0
         ||| % defaultFilters,
-
         grpcServerHandlingSecondsP95: std.strReplace(self.grpcServerHandlingSecondsP50, '0.5', '0.95'),
-
 
         // Cluster Cache Metrics
         clusterCacheAge: |||
@@ -860,7 +866,7 @@ local tbPanelOptions = tablePanel.panelOptions;
             queries.kubectlRequestDurationByVerb,
             '{{ container }} {{ verb }}',
             description='P95 kubectl request duration by container and verb. High values indicate slow kubectl operations against the Kubernetes API.',
-            stack='normal'
+            stack='none'
           ),
 
         kubectlRequestDurationByHostPieChart:
@@ -919,7 +925,7 @@ local tbPanelOptions = tablePanel.panelOptions;
             'Kubectl Rate Limiter Duration (P95)',
             's',
             queries.kubectlRateLimiterDurationP95,
-            '{{ host }}',
+            '{{ verb }}',
             description='P95 time spent waiting in the kubectl client-side rate limiter per host. High values indicate the Kubernetes API server is throttling ArgoCD requests.',
             stack='none',
             fillOpacity=0
@@ -1002,7 +1008,6 @@ local tbPanelOptions = tablePanel.panelOptions;
             stack='none',
             fillOpacity=0
           ),
-
 
         // Cluster Cache Panels
         clusterCacheAgeTimeSeries:

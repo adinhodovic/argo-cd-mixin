@@ -1085,12 +1085,7 @@
                "fieldConfig": {
                   "defaults": {
                      "custom": {
-                        "axisSoftMin": 0,
-                        "fillOpacity": 100,
-                        "lineWidth": 1,
-                        "stacking": {
-                           "mode": "normal"
-                        }
+                        "fillOpacity": 10
                      },
                      "unit": "s"
                   },
@@ -1343,8 +1338,8 @@
                         "uid": "$datasource"
                      },
                      "exemplar": false,
-                     "expr": "histogram_quantile(\n  0.95,\n  sum(\n    rate(\n      argocd_kubectl_rate_limiter_duration_seconds_bucket{\n        cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n\n      }[$__rate_interval]\n    )\n  ) by (le)\n)\n",
-                     "legendFormat": "{{ host }}"
+                     "expr": "histogram_quantile(\n  0.95,\n  sum(\n    rate(\n      argocd_kubectl_rate_limiter_duration_seconds_bucket{\n        cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n\n      }[$__rate_interval]\n    )\n  ) by (le, verb)\n)\n",
+                     "legendFormat": "{{ verb }}"
                   }
                ],
                "title": "Kubectl Rate Limiter Duration (P95)",
@@ -1710,7 +1705,7 @@
                         "uid": "$datasource"
                      },
                      "exemplar": false,
-                     "expr": "sum(\n  rate(\n    grpc_server_msg_sent_total{\n      cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n\n    }[$__rate_interval]\n  )\n) by (namespace, job, grpc_service, grpc_method)\n",
+                     "expr": "sum(\n  rate(\n    grpc_server_msg_sent_total{\n      cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n\n    }[$__rate_interval]\n  )\n) by (namespace, job, grpc_service, grpc_method)\n> 0\n",
                      "legendFormat": "{{ grpc_service }}/{{ grpc_method }}"
                   }
                ],
@@ -1764,7 +1759,7 @@
                         "uid": "$datasource"
                      },
                      "exemplar": false,
-                     "expr": "histogram_quantile(\n  0.5,\n  sum(\n    rate(\n      grpc_server_handling_seconds_bucket{\n        cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n\n      }[$__rate_interval]\n    )\n  ) by (le, grpc_service, grpc_method)\n)\n",
+                     "expr": "histogram_quantile(\n  0.5,\n  sum(\n    rate(\n      grpc_server_handling_seconds_bucket{\n        cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n\n      }[$__rate_interval]\n    )\n  ) by (le, grpc_service, grpc_method)\n)\nand\nsum(\n  rate(\n    grpc_server_handling_seconds_count{\n      cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n\n    }[$__rate_interval]\n  )\n) by (grpc_service, grpc_method) > 0\n",
                      "legendFormat": "{{ grpc_service }}/{{ grpc_method }}"
                   }
                ],
@@ -1818,7 +1813,7 @@
                         "uid": "$datasource"
                      },
                      "exemplar": false,
-                     "expr": "histogram_quantile(\n  0.95,\n  sum(\n    rate(\n      grpc_server_handling_seconds_bucket{\n        cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n\n      }[$__rate_interval]\n    )\n  ) by (le, grpc_service, grpc_method)\n)\n",
+                     "expr": "histogram_quantile(\n  0.95,\n  sum(\n    rate(\n      grpc_server_handling_seconds_bucket{\n        cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n\n      }[$__rate_interval]\n    )\n  ) by (le, grpc_service, grpc_method)\n)\nand\nsum(\n  rate(\n    grpc_server_handling_seconds_count{\n      cluster=\"$cluster\",\nnamespace=~\"$namespace\",\njob=~\"$job\"\n\n\n    }[$__rate_interval]\n  )\n) by (grpc_service, grpc_method) > 0\n",
                      "legendFormat": "{{ grpc_service }}/{{ grpc_method }}"
                   }
                ],
