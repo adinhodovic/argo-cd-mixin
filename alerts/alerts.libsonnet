@@ -520,7 +520,7 @@
               },
               annotations: {
                 summary: 'ArgoCD gRPC error rate is high.',
-                description: 'ArgoCD {{ $labels.job }} in {{ $labels.namespace }} has a gRPC error rate above %(threshold)s for the past %(__for)s.' % (alertConfig { __for: alertConfig['for'] }),
+                description: 'ArgoCD {{ $labels.job }} in {{ $labels.namespace }} has a gRPC error rate above %(thresholdPercent)s%% for the past %(__for)s.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },

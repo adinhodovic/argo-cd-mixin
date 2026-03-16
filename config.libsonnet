@@ -189,7 +189,8 @@
         severity: 'warning',
         interval: '2m',
         'for': '10m',
-        threshold: '0.05',  // 5% error rate
+        threshold: '0.05',  // 5% error rate (used in PromQL comparison)
+        thresholdPercent: '5',  // human-readable percent for alert description
       },
 
       highKubectlPendingExec: {
