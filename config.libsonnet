@@ -109,6 +109,15 @@
         // groupByApplication: false,
       },
 
+      rolloutProgressing: {
+        enabled: true,
+        severity: 'warning',
+        'for': '1h',
+        ignoredApps: '',
+        // Optional: override top-level groupByApplication for this alert
+        // groupByApplication: false,
+      },
+
       notificationDeliveryFailed: {
         enabled: $._config.argoCdNotificationDeliveryEnabled,
         severity: 'warning',
