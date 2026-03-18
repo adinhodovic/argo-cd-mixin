@@ -211,6 +211,44 @@
                   $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}' + clusterVariableQueryString,
               },
             },
+          if $._config.alerts.rolloutProgressing.enabled then
+            local alertConfig = $._config.alerts.rolloutProgressing;
+            local groupByApp = getGroupByApp(alertConfig);
+            local groupLabels = buildLabels(groupByApp);
+            {
+              alert: 'ArgoCdRolloutProgressing',
+              expr: |||
+                sum(
+                  argocd_app_info{
+                    %(argoCdSelector)s,
+                    health_status="Progressing",
+                    name!~"%(ignoredApps)s"
+                  }
+                ) by (%(groupBy)s, health_status)
+                > 0
+              ||| % (
+                $._config
+                {
+                  ignoredApps: alertConfig.ignoredApps,
+                  groupBy: groupLabels,
+                }
+              ),
+              'for': alertConfig['for'],
+              labels: {
+                severity: alertConfig.severity,
+              },
+              annotations: {
+                summary: if groupByApp then 'An ArgoCD Application Rollout is Progressing for too long.' else 'ArgoCD Application Rollouts are Progressing for too long.',
+                description: if groupByApp then
+                  'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has been in a Progressing state for more than %s.' % alertConfig['for']
+                else
+                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} have been in a Progressing state for more than %s.' % alertConfig['for'],
+                dashboard_url: if groupByApp then
+                  $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString
+                else
+                  $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}' + clusterVariableQueryString,
+              },
+            },
           if $._config.alerts.notificationDeliveryFailed.enabled then {
             alert: 'ArgoCdNotificationDeliveryFailed',
             expr: |||

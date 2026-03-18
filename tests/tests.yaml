@@ -107,6 +107,27 @@ tests:
               summary: "ArgoCD Notification Delivery Failed."
               description: "The notification job argo-cd-argocd-notifications-controller-metrics has failed to deliver to grafana for the past 10m."
               dashboard_url: "https://grafana.com/d/argo-cd-notifications-overview-kask/argocd-notifications-overview?var-job=argo-cd-argocd-notifications-controller-metrics&var-exported_service=grafana"
+  - interval: 5m
+    input_series:
+      - series: 'argocd_app_info{autosync_enabled="true", dest_server="https://kubernetes.default.svc", health_status="Progressing", job="argo-cd-argocd-application-controller-metrics", name="ci-cd", namespace="ci-cd", project="ops", sync_status="Synced"}'
+        values: "1+0x15"
+      - series: 'argocd_app_info{autosync_enabled="true", dest_server="https://kubernetes.default.svc", health_status="Healthy", job="argo-cd-argocd-application-controller-metrics", name="ci-cd-healthy", namespace="ci-cd", project="ops", sync_status="Synced"}'
+        values: "1+0x15"
+    alert_rule_test:
+      - eval_time: 75m
+        alertname: ArgoCdRolloutProgressing
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: argo-cd-argocd-application-controller-metrics
+              dest_server: https://kubernetes.default.svc
+              project: ops
+              name: ci-cd
+              health_status: Progressing
+            exp_annotations:
+              summary: "An ArgoCD Application Rollout is Progressing for too long."
+              description: "The application https://kubernetes.default.svc/ops/ci-cd has been in a Progressing state for more than 1h."
+              dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-application=ci-cd"
   # Operational health alert tests
   - interval: 1m
     input_series:
