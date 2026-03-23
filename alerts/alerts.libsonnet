@@ -518,7 +518,7 @@
               },
               annotations: {
                 summary: 'ArgoCD kubectl request retry rate is high.',
-                description: 'ArgoCD in {{ $labels.namespace }} has had more than %(threshold)s kubectl request retries in the past %(__for)s. This indicates transient Kubernetes API errors or throttling.' % (alertConfig { __for: alertConfig['for'] }),
+                description: 'ArgoCD in {{ $labels.namespace }} has had more than %(threshold)s kubectl request retries per minute for the past %(__for)s. This indicates transient Kubernetes API errors or throttling.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -543,7 +543,7 @@
                       %(argoCdServerSelector)s
                     }[%(interval)s]
                   )
-                ) by (%(clusterLabel)s, namespace, job)
+                ) by (%(clusterLabel)s, namespace, job) * 100
                 > %(threshold)s
               ||| % (
                 $._config
@@ -558,7 +558,7 @@
               },
               annotations: {
                 summary: 'ArgoCD gRPC error rate is high.',
-                description: 'ArgoCD {{ $labels.job }} in {{ $labels.namespace }} has a gRPC error rate above %(thresholdPercent)s%% for the past %(__for)s.' % (alertConfig { __for: alertConfig['for'] }),
+                description: 'ArgoCD {{ $labels.job }} in {{ $labels.namespace }} has a gRPC error rate above %(threshold)s%% for the past %(__for)s.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },

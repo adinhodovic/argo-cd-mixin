@@ -188,9 +188,9 @@
       highKubectlRequestRetryRate: {
         enabled: true,
         severity: 'warning',
-        interval: '2m',
+        interval: '1m',
         'for': '10m',
-        threshold: '1',  // retries over interval
+        threshold: '50',  // retries per minute
       },
 
       highGrpcErrorRate: {
@@ -198,8 +198,7 @@
         severity: 'warning',
         interval: '2m',
         'for': '10m',
-        threshold: '0.05',  // 5% error rate (used in PromQL comparison)
-        thresholdPercent: '5',  // human-readable percent for alert description
+        threshold: '5',  // percent error rate
       },
 
       highKubectlPendingExec: {
