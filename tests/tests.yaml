@@ -284,12 +284,12 @@ tests:
               description: "ArgoCD in argocd has a P0.95 kubectl request duration above 5s for the past 10m. This may indicate Kubernetes API server performance issues."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
   # ArgoCdHighKubectlRequestRetryRate
-  - interval: 1m
+  - interval: 30s
     input_series:
       - series: 'argocd_kubectl_request_retries_total{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", container="argocd-application-controller", method="GET", code="429"}'
-        values: "0+20x20"
+        values: "0+30x42"
     alert_rule_test:
-      - eval_time: 20m
+      - eval_time: 21m
         alertname: ArgoCdHighKubectlRequestRetryRate
         exp_alerts:
           - exp_labels:
@@ -297,7 +297,7 @@ tests:
               namespace: argocd
             exp_annotations:
               summary: "ArgoCD kubectl request retry rate is high."
-              description: "ArgoCD in argocd has had more than 1 kubectl request retries in the past 10m. This indicates transient Kubernetes API errors or throttling."
+              description: "ArgoCD in argocd has had more than 50 kubectl request retries per minute for the past 10m. This indicates transient Kubernetes API errors or throttling."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
   # ArgoCdHighGrpcErrorRate
   - interval: 1m
