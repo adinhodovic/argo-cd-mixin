@@ -6,6 +6,13 @@ local dashboard = g.dashboard;
 local row = g.panel.row;
 local grid = g.util.grid;
 
+local colorOverrides = mixinUtils.dashboards.colorOverrides;
+
+local successBooleanColors = {
+  'true': 'green',
+  'false': 'red',
+};
+
 {
   local dashboardName = 'argo-cd-notifications-overview',
   grafanaDashboards+:: {
@@ -53,7 +60,8 @@ local grid = g.util.grid;
             queries.deliveriesCount,
             '{{ exported_service }} - Succeeded: {{ succeeded }}',
             description='A timeseries panel showing the count of notification deliveries by exported service and success status.',
-            stack='normal'
+            stack='normal',
+            overrides=colorOverrides.timeSeriesBySuffixes(successBooleanColors)
           ),
 
         triggerEvalTimeSeries:
@@ -63,7 +71,8 @@ local grid = g.util.grid;
             queries.triggerEvalCount,
             '{{ name }} - Triggered: {{ triggered }}',
             description='A timeseries panel showing the count of trigger evaluations by name and triggered status.',
-            stack='normal'
+            stack='normal',
+            overrides=colorOverrides.timeSeriesBySuffixes(successBooleanColors)
           ),
       };
 

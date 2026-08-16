@@ -16,6 +16,36 @@ local tbPanelOptions = tablePanel.panelOptions;
 local tbOverride = tbStandardOptions.override;
 local tbCustom = tablePanel.fieldConfig.defaults.custom;
 
+local colorOverrides = mixinUtils.dashboards.colorOverrides;
+
+local healthStatusColors = {
+  Healthy: 'green',
+  Progressing: 'yellow',
+  Suspended: 'yellow',
+  Missing: 'red',
+  Degraded: 'red',
+  Unknown: 'orange',
+};
+
+local syncStatusColors = {
+  Synced: 'green',
+  OutOfSync: 'yellow',
+  Unknown: 'orange',
+};
+
+local syncPhaseColors = {
+  Succeeded: 'green',
+  Running: 'yellow',
+  Terminating: 'yellow',
+  Failed: 'red',
+  Error: 'red',
+};
+
+local autoSyncStatusColors = {
+  'true': 'green',
+  'false': 'yellow',
+};
+
 {
   local dashboardName = 'argo-cd-application-overview',
   grafanaDashboards+:: {
@@ -155,7 +185,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             '{{ project }} - {{ health_status }}',
             description='A timeseries panel showing the health status of applications managed by ArgoCD.',
             stack='normal',
-            decimals=0
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(healthStatusColors, prefix=' - ')
           ),
 
         appSyncStatusTimeSeries:
@@ -166,7 +197,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             '{{ project }} - {{ sync_status }}',
             description='A timeseries panel showing the sync status of applications managed by ArgoCD.',
             stack='normal',
-            decimals=0
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(syncStatusColors, prefix=' - ')
           ),
 
         appSyncTimeSeries:
@@ -177,7 +209,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             '{{ project }} - {{ phase }}',
             description='A timeseries panel showing the sync results of applications managed by ArgoCD.',
             stack='normal',
-            decimals=0
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(syncPhaseColors, prefix=' - ')
           ),
 
         appAutoSyncStatusTimeSeries:
@@ -188,7 +221,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             '{{ project }} - {{ autosync_enabled }}',
             description='A timeseries panel showing whether auto sync is enabled for applications managed by ArgoCD.',
             stack='normal',
-            decimals=0
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(autoSyncStatusColors, prefix=' - ')
           ),
 
         appsDefined: std.length($._config.applications) != 0,
@@ -441,7 +475,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             '{{ exported_namespace }}/{{ name }} - {{ health_status }}',
             description='A timeseries panel showing the health status of each application managed by ArgoCD.',
             stack='normal',
-            decimals=0
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(healthStatusColors, prefix=' - ')
           ),
 
         appSyncStatusByAppTimeSeries:
@@ -452,7 +487,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             '{{ exported_namespace }}/{{ name }} - {{ sync_status }}',
             description='A timeseries panel showing the sync status of each application managed by ArgoCD.',
             stack='normal',
-            decimals=0
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(syncStatusColors, prefix=' - ')
           ),
 
         appSyncByAppTimeSeries:
@@ -463,7 +499,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             '{{ exported_namespace }}/{{ name }} - {{ phase }}',
             description='A timeseries panel showing the sync result of each application managed by ArgoCD.',
             stack='normal',
-            decimals=0
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(syncPhaseColors, prefix=' - ')
           ),
       };
 

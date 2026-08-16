@@ -7,11 +7,28 @@ local row = g.panel.row;
 local grid = g.util.grid;
 
 local tablePanel = g.panel.table;
-local pieChartPanel = g.panel.pieChart;
 
-// Pie Chart
-local pcStandardOptions = pieChartPanel.standardOptions;
-local pcOverride = pcStandardOptions.override;
+local colorOverrides = mixinUtils.dashboards.colorOverrides;
+
+local healthStatusColors = {
+  Healthy: 'green',
+  Progressing: 'yellow',
+  Suspended: 'yellow',
+  Missing: 'red',
+  Degraded: 'red',
+  Unknown: 'orange',
+};
+
+local syncStatusColors = {
+  Synced: 'green',
+  OutOfSync: 'yellow',
+  Unknown: 'orange',
+};
+
+local syncFailureColors = {
+  Failed: 'red',
+  Error: 'red',
+};
 
 // Table
 local tbStandardOptions = tablePanel.standardOptions;
@@ -543,23 +560,7 @@ local tbPanelOptions = tablePanel.panelOptions;
             queries.healthStatus,
             '{{ health_status }}',
             description='The distribution of application health statuses managed by ArgoCD.',
-            overrides=[
-              pcOverride.byName.new('Synced') +
-              pcOverride.byName.withPropertiesFromOptions(
-                pcStandardOptions.color.withMode('fixed') +
-                pcStandardOptions.color.withFixedColor('green')
-              ),
-              pcOverride.byName.new('OutOfSync') +
-              pcOverride.byName.withPropertiesFromOptions(
-                pcStandardOptions.color.withMode('fixed') +
-                pcStandardOptions.color.withFixedColor('red')
-              ),
-              pcOverride.byName.new('Unknown') +
-              pcOverride.byName.withPropertiesFromOptions(
-                pcStandardOptions.color.withMode('fixed') +
-                pcStandardOptions.color.withFixedColor('yellow')
-              ),
-            ]
+            overrides=colorOverrides.pieChartByNames(healthStatusColors)
           ),
 
         syncStatusPieChart:
@@ -569,23 +570,7 @@ local tbPanelOptions = tablePanel.panelOptions;
             queries.syncStatusQuery,
             '{{ sync_status }}',
             description='The distribution of application sync statuses managed by ArgoCD.',
-            overrides=[
-              pcOverride.byName.new('Synced') +
-              pcOverride.byName.withPropertiesFromOptions(
-                pcStandardOptions.color.withMode('fixed') +
-                pcStandardOptions.color.withFixedColor('green')
-              ),
-              pcOverride.byName.new('OutOfSync') +
-              pcOverride.byName.withPropertiesFromOptions(
-                pcStandardOptions.color.withMode('fixed') +
-                pcStandardOptions.color.withFixedColor('red')
-              ),
-              pcOverride.byName.new('Unknown') +
-              pcOverride.byName.withPropertiesFromOptions(
-                pcStandardOptions.color.withMode('fixed') +
-                pcStandardOptions.color.withFixedColor('yellow')
-              ),
-            ]
+            overrides=colorOverrides.pieChartByNames(syncStatusColors)
           ),
 
         appsTablePanel:
@@ -651,7 +636,8 @@ local tbPanelOptions = tablePanel.panelOptions;
             queries.syncFailures,
             '{{ project }}/{{ name }} - {{ phase }}',
             description='A timeseries panel showing sync failures for applications managed by ArgoCD.',
-            stack='normal'
+            stack='normal',
+            overrides=colorOverrides.timeSeriesBySuffixes(syncFailureColors, prefix=' - ')
           ),
 
         reconcilationActivtyTimeSeries:
