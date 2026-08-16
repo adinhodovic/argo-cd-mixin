@@ -6,6 +6,23 @@ local dashboard = g.dashboard;
 local row = g.panel.row;
 local grid = g.util.grid;
 
+local timeSeriesPanel = g.panel.timeSeries;
+
+local tsStandardOptions = timeSeriesPanel.standardOptions;
+local tsOverride = tsStandardOptions.override;
+
+local seriesSuffixColorOverride(suffix, color) =
+  tsOverride.byRegexp.new('.*%s$' % suffix) +
+  tsOverride.byRegexp.withPropertiesFromOptions(
+    tsStandardOptions.color.withMode('fixed') +
+    tsStandardOptions.color.withFixedColor(color)
+  );
+
+local successBooleanColorOverrides = [
+  seriesSuffixColorOverride('true', 'green'),
+  seriesSuffixColorOverride('false', 'red'),
+];
+
 {
   local dashboardName = 'argo-cd-notifications-overview',
   grafanaDashboards+:: {
@@ -54,7 +71,8 @@ local grid = g.util.grid;
             '{{ exported_service }} - Succeeded: {{ succeeded }}',
             description='A timeseries panel showing the count of notification deliveries by exported service and success status.',
             stack='normal'
-          ),
+          ) +
+          tsStandardOptions.withOverrides(successBooleanColorOverrides),
 
         triggerEvalTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -64,7 +82,8 @@ local grid = g.util.grid;
             '{{ name }} - Triggered: {{ triggered }}',
             description='A timeseries panel showing the count of trigger evaluations by name and triggered status.',
             stack='normal'
-          ),
+          ) +
+          tsStandardOptions.withOverrides(successBooleanColorOverrides),
       };
 
       local rows =

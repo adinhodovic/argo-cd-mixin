@@ -8,10 +8,49 @@ local grid = g.util.grid;
 
 local tablePanel = g.panel.table;
 local pieChartPanel = g.panel.pieChart;
+local timeSeriesPanel = g.panel.timeSeries;
 
 // Pie Chart
 local pcStandardOptions = pieChartPanel.standardOptions;
 local pcOverride = pcStandardOptions.override;
+
+local pieStatusColorOverride(status, color) =
+  pcOverride.byName.new(status) +
+  pcOverride.byName.withPropertiesFromOptions(
+    pcStandardOptions.color.withMode('fixed') +
+    pcStandardOptions.color.withFixedColor(color)
+  );
+
+local healthStatusColorOverrides = [
+  pieStatusColorOverride('Healthy', 'green'),
+  pieStatusColorOverride('Progressing', 'yellow'),
+  pieStatusColorOverride('Suspended', 'yellow'),
+  pieStatusColorOverride('Missing', 'red'),
+  pieStatusColorOverride('Degraded', 'red'),
+  pieStatusColorOverride('Unknown', 'orange'),
+];
+
+local syncStatusColorOverrides = [
+  pieStatusColorOverride('Synced', 'green'),
+  pieStatusColorOverride('OutOfSync', 'yellow'),
+  pieStatusColorOverride('Unknown', 'orange'),
+];
+
+// Time series
+local tsStandardOptions = timeSeriesPanel.standardOptions;
+local tsOverride = tsStandardOptions.override;
+
+local seriesSuffixColorOverride(suffix, color) =
+  tsOverride.byRegexp.new('.*%s$' % suffix) +
+  tsOverride.byRegexp.withPropertiesFromOptions(
+    tsStandardOptions.color.withMode('fixed') +
+    tsStandardOptions.color.withFixedColor(color)
+  );
+
+local syncFailureColorOverrides = [
+  seriesSuffixColorOverride(' - Failed', 'red'),
+  seriesSuffixColorOverride(' - Error', 'red'),
+];
 
 // Table
 local tbStandardOptions = tablePanel.standardOptions;
@@ -543,23 +582,7 @@ local tbPanelOptions = tablePanel.panelOptions;
             queries.healthStatus,
             '{{ health_status }}',
             description='The distribution of application health statuses managed by ArgoCD.',
-            overrides=[
-              pcOverride.byName.new('Synced') +
-              pcOverride.byName.withPropertiesFromOptions(
-                pcStandardOptions.color.withMode('fixed') +
-                pcStandardOptions.color.withFixedColor('green')
-              ),
-              pcOverride.byName.new('OutOfSync') +
-              pcOverride.byName.withPropertiesFromOptions(
-                pcStandardOptions.color.withMode('fixed') +
-                pcStandardOptions.color.withFixedColor('red')
-              ),
-              pcOverride.byName.new('Unknown') +
-              pcOverride.byName.withPropertiesFromOptions(
-                pcStandardOptions.color.withMode('fixed') +
-                pcStandardOptions.color.withFixedColor('yellow')
-              ),
-            ]
+            overrides=healthStatusColorOverrides
           ),
 
         syncStatusPieChart:
@@ -569,23 +592,7 @@ local tbPanelOptions = tablePanel.panelOptions;
             queries.syncStatusQuery,
             '{{ sync_status }}',
             description='The distribution of application sync statuses managed by ArgoCD.',
-            overrides=[
-              pcOverride.byName.new('Synced') +
-              pcOverride.byName.withPropertiesFromOptions(
-                pcStandardOptions.color.withMode('fixed') +
-                pcStandardOptions.color.withFixedColor('green')
-              ),
-              pcOverride.byName.new('OutOfSync') +
-              pcOverride.byName.withPropertiesFromOptions(
-                pcStandardOptions.color.withMode('fixed') +
-                pcStandardOptions.color.withFixedColor('red')
-              ),
-              pcOverride.byName.new('Unknown') +
-              pcOverride.byName.withPropertiesFromOptions(
-                pcStandardOptions.color.withMode('fixed') +
-                pcStandardOptions.color.withFixedColor('yellow')
-              ),
-            ]
+            overrides=syncStatusColorOverrides
           ),
 
         appsTablePanel:
@@ -652,7 +659,8 @@ local tbPanelOptions = tablePanel.panelOptions;
             '{{ project }}/{{ name }} - {{ phase }}',
             description='A timeseries panel showing sync failures for applications managed by ArgoCD.',
             stack='normal'
-          ),
+          ) +
+          tsStandardOptions.withOverrides(syncFailureColorOverrides),
 
         reconcilationActivtyTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(

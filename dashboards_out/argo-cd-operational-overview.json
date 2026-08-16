@@ -188,7 +188,7 @@
                {
                   "matcher": {
                      "id": "byName",
-                     "options": "Synced"
+                     "options": "Healthy"
                   },
                   "properties": [
                      {
@@ -203,7 +203,52 @@
                {
                   "matcher": {
                      "id": "byName",
-                     "options": "OutOfSync"
+                     "options": "Progressing"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "yellow",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byName",
+                     "options": "Suspended"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "yellow",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byName",
+                     "options": "Missing"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "red",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byName",
+                     "options": "Degraded"
                   },
                   "properties": [
                      {
@@ -224,7 +269,7 @@
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "yellow",
+                           "fixedColor": "orange",
                            "mode": "fixed"
                         }
                      }
@@ -306,7 +351,7 @@
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "red",
+                           "fixedColor": "yellow",
                            "mode": "fixed"
                         }
                      }
@@ -321,7 +366,7 @@
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "yellow",
+                           "fixedColor": "orange",
                            "mode": "fixed"
                         }
                      }
@@ -540,7 +585,38 @@
                },
                "unit": "short"
             },
-            "overrides": [ ]
+            "overrides": [
+               {
+                  "matcher": {
+                     "id": "byRegexp",
+                     "options": ".* - Failed$"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "red",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byRegexp",
+                     "options": ".* - Error$"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "red",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               }
+            ]
          },
          "gridPos": {
             "h": 6,
