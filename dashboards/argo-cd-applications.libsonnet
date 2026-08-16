@@ -7,6 +7,7 @@ local row = g.panel.row;
 local grid = g.util.grid;
 
 local tablePanel = g.panel.table;
+local timeSeriesPanel = g.panel.timeSeries;
 local textPanel = g.panel.text;
 
 // Table
@@ -15,6 +16,45 @@ local tbQueryOptions = tablePanel.queryOptions;
 local tbPanelOptions = tablePanel.panelOptions;
 local tbOverride = tbStandardOptions.override;
 local tbCustom = tablePanel.fieldConfig.defaults.custom;
+
+// Time series
+local tsStandardOptions = timeSeriesPanel.standardOptions;
+local tsOverride = tsStandardOptions.override;
+
+local statusColorOverride(status, color) =
+  tsOverride.byRegexp.new('.* - %s$' % status) +
+  tsOverride.byRegexp.withPropertiesFromOptions(
+    tsStandardOptions.color.withMode('fixed') +
+    tsStandardOptions.color.withFixedColor(color)
+  );
+
+local healthStatusColorOverrides = [
+  statusColorOverride('Healthy', 'green'),
+  statusColorOverride('Progressing', 'yellow'),
+  statusColorOverride('Suspended', 'yellow'),
+  statusColorOverride('Missing', 'red'),
+  statusColorOverride('Degraded', 'red'),
+  statusColorOverride('Unknown', 'orange'),
+];
+
+local syncStatusColorOverrides = [
+  statusColorOverride('Synced', 'green'),
+  statusColorOverride('OutOfSync', 'yellow'),
+  statusColorOverride('Unknown', 'orange'),
+];
+
+local syncPhaseColorOverrides = [
+  statusColorOverride('Succeeded', 'green'),
+  statusColorOverride('Running', 'yellow'),
+  statusColorOverride('Terminating', 'yellow'),
+  statusColorOverride('Failed', 'red'),
+  statusColorOverride('Error', 'red'),
+];
+
+local autoSyncStatusColorOverrides = [
+  statusColorOverride('true', 'green'),
+  statusColorOverride('false', 'yellow'),
+];
 
 {
   local dashboardName = 'argo-cd-application-overview',
@@ -156,7 +196,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             description='A timeseries panel showing the health status of applications managed by ArgoCD.',
             stack='normal',
             decimals=0
-          ),
+          ) +
+          tsStandardOptions.withOverrides(healthStatusColorOverrides),
 
         appSyncStatusTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -167,7 +208,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             description='A timeseries panel showing the sync status of applications managed by ArgoCD.',
             stack='normal',
             decimals=0
-          ),
+          ) +
+          tsStandardOptions.withOverrides(syncStatusColorOverrides),
 
         appSyncTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -178,7 +220,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             description='A timeseries panel showing the sync results of applications managed by ArgoCD.',
             stack='normal',
             decimals=0
-          ),
+          ) +
+          tsStandardOptions.withOverrides(syncPhaseColorOverrides),
 
         appAutoSyncStatusTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -189,7 +232,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             description='A timeseries panel showing whether auto sync is enabled for applications managed by ArgoCD.',
             stack='normal',
             decimals=0
-          ),
+          ) +
+          tsStandardOptions.withOverrides(autoSyncStatusColorOverrides),
 
         appsDefined: std.length($._config.applications) != 0,
         local appBadgeContent = [
@@ -442,7 +486,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             description='A timeseries panel showing the health status of each application managed by ArgoCD.',
             stack='normal',
             decimals=0
-          ),
+          ) +
+          tsStandardOptions.withOverrides(healthStatusColorOverrides),
 
         appSyncStatusByAppTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -453,7 +498,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             description='A timeseries panel showing the sync status of each application managed by ArgoCD.',
             stack='normal',
             decimals=0
-          ),
+          ) +
+          tsStandardOptions.withOverrides(syncStatusColorOverrides),
 
         appSyncByAppTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -464,7 +510,8 @@ local tbCustom = tablePanel.fieldConfig.defaults.custom;
             description='A timeseries panel showing the sync result of each application managed by ArgoCD.',
             stack='normal',
             decimals=0
-          ),
+          ) +
+          tsStandardOptions.withOverrides(syncPhaseColorOverrides),
       };
 
       local rows =
