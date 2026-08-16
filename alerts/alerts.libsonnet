@@ -49,11 +49,11 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: if groupByApp then 'An ArgoCD Application has Failed to Sync.' else 'ArgoCD Applications have Failed to Sync.',
+                summary: if groupByApp then 'ArgoCD application sync failed.' else 'ArgoCD application syncs failed.',
                 description: if groupByApp then
-                  'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has failed to sync with the status {{ $labels.phase }} the past %s.' % alertConfig.interval
+                  'Application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} had at least one sync attempt fail with phase {{ $labels.phase }} in the last %s.' % alertConfig.interval
                 else
-                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} have failed to sync with the status {{ $labels.phase }} the past %s.' % alertConfig.interval,
+                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} had at least one sync attempt fail with phase {{ $labels.phase }} in the last %s.' % alertConfig.interval,
                 dashboard_url: if groupByApp then
                   $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString
                 else
@@ -88,11 +88,11 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: if groupByApp then 'An ArgoCD Application is Unhealthy.' else 'ArgoCD Applications are Unhealthy.',
+                summary: if groupByApp then 'ArgoCD application is unhealthy.' else 'ArgoCD applications are unhealthy.',
                 description: if groupByApp then
-                  'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status {{ $labels.health_status }} for the past %s.' % alertConfig.interval
+                  'Application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has reported health status {{ $labels.health_status }} for at least %s.' % alertConfig.interval
                 else
-                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} are unhealthy with the health status {{ $labels.health_status }} for the past %s.' % alertConfig.interval,
+                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} have reported health status {{ $labels.health_status }} for at least %s.' % alertConfig.interval,
                 dashboard_url: if groupByApp then
                   $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString
                 else
@@ -124,11 +124,11 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: if groupByApp then 'An ArgoCD Application is Out Of Sync.' else 'ArgoCD Applications are Out Of Sync.',
+                summary: if groupByApp then 'ArgoCD application is out of sync.' else 'ArgoCD applications are out of sync.',
                 description: if groupByApp then
-                  'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status {{ $labels.sync_status }} for the past %s.' % alertConfig.interval
+                  'Application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has reported sync status {{ $labels.sync_status }} for at least %s.' % alertConfig.interval
                 else
-                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} are out of sync with the sync status {{ $labels.sync_status }} for the past %s.' % alertConfig.interval,
+                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} have reported sync status {{ $labels.sync_status }} for at least %s.' % alertConfig.interval,
                 dashboard_url: if groupByApp then
                   $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString
                 else
@@ -162,11 +162,11 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: if groupByApp then 'An ArgoCD Application is in a Unknown state.' else 'ArgoCD Applications are in a Unknown state.',
+                summary: if groupByApp then 'ArgoCD application state is unknown.' else 'ArgoCD application states are unknown.',
                 description: if groupByApp then
-                  'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is in a `Unknown` state for the past %s.' % alertConfig.interval
+                  'Application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has reported sync status Unknown for at least %s.' % alertConfig.interval
                 else
-                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} are in a `Unknown` state for the past %s.' % alertConfig.interval,
+                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} have reported sync status Unknown for at least %s.' % alertConfig.interval,
                 dashboard_url: if groupByApp then
                   $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString
                 else
@@ -200,11 +200,11 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: if groupByApp then 'An ArgoCD Application has AutoSync Disabled.' else 'ArgoCD Applications have AutoSync Disabled.',
+                summary: if groupByApp then 'ArgoCD application auto-sync is disabled.' else 'ArgoCD applications have auto-sync disabled.',
                 description: if groupByApp then
-                  'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has autosync disabled for the past %s.' % alertConfig.interval
+                  'Application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has had auto-sync disabled for at least %s.' % alertConfig.interval
                 else
-                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} have autosync disabled for the past %s.' % alertConfig.interval,
+                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} have had auto-sync disabled for at least %s.' % alertConfig.interval,
                 dashboard_url: if groupByApp then
                   $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString
                 else
@@ -238,11 +238,11 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: if groupByApp then 'An ArgoCD Application Rollout is Progressing for too long.' else 'ArgoCD Application Rollouts are Progressing for too long.',
+                summary: if groupByApp then 'ArgoCD application rollout is still progressing.' else 'ArgoCD application rollouts are still progressing.',
                 description: if groupByApp then
-                  'The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has been in a Progressing state for more than %s.' % alertConfig['for']
+                  'Application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has remained in health status Progressing for more than %s.' % alertConfig['for']
                 else
-                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} have been in a Progressing state for more than %s.' % alertConfig['for'],
+                  'Applications in project {{ $labels.dest_server }}/{{ $labels.project }} have remained in health status Progressing for more than %s.' % alertConfig['for'],
                 dashboard_url: if groupByApp then
                   $._config.dashboardUrls['argo-cd-application-overview'] + '?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}' + clusterVariableQueryString
                 else
@@ -273,8 +273,8 @@
               severity: $._config.alerts.notificationDeliveryFailed.severity,
             },
             annotations: {
-              summary: 'ArgoCD Notification Delivery Failed.',
-              description: 'The notification job {{ $labels.job }} has failed to deliver to {{ $labels.exported_service }} for the past %s.' % $._config.alerts.notificationDeliveryFailed.interval,
+              summary: 'ArgoCD notification delivery failed.',
+              description: 'Notification job {{ $labels.job }} failed to deliver to {{ $labels.exported_service }} at least once in the last %s.' % $._config.alerts.notificationDeliveryFailed.interval,
               dashboard_url: $._config.dashboardUrls['argo-cd-notifications-overview'] + '?var-job={{ $labels.job }}&var-exported_service={{ $labels.exported_service }}' + clusterVariableQueryString,
             },
           },
@@ -309,8 +309,8 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: 'ArgoCD App Controller has high reconciliation duration.',
-                description: 'ArgoCD app controller in {{ $labels.namespace }} is taking more than %(threshold)ss (%(quantile)s percentile) to reconcile applications for the past %(__for)s. This may indicate performance issues or the need to scale up.' % (alertConfig { __for: alertConfig['for'] }),
+                summary: 'ArgoCD application reconciliation is slow.',
+                description: 'The P%(quantile)s application reconciliation duration in namespace {{ $labels.namespace }} has been above %(threshold)ss for %(__for)s. The application controller may be overloaded or blocked on Kubernetes API calls.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -337,8 +337,8 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: 'ArgoCD Repo Server has pending requests.',
-                description: 'ArgoCD repo server in {{ $labels.namespace }} has %(threshold)s or more pending requests for the past %(__for)s. The repo server may be overloaded and need scaling.' % (alertConfig { __for: alertConfig['for'] }),
+                summary: 'ArgoCD repo server has pending requests.',
+                description: 'Repo server in namespace {{ $labels.namespace }} has had more than %(threshold)s pending requests for %(__for)s. The repo server may be overloaded or waiting on slow repository operations.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -370,8 +370,8 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: 'ArgoCD Repo Server has high git request duration.',
-                description: 'ArgoCD repo server in {{ $labels.namespace }} is experiencing git operations (fetch/clone) taking more than %(threshold)ss (%(quantile)s percentile) for the past %(__for)s. This may indicate slow git repository access or network issues.' % (alertConfig { __for: alertConfig['for'] }),
+                summary: 'ArgoCD repo server Git requests are slow.',
+                description: 'The P%(quantile)s Git request duration in namespace {{ $labels.namespace }} has been above %(threshold)ss for %(__for)s. Repository access, network latency, or repo server load may be degraded.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -390,8 +390,8 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: 'ArgoCD cannot connect to managed cluster.',
-                description: 'ArgoCD in {{ $labels.namespace }} cannot connect to cluster {{ $labels.server }} for the past %(interval)s. Check cluster credentials and network connectivity.' % alertConfig,
+                summary: 'ArgoCD cannot connect to a managed cluster.',
+                description: 'ArgoCD in namespace {{ $labels.namespace }} has been unable to connect to cluster {{ $labels.server }} for %(interval)s. Check cluster credentials, API server reachability, and network policy.' % alertConfig,
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -422,7 +422,7 @@
               },
               annotations: {
                 summary: 'ArgoCD Git requests are failing.',
-                description: 'ArgoCD in {{ $labels.namespace }} is experiencing git fetch failures for repository {{ $labels.repo }} for the past %(__for)s. This may indicate repository access issues or network problems.' % (alertConfig { __for: alertConfig['for'] }),
+                description: 'ArgoCD in namespace {{ $labels.namespace }} has had Git fetch failures for repository {{ $labels.repo }} for %(__for)s. Check repository availability, credentials, and network connectivity.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -454,8 +454,8 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: 'ArgoCD kubectl rate limiter duration is high.',
-                description: 'ArgoCD in {{ $labels.namespace }} has a P%(quantile)s kubectl rate limiter wait time above %(threshold)ss for the past %(__for)s. The Kubernetes API server may be throttling ArgoCD requests.' % (alertConfig { __for: alertConfig['for'] }),
+                summary: 'ArgoCD kubectl client-side throttling is high.',
+                description: 'The P%(quantile)s kubectl rate limiter wait time in namespace {{ $labels.namespace }} has been above %(threshold)ss for %(__for)s. ArgoCD may be throttling requests before they reach the Kubernetes API server.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -487,8 +487,8 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: 'ArgoCD kubectl request duration is high.',
-                description: 'ArgoCD in {{ $labels.namespace }} has a P%(quantile)s kubectl request duration above %(threshold)ss for the past %(__for)s. This may indicate Kubernetes API server performance issues.' % (alertConfig { __for: alertConfig['for'] }),
+                summary: 'ArgoCD kubectl requests are slow.',
+                description: 'The P%(quantile)s kubectl request duration in namespace {{ $labels.namespace }} has been above %(threshold)ss for %(__for)s. The Kubernetes API server or network path may be slow.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -518,7 +518,7 @@
               },
               annotations: {
                 summary: 'ArgoCD kubectl request retry rate is high.',
-                description: 'ArgoCD in {{ $labels.namespace }} has had more than %(threshold)s kubectl request retries per minute for the past %(__for)s. This indicates transient Kubernetes API errors or throttling.' % (alertConfig { __for: alertConfig['for'] }),
+                description: 'ArgoCD in namespace {{ $labels.namespace }} has had more than %(threshold)s kubectl request retries per minute for %(__for)s. This usually points to Kubernetes API errors, throttling, or network instability.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -558,7 +558,7 @@
               },
               annotations: {
                 summary: 'ArgoCD gRPC error rate is high.',
-                description: 'ArgoCD {{ $labels.job }} in {{ $labels.namespace }} has a gRPC error rate above %(threshold)s%% for the past %(__for)s.' % (alertConfig { __for: alertConfig['for'] }),
+                description: 'ArgoCD job {{ $labels.job }} in namespace {{ $labels.namespace }} has had a gRPC error rate above %(threshold)s%% for %(__for)s. Check argocd-server errors and upstream dependencies.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -584,8 +584,8 @@
                 severity: alertConfig.severity,
               },
               annotations: {
-                summary: 'ArgoCD has a high number of pending kubectl executions.',
-                description: 'ArgoCD in {{ $labels.namespace }} has more than %(threshold)s pending kubectl executions for the past %(__for)s. This may indicate resource contention or slow manifest generation.' % (alertConfig { __for: alertConfig['for'] }),
+                summary: 'ArgoCD has many pending kubectl executions.',
+                description: 'ArgoCD in namespace {{ $labels.namespace }} has had more than %(threshold)s pending kubectl executions for %(__for)s. This may indicate resource contention, slow Kubernetes API calls, or slow manifest generation.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
