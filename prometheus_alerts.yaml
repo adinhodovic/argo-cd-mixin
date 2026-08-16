@@ -4,8 +4,8 @@
   - "alert": "ArgoCdAppSyncFailed"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}"
-      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has failed to sync with the status {{ $labels.phase }} the past 10m."
-      "summary": "An ArgoCD Application has Failed to Sync."
+      "description": "Application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} had at least one sync attempt fail with phase {{ $labels.phase }} in the last 10m."
+      "summary": "ArgoCD application sync failed."
     "expr": |
       sum(
         round(
@@ -23,8 +23,8 @@
   - "alert": "ArgoCdAppUnhealthy"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}"
-      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is unhealthy with the health status {{ $labels.health_status }} for the past 15m."
-      "summary": "An ArgoCD Application is Unhealthy."
+      "description": "Application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has reported health status {{ $labels.health_status }} for at least 15m."
+      "summary": "ArgoCD application is unhealthy."
     "expr": |
       sum(
         argocd_app_info{
@@ -40,8 +40,8 @@
   - "alert": "ArgoCdAppOutOfSync"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}"
-      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} is out of sync with the sync status {{ $labels.sync_status }} for the past 15m."
-      "summary": "An ArgoCD Application is Out Of Sync."
+      "description": "Application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has reported sync status {{ $labels.sync_status }} for at least 15m."
+      "summary": "ArgoCD application is out of sync."
     "expr": |
       sum(
         argocd_app_info{
@@ -56,8 +56,8 @@
   - "alert": "ArgoCdAppAutoSyncDisabled"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}"
-      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has autosync disabled for the past 2h."
-      "summary": "An ArgoCD Application has AutoSync Disabled."
+      "description": "Application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has had auto-sync disabled for at least 2h."
+      "summary": "ArgoCD application auto-sync is disabled."
     "expr": |
       sum(
         argocd_app_info{
@@ -73,8 +73,8 @@
   - "alert": "ArgoCdRolloutProgressing"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server={{ $labels.dest_server }}&var-project={{ $labels.project }}&var-application={{ $labels.name }}"
-      "description": "The application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has been in a Progressing state for more than 1h."
-      "summary": "An ArgoCD Application Rollout is Progressing for too long."
+      "description": "Application {{ $labels.dest_server }}/{{ $labels.project }}/{{ $labels.name }} has remained in health status Progressing for more than 1h."
+      "summary": "ArgoCD application rollout is still progressing."
     "expr": |
       sum(
         argocd_app_info{
@@ -90,8 +90,8 @@
   - "alert": "ArgoCdNotificationDeliveryFailed"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-notifications-overview-kask/argocd-notifications-overview?var-job={{ $labels.job }}&var-exported_service={{ $labels.exported_service }}"
-      "description": "The notification job {{ $labels.job }} has failed to deliver to {{ $labels.exported_service }} for the past 10m."
-      "summary": "ArgoCD Notification Delivery Failed."
+      "description": "Notification job {{ $labels.job }} failed to deliver to {{ $labels.exported_service }} at least once in the last 10m."
+      "summary": "ArgoCD notification delivery failed."
     "expr": |
       sum(
         round(
@@ -109,8 +109,8 @@
   - "alert": "ArgoCdAppControllerHighReconciliationDuration"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
-      "description": "ArgoCD app controller in {{ $labels.namespace }} is taking more than 60s (0.95 percentile) to reconcile applications for the past 10m. This may indicate performance issues or the need to scale up."
-      "summary": "ArgoCD App Controller has high reconciliation duration."
+      "description": "The P0.95 application reconciliation duration in namespace {{ $labels.namespace }} has been above 60s for 10m. The application controller may be overloaded or blocked on Kubernetes API calls."
+      "summary": "ArgoCD application reconciliation is slow."
     "expr": |
       histogram_quantile(0.95,
         sum(
@@ -127,8 +127,8 @@
   - "alert": "ArgoCdRepoServerPendingRequests"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
-      "description": "ArgoCD repo server in {{ $labels.namespace }} has 50 or more pending requests for the past 10m. The repo server may be overloaded and need scaling."
-      "summary": "ArgoCD Repo Server has pending requests."
+      "description": "Repo server in namespace {{ $labels.namespace }} has had more than 50 pending requests for 10m. The repo server may be overloaded or waiting on slow repository operations."
+      "summary": "ArgoCD repo server has pending requests."
     "expr": |
       sum(
         argocd_repo_pending_request_total{
@@ -142,8 +142,8 @@
   - "alert": "ArgoCdRepoServerHighGitRequestDuration"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
-      "description": "ArgoCD repo server in {{ $labels.namespace }} is experiencing git operations (fetch/clone) taking more than 30s (0.95 percentile) for the past 10m. This may indicate slow git repository access or network issues."
-      "summary": "ArgoCD Repo Server has high git request duration."
+      "description": "The P0.95 Git request duration in namespace {{ $labels.namespace }} has been above 30s for 10m. Repository access, network latency, or repo server load may be degraded."
+      "summary": "ArgoCD repo server Git requests are slow."
     "expr": |
       histogram_quantile(0.95,
         sum(
@@ -160,8 +160,8 @@
   - "alert": "ArgoCdClusterConnectionError"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
-      "description": "ArgoCD in {{ $labels.namespace }} cannot connect to cluster {{ $labels.server }} for the past 5m. Check cluster credentials and network connectivity."
-      "summary": "ArgoCD cannot connect to managed cluster."
+      "description": "ArgoCD in namespace {{ $labels.namespace }} has been unable to connect to cluster {{ $labels.server }} for 5m. Check cluster credentials, API server reachability, and network policy."
+      "summary": "ArgoCD cannot connect to a managed cluster."
     "expr": |
       argocd_cluster_connection_status{
         job=~"(argocd|argo-cd).*"
@@ -172,7 +172,7 @@
   - "alert": "ArgoCdGitRequestErrors"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
-      "description": "ArgoCD in {{ $labels.namespace }} is experiencing git fetch failures for repository {{ $labels.repo }} for the past 5m. This may indicate repository access issues or network problems."
+      "description": "ArgoCD in namespace {{ $labels.namespace }} has had Git fetch failures for repository {{ $labels.repo }} for 5m. Check repository availability, credentials, and network connectivity."
       "summary": "ArgoCD Git requests are failing."
     "expr": |
       sum(
@@ -190,8 +190,8 @@
   - "alert": "ArgoCdHighKubectlRateLimiterDuration"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
-      "description": "ArgoCD in {{ $labels.namespace }} has a P0.95 kubectl rate limiter wait time above 1s for the past 10m. The Kubernetes API server may be throttling ArgoCD requests."
-      "summary": "ArgoCD kubectl rate limiter duration is high."
+      "description": "The P0.95 kubectl rate limiter wait time in namespace {{ $labels.namespace }} has been above 1s for 10m. ArgoCD may be throttling requests before they reach the Kubernetes API server."
+      "summary": "ArgoCD kubectl client-side throttling is high."
     "expr": |
       histogram_quantile(0.95,
         sum(
@@ -208,8 +208,8 @@
   - "alert": "ArgoCdHighKubectlRequestDuration"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
-      "description": "ArgoCD in {{ $labels.namespace }} has a P0.95 kubectl request duration above 5s for the past 10m. This may indicate Kubernetes API server performance issues."
-      "summary": "ArgoCD kubectl request duration is high."
+      "description": "The P0.95 kubectl request duration in namespace {{ $labels.namespace }} has been above 5s for 10m. The Kubernetes API server or network path may be slow."
+      "summary": "ArgoCD kubectl requests are slow."
     "expr": |
       histogram_quantile(0.95,
         sum(
@@ -226,7 +226,7 @@
   - "alert": "ArgoCdHighKubectlRequestRetryRate"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
-      "description": "ArgoCD in {{ $labels.namespace }} has had more than 50 kubectl request retries per minute for the past 10m. This indicates transient Kubernetes API errors or throttling."
+      "description": "ArgoCD in namespace {{ $labels.namespace }} has had more than 50 kubectl request retries per minute for 10m. This usually points to Kubernetes API errors, throttling, or network instability."
       "summary": "ArgoCD kubectl request retry rate is high."
     "expr": |
       sum(
@@ -242,7 +242,7 @@
   - "alert": "ArgoCdHighGrpcErrorRate"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
-      "description": "ArgoCD {{ $labels.job }} in {{ $labels.namespace }} has a gRPC error rate above 5% for the past 10m."
+      "description": "ArgoCD job {{ $labels.job }} in namespace {{ $labels.namespace }} has had a gRPC error rate above 5% for 10m. Check argocd-server errors and upstream dependencies."
       "summary": "ArgoCD gRPC error rate is high."
     "expr": |
       sum(
@@ -268,8 +268,8 @@
   - "alert": "ArgoCdHighKubectlPendingExec"
     "annotations":
       "dashboard_url": "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
-      "description": "ArgoCD in {{ $labels.namespace }} has more than 10 pending kubectl executions for the past 15m. This may indicate resource contention or slow manifest generation."
-      "summary": "ArgoCD has a high number of pending kubectl executions."
+      "description": "ArgoCD in namespace {{ $labels.namespace }} has had more than 10 pending kubectl executions for 15m. This may indicate resource contention, slow Kubernetes API calls, or slow manifest generation."
+      "summary": "ArgoCD has many pending kubectl executions."
     "expr": |
       sum(
         argocd_kubectl_exec_pending{

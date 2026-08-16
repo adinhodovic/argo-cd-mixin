@@ -22,8 +22,8 @@ tests:
               name: ci-cd
               sync_status: OutOfSync
             exp_annotations:
-              summary: "An ArgoCD Application is Out Of Sync."
-              description: "The application https://kubernetes.default.svc/ops/ci-cd is out of sync with the sync status OutOfSync for the past 15m."
+              summary: "ArgoCD application is out of sync."
+              description: "Application https://kubernetes.default.svc/ops/ci-cd has reported sync status OutOfSync for at least 15m."
               dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-application=ci-cd"
   - interval: 5m
     input_series:
@@ -43,8 +43,8 @@ tests:
               name: ci-cd
               health_status: Degraded
             exp_annotations:
-              summary: "An ArgoCD Application is Unhealthy."
-              description: "The application https://kubernetes.default.svc/ops/ci-cd is unhealthy with the health status Degraded for the past 15m."
+              summary: "ArgoCD application is unhealthy."
+              description: "Application https://kubernetes.default.svc/ops/ci-cd has reported health status Degraded for at least 15m."
               dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-application=ci-cd"
   - interval: 5m
     input_series:
@@ -64,8 +64,8 @@ tests:
               name: ci-cd
               autosync_enabled: false
             exp_annotations:
-              summary: "An ArgoCD Application has AutoSync Disabled."
-              description: "The application https://kubernetes.default.svc/ops/ci-cd has autosync disabled for the past 2h."
+              summary: "ArgoCD application auto-sync is disabled."
+              description: "Application https://kubernetes.default.svc/ops/ci-cd has had auto-sync disabled for at least 2h."
               dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-application=ci-cd"
   - interval: 5m
     input_series:
@@ -85,8 +85,8 @@ tests:
               name: ci-cd
               phase: "Failed"
             exp_annotations:
-              summary: "An ArgoCD Application has Failed to Sync."
-              description: "The application https://kubernetes.default.svc/ops/ci-cd has failed to sync with the status Failed the past 10m."
+              summary: "ArgoCD application sync failed."
+              description: "Application https://kubernetes.default.svc/ops/ci-cd had at least one sync attempt fail with phase Failed in the last 10m."
               dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-application=ci-cd"
   - interval: 5m
     input_series:
@@ -104,8 +104,8 @@ tests:
               exported_service: grafana
               succeeded: false
             exp_annotations:
-              summary: "ArgoCD Notification Delivery Failed."
-              description: "The notification job argo-cd-argocd-notifications-controller-metrics has failed to deliver to grafana for the past 10m."
+              summary: "ArgoCD notification delivery failed."
+              description: "Notification job argo-cd-argocd-notifications-controller-metrics failed to deliver to grafana at least once in the last 10m."
               dashboard_url: "https://grafana.com/d/argo-cd-notifications-overview-kask/argocd-notifications-overview?var-job=argo-cd-argocd-notifications-controller-metrics&var-exported_service=grafana"
   - interval: 5m
     input_series:
@@ -125,8 +125,8 @@ tests:
               name: ci-cd
               health_status: Progressing
             exp_annotations:
-              summary: "An ArgoCD Application Rollout is Progressing for too long."
-              description: "The application https://kubernetes.default.svc/ops/ci-cd has been in a Progressing state for more than 1h."
+              summary: "ArgoCD application rollout is still progressing."
+              description: "Application https://kubernetes.default.svc/ops/ci-cd has remained in health status Progressing for more than 1h."
               dashboard_url: "https://grafana.com/d/argo-cd-application-overview-kask/argocd-application-overview?var-dest_server=https://kubernetes.default.svc&var-project=ops&var-application=ci-cd"
   # Operational health alert tests
   - interval: 1m
@@ -153,8 +153,8 @@ tests:
               severity: warning
               namespace: argocd
             exp_annotations:
-              summary: "ArgoCD App Controller has high reconciliation duration."
-              description: "ArgoCD app controller in argocd is taking more than 60s (0.95 percentile) to reconcile applications for the past 10m. This may indicate performance issues or the need to scale up."
+              summary: "ArgoCD application reconciliation is slow."
+              description: "The P0.95 application reconciliation duration in namespace argocd has been above 60s for 10m. The application controller may be overloaded or blocked on Kubernetes API calls."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
   - interval: 1m
     input_series:
@@ -168,8 +168,8 @@ tests:
               severity: warning
               namespace: argocd
             exp_annotations:
-              summary: "ArgoCD Repo Server has pending requests."
-              description: "ArgoCD repo server in argocd has 50 or more pending requests for the past 10m. The repo server may be overloaded and need scaling."
+              summary: "ArgoCD repo server has pending requests."
+              description: "Repo server in namespace argocd has had more than 50 pending requests for 10m. The repo server may be overloaded or waiting on slow repository operations."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
   - interval: 1m
     input_series:
@@ -195,8 +195,8 @@ tests:
               severity: warning
               namespace: argocd
             exp_annotations:
-              summary: "ArgoCD Repo Server has high git request duration."
-              description: "ArgoCD repo server in argocd is experiencing git operations (fetch/clone) taking more than 30s (0.95 percentile) for the past 10m. This may indicate slow git repository access or network issues."
+              summary: "ArgoCD repo server Git requests are slow."
+              description: "The P0.95 Git request duration in namespace argocd has been above 30s for 10m. Repository access, network latency, or repo server load may be degraded."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
   - interval: 1m
     input_series:
@@ -214,8 +214,8 @@ tests:
               namespace: argocd
               server: https://prod-cluster.example.com
             exp_annotations:
-              summary: "ArgoCD cannot connect to managed cluster."
-              description: "ArgoCD in argocd cannot connect to cluster https://prod-cluster.example.com for the past 5m. Check cluster credentials and network connectivity."
+              summary: "ArgoCD cannot connect to a managed cluster."
+              description: "ArgoCD in namespace argocd has been unable to connect to cluster https://prod-cluster.example.com for 5m. Check cluster credentials, API server reachability, and network policy."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
   - interval: 1m
     input_series:
@@ -233,7 +233,7 @@ tests:
               repo: https://github.com/example/repo.git
             exp_annotations:
               summary: "ArgoCD Git requests are failing."
-              description: "ArgoCD in argocd is experiencing git fetch failures for repository https://github.com/example/repo.git for the past 5m. This may indicate repository access issues or network problems."
+              description: "ArgoCD in namespace argocd has had Git fetch failures for repository https://github.com/example/repo.git for 5m. Check repository availability, credentials, and network connectivity."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
   # ArgoCdHighKubectlRateLimiterDuration
   - interval: 1m
@@ -256,8 +256,8 @@ tests:
               severity: warning
               namespace: argocd
             exp_annotations:
-              summary: "ArgoCD kubectl rate limiter duration is high."
-              description: "ArgoCD in argocd has a P0.95 kubectl rate limiter wait time above 1s for the past 10m. The Kubernetes API server may be throttling ArgoCD requests."
+              summary: "ArgoCD kubectl client-side throttling is high."
+              description: "The P0.95 kubectl rate limiter wait time in namespace argocd has been above 1s for 10m. ArgoCD may be throttling requests before they reach the Kubernetes API server."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
   # ArgoCdHighKubectlRequestDuration
   - interval: 1m
@@ -280,8 +280,8 @@ tests:
               severity: warning
               namespace: argocd
             exp_annotations:
-              summary: "ArgoCD kubectl request duration is high."
-              description: "ArgoCD in argocd has a P0.95 kubectl request duration above 5s for the past 10m. This may indicate Kubernetes API server performance issues."
+              summary: "ArgoCD kubectl requests are slow."
+              description: "The P0.95 kubectl request duration in namespace argocd has been above 5s for 10m. The Kubernetes API server or network path may be slow."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
   # ArgoCdHighKubectlRequestRetryRate
   - interval: 30s
@@ -297,7 +297,7 @@ tests:
               namespace: argocd
             exp_annotations:
               summary: "ArgoCD kubectl request retry rate is high."
-              description: "ArgoCD in argocd has had more than 50 kubectl request retries per minute for the past 10m. This indicates transient Kubernetes API errors or throttling."
+              description: "ArgoCD in namespace argocd has had more than 50 kubectl request retries per minute for 10m. This usually points to Kubernetes API errors, throttling, or network instability."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
   # ArgoCdHighGrpcErrorRate
   - interval: 1m
@@ -316,7 +316,7 @@ tests:
               namespace: argocd
             exp_annotations:
               summary: "ArgoCD gRPC error rate is high."
-              description: "ArgoCD argo-cd-argocd-server-metrics in argocd has a gRPC error rate above 5% for the past 10m."
+              description: "ArgoCD job argo-cd-argocd-server-metrics in namespace argocd has had a gRPC error rate above 5% for 10m. Check argocd-server errors and upstream dependencies."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
   # ArgoCdHighKubectlPendingExec
   - interval: 1m
@@ -331,6 +331,6 @@ tests:
               severity: warning
               namespace: argocd
             exp_annotations:
-              summary: "ArgoCD has a high number of pending kubectl executions."
-              description: "ArgoCD in argocd has more than 10 pending kubectl executions for the past 15m. This may indicate resource contention or slow manifest generation."
+              summary: "ArgoCD has many pending kubectl executions."
+              description: "ArgoCD in namespace argocd has had more than 10 pending kubectl executions for 15m. This may indicate resource contention, slow Kubernetes API calls, or slow manifest generation."
               dashboard_url: "https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview"
