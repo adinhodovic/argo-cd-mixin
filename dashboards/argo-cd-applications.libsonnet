@@ -287,7 +287,7 @@ local autoSyncStatusColors = {
               tbOverride.byName.withPropertiesFromOptions(
                 tbStandardOptions.color.withMode('fixed') +
                 tbStandardOptions.color.withFixedColor('yellow') +
-                tbCustom.cellOptions.TableColoredBackgroundCellOptions.withType()
+                tbCustom.cellOptions.TableCellOptions.TableColoredBackgroundCellOptions.withType()
               ),
             ]
           ) +
@@ -342,7 +342,7 @@ local autoSyncStatusColors = {
               tbOverride.byName.withPropertiesFromOptions(
                 tbStandardOptions.color.withMode('fixed') +
                 tbStandardOptions.color.withFixedColor('yellow') +
-                tbCustom.cellOptions.TableColoredBackgroundCellOptions.withType()
+                tbCustom.cellOptions.TableCellOptions.TableColoredBackgroundCellOptions.withType()
               ),
             ]
           ) +
@@ -397,7 +397,7 @@ local autoSyncStatusColors = {
               tbOverride.byName.withPropertiesFromOptions(
                 tbStandardOptions.color.withMode('fixed') +
                 tbStandardOptions.color.withFixedColor('yellow') +
-                tbCustom.cellOptions.TableColoredBackgroundCellOptions.withType()
+                tbCustom.cellOptions.TableCellOptions.TableColoredBackgroundCellOptions.withType()
               ),
             ]
           ) +
@@ -452,7 +452,7 @@ local autoSyncStatusColors = {
               tbOverride.byName.withPropertiesFromOptions(
                 tbStandardOptions.color.withMode('fixed') +
                 tbStandardOptions.color.withFixedColor('yellow') +
-                tbCustom.cellOptions.TableColoredBackgroundCellOptions.withType()
+                tbCustom.cellOptions.TableCellOptions.TableColoredBackgroundCellOptions.withType()
               ),
             ]
           ) +
