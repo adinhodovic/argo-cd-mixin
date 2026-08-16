@@ -55,13 +55,13 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".*true$"
+                     "options": ".*false$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "green",
+                           "fixedColor": "red",
                            "mode": "fixed"
                         }
                      }
@@ -70,13 +70,13 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".*false$"
+                     "options": ".*true$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "red",
+                           "fixedColor": "green",
                            "mode": "fixed"
                         }
                      }
@@ -145,13 +145,13 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".*true$"
+                     "options": ".*false$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "green",
+                           "fixedColor": "red",
                            "mode": "fixed"
                         }
                      }
@@ -160,13 +160,13 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".*false$"
+                     "options": ".*true$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "red",
+                           "fixedColor": "green",
                            "mode": "fixed"
                         }
                      }

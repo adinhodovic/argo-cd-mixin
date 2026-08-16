@@ -56,6 +56,21 @@
                {
                   "matcher": {
                      "id": "byRegexp",
+                     "options": ".* - Degraded$"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "red",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byRegexp",
                      "options": ".* - Healthy$"
                   },
                   "properties": [
@@ -63,6 +78,21 @@
                         "id": "color",
                         "value": {
                            "fixedColor": "green",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byRegexp",
+                     "options": ".* - Missing$"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "red",
                            "mode": "fixed"
                         }
                      }
@@ -93,36 +123,6 @@
                         "id": "color",
                         "value": {
                            "fixedColor": "yellow",
-                           "mode": "fixed"
-                        }
-                     }
-                  ]
-               },
-               {
-                  "matcher": {
-                     "id": "byRegexp",
-                     "options": ".* - Missing$"
-                  },
-                  "properties": [
-                     {
-                        "id": "color",
-                        "value": {
-                           "fixedColor": "red",
-                           "mode": "fixed"
-                        }
-                     }
-                  ]
-               },
-               {
-                  "matcher": {
-                     "id": "byRegexp",
-                     "options": ".* - Degraded$"
-                  },
-                  "properties": [
-                     {
-                        "id": "color",
-                        "value": {
-                           "fixedColor": "red",
                            "mode": "fixed"
                         }
                      }
@@ -207,13 +207,13 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".* - Synced$"
+                     "options": ".* - OutOfSync$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "green",
+                           "fixedColor": "yellow",
                            "mode": "fixed"
                         }
                      }
@@ -222,13 +222,13 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".* - OutOfSync$"
+                     "options": ".* - Synced$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "yellow",
+                           "fixedColor": "green",
                            "mode": "fixed"
                         }
                      }
@@ -313,43 +313,13 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".* - Succeeded$"
+                     "options": ".* - Error$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "green",
-                           "mode": "fixed"
-                        }
-                     }
-                  ]
-               },
-               {
-                  "matcher": {
-                     "id": "byRegexp",
-                     "options": ".* - Running$"
-                  },
-                  "properties": [
-                     {
-                        "id": "color",
-                        "value": {
-                           "fixedColor": "yellow",
-                           "mode": "fixed"
-                        }
-                     }
-                  ]
-               },
-               {
-                  "matcher": {
-                     "id": "byRegexp",
-                     "options": ".* - Terminating$"
-                  },
-                  "properties": [
-                     {
-                        "id": "color",
-                        "value": {
-                           "fixedColor": "yellow",
+                           "fixedColor": "red",
                            "mode": "fixed"
                         }
                      }
@@ -373,13 +343,43 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".* - Error$"
+                     "options": ".* - Running$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "red",
+                           "fixedColor": "yellow",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byRegexp",
+                     "options": ".* - Succeeded$"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "green",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byRegexp",
+                     "options": ".* - Terminating$"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "yellow",
                            "mode": "fixed"
                         }
                      }
@@ -449,13 +449,13 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".* - true$"
+                     "options": ".* - false$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "green",
+                           "fixedColor": "yellow",
                            "mode": "fixed"
                         }
                      }
@@ -464,13 +464,13 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".* - false$"
+                     "options": ".* - true$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "yellow",
+                           "fixedColor": "green",
                            "mode": "fixed"
                         }
                      }
@@ -981,6 +981,21 @@
                {
                   "matcher": {
                      "id": "byRegexp",
+                     "options": ".* - Degraded$"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "red",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byRegexp",
                      "options": ".* - Healthy$"
                   },
                   "properties": [
@@ -988,6 +1003,21 @@
                         "id": "color",
                         "value": {
                            "fixedColor": "green",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byRegexp",
+                     "options": ".* - Missing$"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "red",
                            "mode": "fixed"
                         }
                      }
@@ -1018,36 +1048,6 @@
                         "id": "color",
                         "value": {
                            "fixedColor": "yellow",
-                           "mode": "fixed"
-                        }
-                     }
-                  ]
-               },
-               {
-                  "matcher": {
-                     "id": "byRegexp",
-                     "options": ".* - Missing$"
-                  },
-                  "properties": [
-                     {
-                        "id": "color",
-                        "value": {
-                           "fixedColor": "red",
-                           "mode": "fixed"
-                        }
-                     }
-                  ]
-               },
-               {
-                  "matcher": {
-                     "id": "byRegexp",
-                     "options": ".* - Degraded$"
-                  },
-                  "properties": [
-                     {
-                        "id": "color",
-                        "value": {
-                           "fixedColor": "red",
                            "mode": "fixed"
                         }
                      }
@@ -1132,13 +1132,13 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".* - Synced$"
+                     "options": ".* - OutOfSync$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "green",
+                           "fixedColor": "yellow",
                            "mode": "fixed"
                         }
                      }
@@ -1147,13 +1147,13 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".* - OutOfSync$"
+                     "options": ".* - Synced$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "yellow",
+                           "fixedColor": "green",
                            "mode": "fixed"
                         }
                      }
@@ -1238,43 +1238,13 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".* - Succeeded$"
+                     "options": ".* - Error$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "green",
-                           "mode": "fixed"
-                        }
-                     }
-                  ]
-               },
-               {
-                  "matcher": {
-                     "id": "byRegexp",
-                     "options": ".* - Running$"
-                  },
-                  "properties": [
-                     {
-                        "id": "color",
-                        "value": {
-                           "fixedColor": "yellow",
-                           "mode": "fixed"
-                        }
-                     }
-                  ]
-               },
-               {
-                  "matcher": {
-                     "id": "byRegexp",
-                     "options": ".* - Terminating$"
-                  },
-                  "properties": [
-                     {
-                        "id": "color",
-                        "value": {
-                           "fixedColor": "yellow",
+                           "fixedColor": "red",
                            "mode": "fixed"
                         }
                      }
@@ -1298,13 +1268,43 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".* - Error$"
+                     "options": ".* - Running$"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "red",
+                           "fixedColor": "yellow",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byRegexp",
+                     "options": ".* - Succeeded$"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "green",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byRegexp",
+                     "options": ".* - Terminating$"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "yellow",
                            "mode": "fixed"
                         }
                      }

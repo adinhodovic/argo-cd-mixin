@@ -6,22 +6,12 @@ local dashboard = g.dashboard;
 local row = g.panel.row;
 local grid = g.util.grid;
 
-local timeSeriesPanel = g.panel.timeSeries;
+local colorOverrides = mixinUtils.dashboards.colorOverrides;
 
-local tsStandardOptions = timeSeriesPanel.standardOptions;
-local tsOverride = tsStandardOptions.override;
-
-local seriesSuffixColorOverride(suffix, color) =
-  tsOverride.byRegexp.new('.*%s$' % suffix) +
-  tsOverride.byRegexp.withPropertiesFromOptions(
-    tsStandardOptions.color.withMode('fixed') +
-    tsStandardOptions.color.withFixedColor(color)
-  );
-
-local successBooleanColorOverrides = [
-  seriesSuffixColorOverride('true', 'green'),
-  seriesSuffixColorOverride('false', 'red'),
-];
+local successBooleanColors = {
+  'true': 'green',
+  'false': 'red',
+};
 
 {
   local dashboardName = 'argo-cd-notifications-overview',
@@ -70,9 +60,9 @@ local successBooleanColorOverrides = [
             queries.deliveriesCount,
             '{{ exported_service }} - Succeeded: {{ succeeded }}',
             description='A timeseries panel showing the count of notification deliveries by exported service and success status.',
-            stack='normal'
-          ) +
-          tsStandardOptions.withOverrides(successBooleanColorOverrides),
+            stack='normal',
+            overrides=colorOverrides.timeSeriesBySuffixes(successBooleanColors)
+          ),
 
         triggerEvalTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -81,9 +71,9 @@ local successBooleanColorOverrides = [
             queries.triggerEvalCount,
             '{{ name }} - Triggered: {{ triggered }}',
             description='A timeseries panel showing the count of trigger evaluations by name and triggered status.',
-            stack='normal'
-          ) +
-          tsStandardOptions.withOverrides(successBooleanColorOverrides),
+            stack='normal',
+            overrides=colorOverrides.timeSeriesBySuffixes(successBooleanColors)
+          ),
       };
 
       local rows =

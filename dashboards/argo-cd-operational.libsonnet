@@ -7,50 +7,28 @@ local row = g.panel.row;
 local grid = g.util.grid;
 
 local tablePanel = g.panel.table;
-local pieChartPanel = g.panel.pieChart;
-local timeSeriesPanel = g.panel.timeSeries;
 
-// Pie Chart
-local pcStandardOptions = pieChartPanel.standardOptions;
-local pcOverride = pcStandardOptions.override;
+local colorOverrides = mixinUtils.dashboards.colorOverrides;
 
-local pieStatusColorOverride(status, color) =
-  pcOverride.byName.new(status) +
-  pcOverride.byName.withPropertiesFromOptions(
-    pcStandardOptions.color.withMode('fixed') +
-    pcStandardOptions.color.withFixedColor(color)
-  );
+local healthStatusColors = {
+  Healthy: 'green',
+  Progressing: 'yellow',
+  Suspended: 'yellow',
+  Missing: 'red',
+  Degraded: 'red',
+  Unknown: 'orange',
+};
 
-local healthStatusColorOverrides = [
-  pieStatusColorOverride('Healthy', 'green'),
-  pieStatusColorOverride('Progressing', 'yellow'),
-  pieStatusColorOverride('Suspended', 'yellow'),
-  pieStatusColorOverride('Missing', 'red'),
-  pieStatusColorOverride('Degraded', 'red'),
-  pieStatusColorOverride('Unknown', 'orange'),
-];
+local syncStatusColors = {
+  Synced: 'green',
+  OutOfSync: 'yellow',
+  Unknown: 'orange',
+};
 
-local syncStatusColorOverrides = [
-  pieStatusColorOverride('Synced', 'green'),
-  pieStatusColorOverride('OutOfSync', 'yellow'),
-  pieStatusColorOverride('Unknown', 'orange'),
-];
-
-// Time series
-local tsStandardOptions = timeSeriesPanel.standardOptions;
-local tsOverride = tsStandardOptions.override;
-
-local seriesSuffixColorOverride(suffix, color) =
-  tsOverride.byRegexp.new('.*%s$' % suffix) +
-  tsOverride.byRegexp.withPropertiesFromOptions(
-    tsStandardOptions.color.withMode('fixed') +
-    tsStandardOptions.color.withFixedColor(color)
-  );
-
-local syncFailureColorOverrides = [
-  seriesSuffixColorOverride(' - Failed', 'red'),
-  seriesSuffixColorOverride(' - Error', 'red'),
-];
+local syncFailureColors = {
+  Failed: 'red',
+  Error: 'red',
+};
 
 // Table
 local tbStandardOptions = tablePanel.standardOptions;
@@ -582,7 +560,7 @@ local tbPanelOptions = tablePanel.panelOptions;
             queries.healthStatus,
             '{{ health_status }}',
             description='The distribution of application health statuses managed by ArgoCD.',
-            overrides=healthStatusColorOverrides
+            overrides=colorOverrides.pieChartByNames(healthStatusColors)
           ),
 
         syncStatusPieChart:
@@ -592,7 +570,7 @@ local tbPanelOptions = tablePanel.panelOptions;
             queries.syncStatusQuery,
             '{{ sync_status }}',
             description='The distribution of application sync statuses managed by ArgoCD.',
-            overrides=syncStatusColorOverrides
+            overrides=colorOverrides.pieChartByNames(syncStatusColors)
           ),
 
         appsTablePanel:
@@ -658,9 +636,9 @@ local tbPanelOptions = tablePanel.panelOptions;
             queries.syncFailures,
             '{{ project }}/{{ name }} - {{ phase }}',
             description='A timeseries panel showing sync failures for applications managed by ArgoCD.',
-            stack='normal'
-          ) +
-          tsStandardOptions.withOverrides(syncFailureColorOverrides),
+            stack='normal',
+            overrides=colorOverrides.timeSeriesBySuffixes(syncFailureColors, prefix=' - ')
+          ),
 
         reconcilationActivtyTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(

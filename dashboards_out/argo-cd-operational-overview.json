@@ -188,6 +188,21 @@
                {
                   "matcher": {
                      "id": "byName",
+                     "options": "Degraded"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "red",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byName",
                      "options": "Healthy"
                   },
                   "properties": [
@@ -195,6 +210,21 @@
                         "id": "color",
                         "value": {
                            "fixedColor": "green",
+                           "mode": "fixed"
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher": {
+                     "id": "byName",
+                     "options": "Missing"
+                  },
+                  "properties": [
+                     {
+                        "id": "color",
+                        "value": {
+                           "fixedColor": "red",
                            "mode": "fixed"
                         }
                      }
@@ -225,36 +255,6 @@
                         "id": "color",
                         "value": {
                            "fixedColor": "yellow",
-                           "mode": "fixed"
-                        }
-                     }
-                  ]
-               },
-               {
-                  "matcher": {
-                     "id": "byName",
-                     "options": "Missing"
-                  },
-                  "properties": [
-                     {
-                        "id": "color",
-                        "value": {
-                           "fixedColor": "red",
-                           "mode": "fixed"
-                        }
-                     }
-                  ]
-               },
-               {
-                  "matcher": {
-                     "id": "byName",
-                     "options": "Degraded"
-                  },
-                  "properties": [
-                     {
-                        "id": "color",
-                        "value": {
-                           "fixedColor": "red",
                            "mode": "fixed"
                         }
                      }
@@ -330,13 +330,13 @@
                {
                   "matcher": {
                      "id": "byName",
-                     "options": "Synced"
+                     "options": "OutOfSync"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "green",
+                           "fixedColor": "yellow",
                            "mode": "fixed"
                         }
                      }
@@ -345,13 +345,13 @@
                {
                   "matcher": {
                      "id": "byName",
-                     "options": "OutOfSync"
+                     "options": "Synced"
                   },
                   "properties": [
                      {
                         "id": "color",
                         "value": {
-                           "fixedColor": "yellow",
+                           "fixedColor": "green",
                            "mode": "fixed"
                         }
                      }
@@ -589,7 +589,7 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".* - Failed$"
+                     "options": ".* - Error$"
                   },
                   "properties": [
                      {
@@ -604,7 +604,7 @@
                {
                   "matcher": {
                      "id": "byRegexp",
-                     "options": ".* - Error$"
+                     "options": ".* - Failed$"
                   },
                   "properties": [
                      {

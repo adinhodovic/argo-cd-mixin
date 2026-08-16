@@ -7,7 +7,6 @@ local row = g.panel.row;
 local grid = g.util.grid;
 
 local tablePanel = g.panel.table;
-local timeSeriesPanel = g.panel.timeSeries;
 local textPanel = g.panel.text;
 
 // Table
@@ -17,44 +16,35 @@ local tbPanelOptions = tablePanel.panelOptions;
 local tbOverride = tbStandardOptions.override;
 local tbCustom = tablePanel.fieldConfig.defaults.custom;
 
-// Time series
-local tsStandardOptions = timeSeriesPanel.standardOptions;
-local tsOverride = tsStandardOptions.override;
+local colorOverrides = mixinUtils.dashboards.colorOverrides;
 
-local statusColorOverride(status, color) =
-  tsOverride.byRegexp.new('.* - %s$' % status) +
-  tsOverride.byRegexp.withPropertiesFromOptions(
-    tsStandardOptions.color.withMode('fixed') +
-    tsStandardOptions.color.withFixedColor(color)
-  );
+local healthStatusColors = {
+  Healthy: 'green',
+  Progressing: 'yellow',
+  Suspended: 'yellow',
+  Missing: 'red',
+  Degraded: 'red',
+  Unknown: 'orange',
+};
 
-local healthStatusColorOverrides = [
-  statusColorOverride('Healthy', 'green'),
-  statusColorOverride('Progressing', 'yellow'),
-  statusColorOverride('Suspended', 'yellow'),
-  statusColorOverride('Missing', 'red'),
-  statusColorOverride('Degraded', 'red'),
-  statusColorOverride('Unknown', 'orange'),
-];
+local syncStatusColors = {
+  Synced: 'green',
+  OutOfSync: 'yellow',
+  Unknown: 'orange',
+};
 
-local syncStatusColorOverrides = [
-  statusColorOverride('Synced', 'green'),
-  statusColorOverride('OutOfSync', 'yellow'),
-  statusColorOverride('Unknown', 'orange'),
-];
+local syncPhaseColors = {
+  Succeeded: 'green',
+  Running: 'yellow',
+  Terminating: 'yellow',
+  Failed: 'red',
+  Error: 'red',
+};
 
-local syncPhaseColorOverrides = [
-  statusColorOverride('Succeeded', 'green'),
-  statusColorOverride('Running', 'yellow'),
-  statusColorOverride('Terminating', 'yellow'),
-  statusColorOverride('Failed', 'red'),
-  statusColorOverride('Error', 'red'),
-];
-
-local autoSyncStatusColorOverrides = [
-  statusColorOverride('true', 'green'),
-  statusColorOverride('false', 'yellow'),
-];
+local autoSyncStatusColors = {
+  'true': 'green',
+  'false': 'yellow',
+};
 
 {
   local dashboardName = 'argo-cd-application-overview',
@@ -195,9 +185,9 @@ local autoSyncStatusColorOverrides = [
             '{{ project }} - {{ health_status }}',
             description='A timeseries panel showing the health status of applications managed by ArgoCD.',
             stack='normal',
-            decimals=0
-          ) +
-          tsStandardOptions.withOverrides(healthStatusColorOverrides),
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(healthStatusColors, prefix=' - ')
+          ),
 
         appSyncStatusTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -207,9 +197,9 @@ local autoSyncStatusColorOverrides = [
             '{{ project }} - {{ sync_status }}',
             description='A timeseries panel showing the sync status of applications managed by ArgoCD.',
             stack='normal',
-            decimals=0
-          ) +
-          tsStandardOptions.withOverrides(syncStatusColorOverrides),
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(syncStatusColors, prefix=' - ')
+          ),
 
         appSyncTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -219,9 +209,9 @@ local autoSyncStatusColorOverrides = [
             '{{ project }} - {{ phase }}',
             description='A timeseries panel showing the sync results of applications managed by ArgoCD.',
             stack='normal',
-            decimals=0
-          ) +
-          tsStandardOptions.withOverrides(syncPhaseColorOverrides),
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(syncPhaseColors, prefix=' - ')
+          ),
 
         appAutoSyncStatusTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -231,9 +221,9 @@ local autoSyncStatusColorOverrides = [
             '{{ project }} - {{ autosync_enabled }}',
             description='A timeseries panel showing whether auto sync is enabled for applications managed by ArgoCD.',
             stack='normal',
-            decimals=0
-          ) +
-          tsStandardOptions.withOverrides(autoSyncStatusColorOverrides),
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(autoSyncStatusColors, prefix=' - ')
+          ),
 
         appsDefined: std.length($._config.applications) != 0,
         local appBadgeContent = [
@@ -485,9 +475,9 @@ local autoSyncStatusColorOverrides = [
             '{{ exported_namespace }}/{{ name }} - {{ health_status }}',
             description='A timeseries panel showing the health status of each application managed by ArgoCD.',
             stack='normal',
-            decimals=0
-          ) +
-          tsStandardOptions.withOverrides(healthStatusColorOverrides),
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(healthStatusColors, prefix=' - ')
+          ),
 
         appSyncStatusByAppTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -497,9 +487,9 @@ local autoSyncStatusColorOverrides = [
             '{{ exported_namespace }}/{{ name }} - {{ sync_status }}',
             description='A timeseries panel showing the sync status of each application managed by ArgoCD.',
             stack='normal',
-            decimals=0
-          ) +
-          tsStandardOptions.withOverrides(syncStatusColorOverrides),
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(syncStatusColors, prefix=' - ')
+          ),
 
         appSyncByAppTimeSeries:
           mixinUtils.dashboards.timeSeriesPanel(
@@ -509,9 +499,9 @@ local autoSyncStatusColorOverrides = [
             '{{ exported_namespace }}/{{ name }} - {{ phase }}',
             description='A timeseries panel showing the sync result of each application managed by ArgoCD.',
             stack='normal',
-            decimals=0
-          ) +
-          tsStandardOptions.withOverrides(syncPhaseColorOverrides),
+            decimals=0,
+            overrides=colorOverrides.timeSeriesBySuffixes(syncPhaseColors, prefix=' - ')
+          ),
       };
 
       local rows =
