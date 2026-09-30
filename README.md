@@ -76,6 +76,12 @@ argoCdMixin {
 
 The mixin follows the [monitoring-mixins guidelines](https://github.com/monitoring-mixins/docs#guidelines-for-alert-names-labels-and-annotations) for alerts.
 
+### Latency alert thresholds
+
+Argo CD's reconciliation histogram ends at 16 seconds, and its Git request histogram ends at 20 seconds. The default P95 alerts use `>= 16` and `>= 20` to detect saturation of these last finite buckets. They cannot distinguish a reconciliation taking 60 seconds from one taking 120 seconds, or a Git request taking 30 seconds from one taking 45 seconds.
+
+To measure higher latency thresholds, add wider buckets in Argo CD itself and override `alerts.highReconciliationDuration.threshold` and `alerts.highGitRequestDuration.threshold`. Changing the mixin threshold alone cannot extend the histogram's range.
+
 ## Preview
 
 ### Operational Dashboard

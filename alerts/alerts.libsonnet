@@ -295,7 +295,7 @@
                       }[%(interval)s]
                     )
                   ) by (%(clusterLabel)s, namespace, le)
-                ) > %(threshold)s
+                ) >= %(threshold)s
               ||| % (
                 $._config
                 {
@@ -310,7 +310,7 @@
               },
               annotations: {
                 summary: 'ArgoCD application reconciliation is slow.',
-                description: 'The P%(quantile)s application reconciliation duration in namespace {{ $labels.namespace }} has been above %(threshold)ss for %(__for)s. The application controller may be overloaded or blocked on Kubernetes API calls.' % (alertConfig { __for: alertConfig['for'] }),
+                description: 'The P%(quantile)s application reconciliation duration in namespace {{ $labels.namespace }} has been at or above %(threshold)ss for %(__for)s. The application controller may be overloaded or blocked on Kubernetes API calls.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },
@@ -356,7 +356,7 @@
                       }[%(interval)s]
                     )
                   ) by (%(clusterLabel)s, namespace, le)
-                ) > %(threshold)s
+                ) >= %(threshold)s
               ||| % (
                 $._config
                 {
@@ -371,7 +371,7 @@
               },
               annotations: {
                 summary: 'ArgoCD repo server Git requests are slow.',
-                description: 'The P%(quantile)s Git request duration in namespace {{ $labels.namespace }} has been above %(threshold)ss for %(__for)s. Repository access, network latency, or repo server load may be degraded.' % (alertConfig { __for: alertConfig['for'] }),
+                description: 'The P%(quantile)s Git request duration in namespace {{ $labels.namespace }} has been at or above %(threshold)ss for %(__for)s. Repository access, network latency, or repo server load may be degraded.' % (alertConfig { __for: alertConfig['for'] }),
                 dashboard_url: $._config.dashboardUrls['argo-cd-operational-overview'] + clusterVariableQueryString,
               },
             },

@@ -1,0 +1,240 @@
+rule_files:
+- ../prometheus_alerts.yaml
+evaluation_interval: 1m
+tests:
+- interval: 1m
+  input_series:
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="0.25"}
+    values: 0+0x19 20+20x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="0.5"}
+    values: 0+0x19 20+20x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="1"}
+    values: 0+0x19 20+20x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="2"}
+    values: 0+0x19 20+20x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="4"}
+    values: 0+0x19 20+20x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="8"}
+    values: 0+0x19 20+20x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="16"}
+    values: 0+0x19 20+20x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="+Inf"}
+    values: 0+20x35
+  alert_rule_test:
+  - alertname: ArgoCdAppControllerHighReconciliationDuration
+    eval_time: 5m
+    exp_alerts: []
+  - eval_time: 15m
+    alertname: ArgoCdAppControllerHighReconciliationDuration
+    exp_alerts:
+    - exp_labels:
+        severity: warning
+        namespace: argocd
+      exp_annotations:
+        summary: ArgoCD application reconciliation is slow.
+        description: The P0.95 application reconciliation duration in namespace argocd has been at or above 16s for 10m. The application controller
+          may be overloaded or blocked on Kubernetes API calls.
+        dashboard_url: https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview
+  - alertname: ArgoCdAppControllerHighReconciliationDuration
+    eval_time: 25m
+    exp_alerts: []
+  name: ArgoCdAppControllerHighReconciliationDuration is pending before ten minutes and clears after recovery
+- interval: 1m
+  input_series:
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="0.25"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="0.5"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="1"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="2"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="4"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="8"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="16"}
+    values: 0+20x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="+Inf"}
+    values: 0+20x15
+  alert_rule_test:
+  - eval_time: 15m
+    alertname: ArgoCdAppControllerHighReconciliationDuration
+    exp_alerts: []
+  name: ArgoCdAppControllerHighReconciliationDuration within last finite bucket
+- interval: 1m
+  input_series:
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="0.25"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="0.5"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="1"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="2"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="4"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="8"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="16"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="+Inf"}
+    values: 0+0x15
+  alert_rule_test:
+  - eval_time: 15m
+    alertname: ArgoCdAppControllerHighReconciliationDuration
+    exp_alerts: []
+  name: ArgoCdAppControllerHighReconciliationDuration idle
+- interval: 1m
+  input_series:
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="0.25"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="0.5"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="1"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="2"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="4"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="8"}
+    values: 0+0x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="16"}
+    values: 0+19x15
+  - series: argocd_app_reconcile_bucket{job="argo-cd-argocd-application-controller-metrics", namespace="argocd", le="+Inf"}
+    values: 0+20x15
+  alert_rule_test:
+  - eval_time: 15m
+    alertname: ArgoCdAppControllerHighReconciliationDuration
+    exp_alerts:
+    - exp_labels:
+        severity: warning
+        namespace: argocd
+      exp_annotations:
+        summary: ArgoCD application reconciliation is slow.
+        description: The P0.95 application reconciliation duration in namespace argocd has been at or above 16s for 10m. The application controller
+          may be overloaded or blocked on Kubernetes API calls.
+        dashboard_url: https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview
+  name: ArgoCdAppControllerHighReconciliationDuration exact last finite bucket
+- interval: 1m
+  input_series:
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="0.1"}
+    values: 0+0x19 20+20x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="0.25"}
+    values: 0+0x19 20+20x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="0.5"}
+    values: 0+0x19 20+20x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="1"}
+    values: 0+0x19 20+20x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="2"}
+    values: 0+0x19 20+20x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="4"}
+    values: 0+0x19 20+20x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="10"}
+    values: 0+0x19 20+20x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="20"}
+    values: 0+0x19 20+20x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="+Inf"}
+    values: 0+20x35
+  alert_rule_test:
+  - alertname: ArgoCdRepoServerHighGitRequestDuration
+    eval_time: 5m
+    exp_alerts: []
+  - eval_time: 15m
+    alertname: ArgoCdRepoServerHighGitRequestDuration
+    exp_alerts:
+    - exp_labels:
+        severity: warning
+        namespace: argocd
+      exp_annotations:
+        summary: ArgoCD repo server Git requests are slow.
+        description: The P0.95 Git request duration in namespace argocd has been at or above 20s for 10m. Repository access, network latency,
+          or repo server load may be degraded.
+        dashboard_url: https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview
+  - alertname: ArgoCdRepoServerHighGitRequestDuration
+    eval_time: 25m
+    exp_alerts: []
+  name: ArgoCdRepoServerHighGitRequestDuration is pending before ten minutes and clears after recovery
+- interval: 1m
+  input_series:
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="0.1"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="0.25"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="0.5"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="1"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="2"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="4"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="10"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="20"}
+    values: 0+20x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="+Inf"}
+    values: 0+20x15
+  alert_rule_test:
+  - eval_time: 15m
+    alertname: ArgoCdRepoServerHighGitRequestDuration
+    exp_alerts: []
+  name: ArgoCdRepoServerHighGitRequestDuration within last finite bucket
+- interval: 1m
+  input_series:
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="0.1"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="0.25"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="0.5"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="1"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="2"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="4"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="10"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="20"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="+Inf"}
+    values: 0+0x15
+  alert_rule_test:
+  - eval_time: 15m
+    alertname: ArgoCdRepoServerHighGitRequestDuration
+    exp_alerts: []
+  name: ArgoCdRepoServerHighGitRequestDuration idle
+- interval: 1m
+  input_series:
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="0.1"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="0.25"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="0.5"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="1"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="2"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="4"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="10"}
+    values: 0+0x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="20"}
+    values: 0+19x15
+  - series: argocd_git_request_duration_seconds_bucket{job="argo-cd-argocd-repo-server-metrics", namespace="argocd", le="+Inf"}
+    values: 0+20x15
+  alert_rule_test:
+  - eval_time: 15m
+    alertname: ArgoCdRepoServerHighGitRequestDuration
+    exp_alerts:
+    - exp_labels:
+        severity: warning
+        namespace: argocd
+      exp_annotations:
+        summary: ArgoCD repo server Git requests are slow.
+        description: The P0.95 Git request duration in namespace argocd has been at or above 20s for 10m. Repository access, network latency,
+          or repo server load may be degraded.
+        dashboard_url: https://grafana.com/d/argo-cd-operational-overview-kask/argocd-operational-overview
+  name: ArgoCdRepoServerHighGitRequestDuration exact last finite bucket
