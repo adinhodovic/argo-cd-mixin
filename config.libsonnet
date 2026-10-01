@@ -134,7 +134,7 @@
         severity: 'warning',
         interval: '2m',
         'for': '10m',
-        threshold: '60',  // seconds - apps taking longer than 1min to reconcile
+        threshold: '16',  // seconds - saturation of the last finite reconcile bucket
         quantile: '0.95',  // 95th percentile
       },
 
@@ -150,7 +150,7 @@
         severity: 'warning',
         interval: '2m',
         'for': '10m',
-        threshold: '30',  // seconds - git operations (fetch/clone) taking too long
+        threshold: '20',  // seconds - saturation of the last finite Git request bucket
         quantile: '0.95',  // 95th percentile
       },
 
