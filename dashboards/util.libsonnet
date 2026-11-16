@@ -77,7 +77,7 @@ local query = variable.query;
         config.clusterLabel,
         'argocd_app_info{}',
       ) +
-      query.generalOptions.withLabel('Cluster') +
+      query.generalOptions.withLabel(config.clusterVariableLabel) +
       query.refresh.onLoad() +
       query.refresh.onTime() +
       query.withSort() +
