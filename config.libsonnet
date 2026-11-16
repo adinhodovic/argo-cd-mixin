@@ -11,6 +11,8 @@
     // Opt-in to multiCluster dashboards by overriding this and the clusterLabel.
     showMultiCluster: false,
     clusterLabel: 'cluster',
+    // Display name of the cluster variable
+    clusterVariableLabel: 'Cluster',
 
     grafanaUrl: 'https://grafana.com',
     argoCdUrl: 'https://github.com/adinhodovic/argo-cd-mixin?tab=readme-ov-file#argocd-badges',
